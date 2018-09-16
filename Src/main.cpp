@@ -28,7 +28,7 @@ int num1, num2;
 
 extern int curLayer;
 
-int main(int argc, char* argv[]) {
+int main2(int argc, char** argv) {
     if (!initApp(argc, argv)) {
         return 0;
     }
@@ -165,12 +165,9 @@ void initGraphics() {
     glEnable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
 
+    TextureLoader starLoader;
+    starLoader.load("star edited.png", starTexture);
 
-
-    // Загружаем текстуры
-
-    lTexture *starLoader = new lTexture();
-    starLoader->load(IL_PNG, "star.png", &starTexture);
     renderParams.tree = false;
 }
 

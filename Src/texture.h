@@ -1,31 +1,22 @@
 #pragma once
 
+#include <cstdint>
+
 #include "gl\glut.h"
 
-#include "IL\il.h"
-#include "IL\ilu.h"
+typedef struct TextureImage {
+    unsigned char *imageData;
 
+    int	 bpp;
+    int	 width;
+    int	 height;
 
-
-typedef struct TextureImage
-{
-	unsigned char	*imageData;
-	unsigned int	 bpp;
-	unsigned int	 width;
-	unsigned int	 height;
-	unsigned int	 texID;
+    uint32_t texID;
 } TextureImage;
 
-
-
-class lTexture
-{
+class TextureLoader {
 public:
-
-	lTexture(void);
-	~lTexture(void);
-
-	void load(ILenum fileType, char *fname, TextureImage *tex);
-	void free(TextureImage *tex);
+    void load(const char *fname, TextureImage &tex);
+    void free(TextureImage &tex);
 };
 
