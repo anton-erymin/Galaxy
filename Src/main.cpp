@@ -28,7 +28,7 @@ int num1, num2;
 
 extern int curLayer;
 
-int main2(int argc, char** argv) {
+int main(int argc, char** argv) {
     if (!initApp(argc, argv)) {
         return 0;
     }

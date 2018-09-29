@@ -1,6 +1,6 @@
 #include "irrlicht.h"
 
-int main(int argc, char** argv) {
+int main2(int argc, char** argv) {
     using namespace irr;
 
     // start up the engine
@@ -33,4 +33,6 @@ int main(int argc, char** argv) {
 
     // delete device
     device->drop();
+
+    return 0;
 }
