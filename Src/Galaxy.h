@@ -1,24 +1,99 @@
-#define		SCREEN_WIDTH		800
-#define		SCREEN_HEIGHT		600
+﻿#pragma once
 
-float dt = 1.0f / 60.0f;
-size_t lastTime, newTime;
-float accTime, frameTime;
-	
-bool keymap[256];
+#include <vector>
+#include <memory>
+#include <unordered_map>
 
-struct RENDER_PARAMS {
-	bool tree;
+#include "lpVec3.h"
+#include "BarnesHutTree.h"
+#include "SphericalModel.h"
+
+class Image;
+
+struct Particle
+{
+    bool active = true;
+    float activationTime = 0;
+    float timer = 0;
+
+    lpVec3 position = {};
+    lpVec3 linearVelocity = {};
+    lpVec3 force = {};
+
+    float mass = 1.0f;
+    float inverseMass = 1.0f;
+
+    float m_alpha;
+    lpVec3 color = { 1.0f, 1.0f, 1.0f };
+
+    float magnitude = 1.0f;
+    float size = 1.0f;
+
+    const Image* image;
+
+    bool doubleDrawing = false;
+
+    int	userData = 0;
+
+    Particle();
+
+    void SetMass(float mass);
 };
 
-RENDER_PARAMS renderParams;
+class Galaxy
+{
+public:
+    Galaxy();
+    Galaxy(lpVec3 center, int numBulgeStars, int numDiskStars, float bulgeRadius, float diskRadius, float haloRadius, float diskThickness,
+        float bulgeMass, float haloMass, float starMass, bool ccw);
+    
+    void setVelocities();
 
-void initGraphics();
-void draw();
-void reshape(int, int);
-void idle();
-void keyboard(unsigned char, int, int);
-void keyboardUp(unsigned char, int, int);
-void makeScreenShot(int);
-bool initApp(int, char**);
-void readGlxFile(char*);
+    void update(float dt);
+
+    std::vector<Particle>& GetParticles() { return particles; }
+    const std::unordered_map<const Image*, std::vector<const Particle*>> GetParticlesByImage() const { return image_to_particles; }
+
+private:
+    void CreateBulge();
+    void CreateDisk();
+
+    lpVec3 position;
+
+    std::vector<Particle> particles;
+    std::unordered_map<const Image*, std::vector<const Particle*>> image_to_particles;
+
+    int numBulgeStars;
+    float bulgeMass;
+    float bulgeRadius;
+
+    int numDiskStars;
+    float diskRadius;
+    float diskThickness;
+
+    float haloRadius;
+    float haloMass;
+
+    float starMass;
+
+    bool ccw;
+
+    SphericalModel darkMatter;
+};
+
+class Universe
+{
+public:
+    Universe(float size);
+
+    Galaxy& CreateGalaxy();
+    Galaxy& CreateGalaxy(lpVec3 center, int numBulgeStars, int numDiskStars, float bulgeRadius, float diskRadius, float haloRadius, float diskThickness,
+        float bulgeMass, float haloMass, float starMass, bool ccw);
+
+    std::vector<Galaxy>& GetGalaxies() { return galaxies; }
+    BarnesHutTree& GetBarnesHutTree() { return *barnesHutTree; }
+
+private:
+    std::vector<Galaxy> galaxies;
+    std::unique_ptr<BarnesHutTree> barnesHutTree;
+};

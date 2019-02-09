@@ -1,16 +1,21 @@
 #pragma once
 
-#include <vector>
+class Universe;
 
-#include "GalaxySystem.h"
-
-class ISolver {
+class Solver {
 public:
-    virtual ~ISolver() = default;
-    virtual void solve(float dt, std::vector<GalaxySystem> &galaxies) = 0;
+    virtual ~Solver() = default;
+
+    virtual void Solve(float dt, Universe& universe) = 0;
 };
 
-class BruteforceSolver : public ISolver {
+class BruteforceSolver : public Solver {
 public:
-    void solve(float dt, std::vector<GalaxySystem> &galaxies) override;
+    void Solve(float dt, Universe& universe) override;
+};
+
+class BarnesHutSolver : public Solver
+{
+public:
+    void Solve(float dt, Universe& universe) override;
 };

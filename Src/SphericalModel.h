@@ -2,52 +2,52 @@
 
 #include "lpVec3.h"
 
-// Сферически симметричное распределение материи
 
-class SphericalModel {
+// РЎС„РµСЂРёС‡РµСЃРєРё СЃРёРјРјРµС‚СЂРёС‡РЅРѕРµ СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµ РјР°С‚РµСЂРёРё
+
+class SphericalModel
+{
 public:
 
-    // Кол-во расчетных точек
-    int		  m_N;
-    // Расчетная область
-    float	  m_gridXMin;
-    float	  m_gridXMax;
-    // Шаг разбиения
-    float	  m_h;
+	// РљРѕР»-РІРѕ СЂР°СЃС‡РµС‚РЅС‹С… С‚РѕС‡РµРє
+	int		  m_N;
+	// Р Р°СЃС‡РµС‚РЅР°СЏ РѕР±Р»Р°СЃС‚СЊ
+	float	  m_gridXMin;
+	float	  m_gridXMax;
+	// РЁР°Рі СЂР°Р·Р±РёРµРЅРёСЏ
+	float	  m_h;
 
-    float     m_radius;
+	float     m_radius;
 
-    // Гравитационный потенциал
-    float	 *m_potential;
-    // Напряженности гравитационного поля
-    float	 *m_gravityField;
+	// Р“СЂР°РІРёС‚Р°С†РёРѕРЅРЅС‹Р№ РїРѕС‚РµРЅС†РёР°Р»
+	float	 *m_potential;
+	// РќР°РїСЂСЏР¶РµРЅРЅРѕСЃС‚Рё РіСЂР°РІРёС‚Р°С†РёРѕРЅРЅРѕРіРѕ РїРѕР»СЏ
+	float	 *m_gravityField;
 
-    float     m_potentialMax;
-    float	  m_potentialMin;
+	float     m_potentialMax;
+	float	  m_potentialMin;
 
-    float	  m_vc;
-
-
-    SphericalModel(float gridXMin, float gridXMax, float radius);
-    ~SphericalModel(void);
-
-    void init();
-
-    // Расчет гравитационного потенциала
-    void calcPotential();
-    // Расчет напряженности
-    void calcGravityField();
-
-    lpVec3 getGravityVector(lpVec3 pos) const;
-    float  getCircularVelocity(float r);
-
-    void plotPotential() const;
+	float	  m_vc;
 
 
-    // Функция распределения плотности
-    static float densityDistribution(float r);
-    // Правая часть уравнения Пуассона
-    static float rightPartPoisson(float r);
+	SphericalModel(float gridXMin, float gridXMax, float radius);
+	~SphericalModel(void);
+
+	// Р Р°СЃС‡РµС‚ РіСЂР°РІРёС‚Р°С†РёРѕРЅРЅРѕРіРѕ РїРѕС‚РµРЅС†РёР°Р»Р°
+	void calcPotential();
+	// Р Р°СЃС‡РµС‚ РЅР°РїСЂСЏР¶РµРЅРЅРѕСЃС‚Рё
+	void calcGravityField();
+
+	lpVec3 getGravityVector(lpVec3 pos);
+	float  getCircularVelocity(float r);
+
+	void plotPotential();
+
+
+	// Р¤СѓРЅРєС†РёСЏ СЂР°СЃРїСЂРµРґРµР»РµРЅРёСЏ РїР»РѕС‚РЅРѕСЃС‚Рё
+	static float densityDistribution(float r);
+	// РџСЂР°РІР°СЏ С‡Р°СЃС‚СЊ СѓСЂР°РІРЅРµРЅРёСЏ РџСѓР°СЃСЃРѕРЅР°
+	static float rightPartPoisson(float r);
 
 };
 

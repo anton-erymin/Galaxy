@@ -1,9 +1,6 @@
 #pragma once
 
-
-// Константы
-
-
+// РљРѕРЅСЃС‚Р°РЅС‚С‹
 
 #define		GLX_RENDER_GALO			1
 #define		GLX_RENDER_DISK			2
@@ -11,28 +8,31 @@
 
 #define		GLX_RENDER_ALL			7
 
-
-
-/* Единицы измерения:
-длина - килопарсек
-масса - 10^10 солнечных масс
-время - 4.7 млн. лет
-Гравитационная постоянная в этих единницах G = 1
+/* Р•РґРёРЅРёС†С‹ РёР·РјРµСЂРµРЅРёСЏ:
+РґР»РёРЅР° - РєРёР»РѕРїР°СЂСЃРµРє
+РјР°СЃСЃР° - 10^10 СЃРѕР»РЅРµС‡РЅС‹С… РјР°СЃСЃ
+РІСЂРµРјСЏ - 4.7 РјР»РЅ. Р»РµС‚
+Р“СЂР°РІРёС‚Р°С†РёРѕРЅРЅР°СЏ РїРѕСЃС‚РѕСЏРЅРЅР°СЏ РІ СЌС‚РёС… РµРґРёРЅРЅРёС†Р°С… G = 1
 */
 
+constexpr double cG = 6.67408e-11;                // m^3 / (kg * sec^2)
+constexpr double cParsec = 3.08567758149137e+16;  // m
+constexpr double cKiloParsec = 1000 * cParsec;    // m
+constexpr double cSolarMass = 1.9885e+30;         // kg
+constexpr double cMassUnit = 1e+10 * cSolarMass;  // kg
 
-// Параметры по умолчанию для стандартной модели
+// РџР°СЂР°РјРµС‚СЂС‹ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РґР»СЏ СЃС‚Р°РЅРґР°СЂС‚РЅРѕР№ РјРѕРґРµР»Рё
 
-#define			GLX_DISK_RADIUS			15.0f						// Радиус галактики
-#define			GLX_BULGE_RADIUS		0.5f						// Радиус ядра галактики
-#define			GLX_HALO_RADIUS			30.0f						// Радиус гало из темной материи
-#define			GLX_DISK_THICKNESS		0.3f						// Толщина диска галактики
+#define			GLX_DISK_RADIUS			15.0f						// Р Р°РґРёСѓСЃ РіР°Р»Р°РєС‚РёРєРё
+#define			GLX_BULGE_RADIUS		0.5f						// Р Р°РґРёСѓСЃ СЏРґСЂР° РіР°Р»Р°РєС‚РёРєРё
+#define			GLX_HALO_RADIUS			30.0f						// Р Р°РґРёСѓСЃ РіР°Р»Рѕ РёР· С‚РµРјРЅРѕР№ РјР°С‚РµСЂРёРё
+#define			GLX_DISK_THICKNESS		0.3f						// РўРѕР»С‰РёРЅР° РґРёСЃРєР° РіР°Р»Р°РєС‚РёРєРё
 
-#define	 		GLX_STAR_MASS			1.0e-7f						// Масса звезды
-#define			GLX_BULGE_MASS			1.0f						// Масса балджа
-#define			GLX_HALO_MASS			20.0f						// Масса гало
+#define	 		GLX_STAR_MASS			1//.0e-7f						// РњР°СЃСЃР° Р·РІРµР·РґС‹
+#define			GLX_BULGE_MASS			1.0f						// РњР°СЃСЃР° Р±Р°Р»РґР¶Р°
+#define			GLX_HALO_MASS			20.0f						// РњР°СЃСЃР° РіР°Р»Рѕ
 
-#define			UNIVERSE_SIZE			400.0f						// Размеры пространства симуляции
+#define			UNIVERSE_SIZE			50.0f						// Р Р°Р·РјРµСЂС‹ РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІР° СЃРёРјСѓР»СЏС†РёРё
 
-#define			GLX_BULGE_NUM			200						// Количесто частиц в балдже
-#define			GLX_DISK_NUM			1000						// Количесто частиц в диске
+#define			GLX_BULGE_NUM			200						// РљРѕР»РёС‡РµСЃС‚Рѕ С‡Р°СЃС‚РёС† РІ Р±Р°Р»РґР¶Рµ
+#define			GLX_DISK_NUM			10000						// РљРѕР»РёС‡РµСЃС‚Рѕ С‡Р°СЃС‚РёС† РІ РґРёСЃРєРµ

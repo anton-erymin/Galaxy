@@ -18,40 +18,34 @@
     <ClCompile Include="Src\BarnesHutTree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\constants.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Src\GalaxyParticle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Src\GalaxySystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Src\integration.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Src\lpVec3.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\poisson.cpp">
+    <ClCompile Include="Src\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\SphericalModel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\texture.cpp">
+    <ClCompile Include="Src\Application.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Universe.cpp">
+    <ClCompile Include="Src\Image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\main.cpp">
+    <ClCompile Include="Src\Galaxy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\solver.cpp">
+    <ClCompile Include="Src\Math.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\main2.cpp">
+    <ClCompile Include="Src\Solver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Threading.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -59,46 +53,34 @@
     <ClInclude Include="Src\BarnesHutTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Src\Galaxy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Src\GalaxyParticle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Src\GalaxySystem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Src\integration.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Src\lpVec3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Src\poisson.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Src\SphericalModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\texture.h">
+    <ClInclude Include="Src\Application.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="logger.h">
+    <ClInclude Include="Src\Image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\logger.h">
+    <ClInclude Include="Src\Galaxy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Universe.h">
+    <ClInclude Include="Src\Constants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\solver.h">
+    <ClInclude Include="Src\Math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\stb_image.h">
+    <ClInclude Include="Src\Solver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Threading.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

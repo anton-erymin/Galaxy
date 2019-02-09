@@ -57,7 +57,7 @@ void lpVec3::add(const lpVec3& other)
 }
 
 
-lpVec3 lpVec3::addR(const lpVec3& other) const
+lpVec3 lpVec3::addR(const lpVec3& other)
 {
 	return lpVec3(m_x + other.m_x, m_y + other.m_y, m_z + other.m_z);
 }
@@ -71,7 +71,7 @@ void lpVec3::sub(const lpVec3& other)
 }
 
 
-lpVec3 lpVec3::subR(const lpVec3& other) const
+lpVec3 lpVec3::subR(const lpVec3& other)
 {
 	return lpVec3(m_x - other.m_x, m_y - other.m_y, m_z - other.m_z);
 }
@@ -99,7 +99,7 @@ void lpVec3::addScaled(const lpVec3& other, float s)
 }
 
 
-lpVec3 lpVec3::addScaledR(const lpVec3& other, float s) const
+lpVec3 lpVec3::addScaledR(const lpVec3& other, float s)
 {
 	return lpVec3(m_x + s * other.m_x,	m_y + s * other.m_y, m_z + s * other.m_z);
 }
@@ -123,7 +123,7 @@ void lpVec3::cross(const lpVec3& other)
 }
 
 
-lpVec3 lpVec3::crossR(const lpVec3& other) const
+lpVec3 lpVec3::crossR(const lpVec3& other)
 {
 	return lpVec3(m_y * other.m_z - m_z * other.m_y, m_z * other.m_x - m_x * other.m_z, m_x * other.m_y - m_y * other.m_x);
 }
