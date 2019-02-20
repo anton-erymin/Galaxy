@@ -40,13 +40,13 @@ public:
 
     void Rotate(float x, float y)
     {
-        theta += x;
-        phi += y;
+        thetaTarget += x;
+        phiTarget += y;
     }
 
     void MoveForward(float dist)
     {
-        distance = std::max(0.01f, distance + dist);
+        distanceTarget = std::max(0.01f, distanceTarget + dist);
     }
 
     void Pan(float x, float y)
@@ -57,11 +57,32 @@ public:
 
     float GetDistance() const { return distance; }
 
+    void Update(float time)
+    {
+        float eps = 0.001f;
+
+        if (fabsf(thetaTarget - theta) > eps)
+        {
+            theta += (thetaTarget - theta) * 10.0f * time;
+        }
+        if (fabsf(phiTarget - phi) > eps)
+        {
+            phi += (phiTarget - phi) * 10.0f * time;
+        }
+        if (fabsf(distanceTarget - distance) > eps)
+        {
+            distance += (distanceTarget - distance) * 6.0f * time;
+        }
+    }
+
 private:
     lpVec3 center;
     float distance = 30.0f;
+    float distanceTarget = 30.0f;
     float phi = 0.0f;
+    float phiTarget = 0.0f;
     float theta = 0.0f;
+    float thetaTarget = 0.0f;
     lpVec3 right;
     lpVec3 up;
     lpVec3 forward;

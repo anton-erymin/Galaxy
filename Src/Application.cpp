@@ -292,7 +292,7 @@ void Application::OnDraw()
 
     if (renderParams.renderTree)
     {   
-        DrawBarnesHutTree(universe->GetBarnesHutTree());
+        //DrawBarnesHutTree(universe->GetBarnesHutTree());
     }
 
     glutSwapBuffers();
@@ -300,8 +300,13 @@ void Application::OnDraw()
     static uint64_t lastUpdate = 0;
     static int frames = 0;
     char buf[256];
-    uint64_t currentTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    static auto lastTime = std::chrono::high_resolution_clock::now();
+    auto currentTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     frames++;
+    auto now = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<float>(now - lastTime).count();
+    lastTime = now;
+    orbit.Update(time);
 
     if (currentTime - lastUpdate >= 1000000000)
     {
@@ -431,7 +436,7 @@ void Application::OnMouseMove(int x, int y)
     }
     if (inputState.buttons & (1u << GLUT_RIGHT_BUTTON))
     {
-        orbit.MoveForward(delta.y * orbit.GetDistance() * 0.005f);
+        orbit.MoveForward(delta.y * orbit.GetDistance() * 0.003f);
     }
 }
 
