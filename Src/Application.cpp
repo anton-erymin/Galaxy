@@ -16,7 +16,7 @@
 constexpr uint32_t cWindowWidth = 1400;
 constexpr uint32_t cWindowHeight = 800;
 
-constexpr char* cWindowCaption = "Galaxy Model 1.1";
+constexpr char* cWindowCaption = "Galaxy Model 0.1";
 
 extern int curLayer;
 
@@ -344,7 +344,7 @@ void Application::OnIdle()
 
     if (inputState.brightnessUp)
     {
-        renderParams.brightness = std::min(1.0f, renderParams.brightness * 1.1f);
+        renderParams.brightness = std::min(10.0f, renderParams.brightness * 1.1f);
     }
     if (inputState.brightnessDown)
     {
