@@ -7,8 +7,6 @@
 #include <Windows.h>
 #include <stdio.h>
 
-#include <gl\freeglut.h>
-
 #include "Galaxy.h"
 #include "Constants.h"
 #include "Image.h"
@@ -35,31 +33,6 @@ Application::Application()
 Application::~Application()
 {
     ThreadPool::Destroy();
-}
-
-static void Draw()
-{
-    Application::GetInstance().OnDraw();
-}
-
-static void Resize(int width, int height)
-{
-    Application::GetInstance().OnResize(width, height);
-}
-
-static void Idle()
-{
-    Application::GetInstance().OnIdle();
-}
-
-static void Keyboard(unsigned char key, int x, int y)
-{
-    Application::GetInstance().OnKeyboard(key, x, y);
-}
-
-static void KeyboardUp(unsigned char key, int x, int y)
-{
-    Application::GetInstance().OnKeyboardUp(key, x, y);
 }
 
 static Universe* CreateDefaultUniverse()
@@ -127,14 +100,12 @@ int Application::Run(int argc, char **argv)
     printf("\nControl keys:\n\n");
     printf("ENTER    - Start\n");
     printf("SPACE    - Reset the galaxy\n");
-    printf("'+'      - Zoom in\n");
-    printf("'-'      - Zoom out\n");
-    printf("'WASD'   - Move\n");
     printf("']'      - Speed up\n");
     printf("'['      - Slow down\n");
     printf("'t'      - Toggle quadtree drawing\n");
+    printf("'m'      - Toggle draw mode");
 
-    renderParams.render_tree = true;
+    renderParams.renderTree = true;
 
     width = cWindowWidth;
     height = cWindowHeight;
@@ -145,27 +116,31 @@ int Application::Run(int argc, char **argv)
 
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 
-    memset(keymap, 0, 256 * sizeof(bool));
-
     glutCreateWindow(cWindowCaption);
 
-    glutDisplayFunc(Draw);
-    glutReshapeFunc(Resize);
-    glutIdleFunc(Idle);
-    glutKeyboardFunc(Keyboard);
-    glutKeyboardUpFunc(KeyboardUp);
+    glutDisplayFunc([]() { Application::GetInstance().OnDraw(); });
+    glutReshapeFunc([](int width, int height) { Application::GetInstance().OnResize(width, height); });
+    glutIdleFunc([]() { Application::GetInstance().OnIdle(); });
+    glutKeyboardFunc([](unsigned char key, int x, int y) { Application::GetInstance().OnKeyboard(key, x, y); });
+    glutKeyboardUpFunc([](unsigned char key, int x, int y) { Application::GetInstance().OnKeyboardUp(key, x, y); });
+    glutMouseFunc([](int button, int state, int x, int y) { Application::GetInstance().OnMousePressed(button, state, x, y); });
+    glutMotionFunc([](int x, int y) { Application::GetInstance().OnMouseMove(x, y); });
+    glutMouseWheelFunc([](int button, int dir, int x, int y) { Application::GetInstance().OnMouseWheel(button, dir, x, y); });
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glBlendFunc(GL_ONE, GL_ONE);
     //glEnable(GL_DEPTH_TEST);
     //glEnable(GL_ALPHA_TEST);
 
-    solver_bruteforce = std::make_unique<BruteforceSolver>();
-    solver_barneshut = std::make_unique<BarnesHutSolver>();
+    solverBruteforce = std::make_unique<BruteforceSolver>();
+    solverBarneshut = std::make_unique<BarnesHutSolver>();
 
-    solver = &*solver_barneshut;
+    solver = &*solverBarneshut;
 
     GetImageLoader().GenTextureIds();
+
+    inputMappings['a'] = &inputState.brightnessUp;
+    inputMappings['z'] = &inputState.brightnessDown;
 
     float dt = deltaTime;
     std::thread solverThread([this, dt]() 
@@ -186,9 +161,6 @@ static void DrawBarnesHutTree(const BarnesHutTree& node)
 {
 	lpVec3 p = node.point;
 	float l = node.length;
-
-	glDisable(GL_BLEND);
-	glDisable(GL_TEXTURE_2D);
 
 	glBegin(GL_LINE_STRIP);
 		glColor3f(0.0f, 1.0f, 0.0f);
@@ -214,22 +186,24 @@ void Application::OnDraw()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
-    gluLookAt(cameraX, cameraY, cameraZ, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+    orbit.Transform();
 
-    int mode = GLX_RENDER_DISK | (renderParams.render_tree ? GLX_RENDER_TREE : 0);
+    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+
+    int mode = GLX_RENDER_DISK | (renderParams.renderTree ? GLX_RENDER_TREE : 0);
 
     float modelview[16];
     glGetFloatv(GL_MODELVIEW_MATRIX, modelview);
     lpVec3 v1 = lpVec3(modelview[0], modelview[4], modelview[8]);
     lpVec3 v2 = lpVec3(modelview[1], modelview[5], modelview[9]);
 
-    glEnable(GL_BLEND);
-    glEnable(GL_TEXTURE_2D);
+    
     //glDepthMask(false);
 
     if (renderParams.particleMode == RenderParameters::ParticleMode::Point)
     {
         glBegin(GL_POINTS);
+        glColor3f(1.0f, 1.0f, 1.0f);
         for (auto& galaxy : universe->GetGalaxies())
         {
             for (auto& particle : galaxy.GetParticles())
@@ -250,6 +224,9 @@ void Application::OnDraw()
     }
     else
     {
+        glEnable(GL_BLEND);
+        glEnable(GL_TEXTURE_2D);
+
         for (auto& galaxy : universe->GetGalaxies())
         {
             for (auto& particlesByImage : galaxy.GetParticlesByImage())
@@ -277,12 +254,12 @@ void Application::OnDraw()
                     lpVec3 p3 = pos + v1 * s + v2 * s;
                     lpVec3 p4 = pos + v1 * s - v2 * s;
 
-                    float mag = particle.magnitude;
+                    float mag = particle.magnitude * renderParams.brightness;
                     // Квадрат расстояние до частицы от наблюдателя
-                    float dist = (cameraX - pos.m_x) * (cameraX - pos.m_x) + (cameraY - pos.m_y) * (cameraY - pos.m_y) + (cameraZ - pos.m_z) * (cameraZ - pos.m_z);
-                    //dist = sqrt(dist);
-                    if (dist > 5.0f) dist = 5.0f;
-                    mag /= (dist / 2);
+                    //float dist = (cameraX - pos.m_x) * (cameraX - pos.m_x) + (cameraY - pos.m_y) * (cameraY - pos.m_y) + (cameraZ - pos.m_z) * (cameraZ - pos.m_z);
+                    ////dist = sqrt(dist);
+                    //if (dist > 5.0f) dist = 5.0f;
+                    //mag /= (dist / 2);
 
                     glColor3f(particle.color.m_x * mag, particle.color.m_y * mag, particle.color.m_z * mag);
 
@@ -306,13 +283,16 @@ void Application::OnDraw()
                 glEnd();
             }
         }
+
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_BLEND);
     }
 
-    glDepthMask(true);
+    //glDepthMask(true);
 
-    if (renderParams.render_tree)
+    if (renderParams.renderTree)
     {   
-        //DrawBarnesHutTree(universe->GetBarnesHutTree());
+        DrawBarnesHutTree(universe->GetBarnesHutTree());
     }
 
     glutSwapBuffers();
@@ -346,7 +326,7 @@ void Application::OnResize(int width, int height)
     glViewport(0, 0, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60.0f, (float)width / (float)height, 1.0f, 1000.0f);
+    gluPerspective(60.0f, (float)width / (float)height, 0.001f, 1000.0f);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -355,28 +335,23 @@ void Application::OnIdle()
     if (started)
     {
         //solver->Solve(delta_time, *universe);
-
-        
     }
 
-    
-
-    if (keymap['d'] || keymap['D']) cameraX += cameraZ * 0.015f;
-    if (keymap['a'] || keymap['A']) cameraX -= cameraZ * 0.015f;
-    if (keymap['w'] || keymap['W']) cameraY += cameraZ * 0.015f;
-    if (keymap['s'] || keymap['S']) cameraY -= cameraZ * 0.015f;
-
+    if (inputState.brightnessUp)
+    {
+        renderParams.brightness = std::min(1.0f, renderParams.brightness * 1.1f);
+    }
+    if (inputState.brightnessDown)
+    {
+        renderParams.brightness = std::max(0.01f, renderParams.brightness / 1.1f);
+    }
 }
 
 void Application::OnKeyboard(unsigned char key, int x, int y)
 {
-    keymap[key] = true;
-
-    if (key == '+') cameraZ /= 1.3f;
-    if (key == '-') cameraZ *= 1.3f;
-    if (key == 't' || key == 'T')
+    if (key == 't')
     {
-        renderParams.render_tree = !renderParams.render_tree;
+        renderParams.renderTree = !renderParams.renderTree;
 
         //ScreenShoter::GetScreenshot({ 0, 0, width, height }).SaveTga("Screenshot.tga");
     }
@@ -389,11 +364,80 @@ void Application::OnKeyboard(unsigned char key, int x, int y)
     }
 
     if (key == 'u') curLayer++;
+
+    for (auto& mapping : inputMappings)
+    {
+        if (mapping.first == key)
+        {
+            *mapping.second = true;
+        }
+    }
 }
 
 void Application::OnKeyboardUp(unsigned char key, int x, int y)
 {
-    keymap[key] = false;
+    if (key == 'm')
+    {
+        if (renderParams.particleMode == RenderParameters::ParticleMode::Billboard)
+        {
+            renderParams.particleMode = RenderParameters::ParticleMode::Point;
+        } 
+        else if (renderParams.particleMode == RenderParameters::ParticleMode::Point)
+        {
+            renderParams.particleMode = RenderParameters::ParticleMode::Billboard;
+        }
+    }
+
+    for (auto& mapping : inputMappings)
+    {
+        if (mapping.first == key)
+        {
+            *mapping.second = false;
+        }
+    }
+}
+
+void Application::OnMousePressed(int button, int state, int x, int y)
+{
+    auto flag = 1u << button;
+    if (state == GLUT_DOWN)
+    {
+        inputState.buttons |= flag;
+        inputState.prevPos = {float(x), float(y)};
+    }
+    else
+    {
+        inputState.buttons &= ~flag;
+    }
+}
+
+void Application::OnMouseMove(int x, int y)
+{
+    float2 delta = {float(x) - inputState.prevPos.x, float(y) - inputState.prevPos.y};
+    inputState.prevPos = {float(x), float(y)};
+
+    if (!inputState.buttons)
+    {
+        return;
+    }
+
+    if (inputState.buttons & (1u << GLUT_LEFT_BUTTON))
+    {
+        orbit.Rotate(delta.x * 0.1f, delta.y * 0.1f);
+    }
+    if (inputState.buttons & (1u << GLUT_MIDDLE_BUTTON))
+    {
+        orbit.Pan(-delta.x * orbit.GetDistance() * 0.001f, delta.y * orbit.GetDistance() * 0.001f);
+    }
+    if (inputState.buttons & (1u << GLUT_RIGHT_BUTTON))
+    {
+        orbit.MoveForward(delta.y * orbit.GetDistance() * 0.005f);
+    }
+}
+
+void Application::OnMouseWheel(int button, int dir, int x, int y)
+{
+    orbit.MoveForward(-dir * orbit.GetDistance() * 0.1f);
 }
 
 void getLexem(char *line, char *lexem, int &i)

@@ -5,8 +5,32 @@
 
 #include "lpVec3.h"
 
-#define		RAND					((float)rand() / RAND_MAX)
-#define		RAND_RANGE(a, b)		(a + (b - a) * RAND)
+inline float RAND()
+{
+    return ((float)rand() / RAND_MAX);
+}
+
+inline float RAND_RANGE(float a, float b)
+{
+    return a + (b - a) * RAND();
+}
+
+inline float deg2rad(float deg)
+{
+    return M_PI / 180.0f * deg;
+}
+
+inline float rad2deg(float rad)
+{
+    return 180.0f / M_PI * rad;
+}
+
+struct float2
+{
+    float x, y;
+
+    float2(float xp = 0.0f, float yp = 0.0f) : x(xp), y(yp) {}
+};
 
 float integrate_rect(float a, float b, int n, float(*f)(float));
 float integrate_trap(float a, float b, int n, float(*f)(float));
@@ -40,10 +64,10 @@ inline lpVec3 CylindricalToCartesian(const lpVec3& cylindrical)
 
 inline lpVec3 RandomUniformSpherical(float rmin, float rmax)
 {
-    return { RAND_RANGE(rmin, rmax), 2.0f * float(M_PI) * RAND - float(M_PI), 2.0f * float(M_PI) * RAND };
+    return { RAND_RANGE(rmin, rmax), 2.0f * float(M_PI) * RAND() - float(M_PI), 2.0f * float(M_PI) * RAND() };
 }
 
 inline lpVec3 RandomUniformCylindrical(float rmin, float rmax, float height)
 {
-    return { RAND_RANGE(rmin, rmax), 2.0f * float(M_PI) * RAND, RAND_RANGE(-0.5f * height, 0.5f * height) };
+    return { RAND_RANGE(rmin, rmax), 2.0f * float(M_PI) * RAND(), RAND_RANGE(-0.5f * height, 0.5f * height) };
 }

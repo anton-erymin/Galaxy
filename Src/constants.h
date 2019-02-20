@@ -28,7 +28,7 @@ constexpr double cMassUnit = 1e+10 * cSolarMass;  // kg
 #define			GLX_HALO_RADIUS			30.0f						// Радиус гало из темной материи
 #define			GLX_DISK_THICKNESS		0.3f						// Толщина диска галактики
 
-#define	 		GLX_STAR_MASS			1//.0e-7f						// Масса звезды
+#define	 		GLX_STAR_MASS			1.0e-7f						// Масса звезды
 #define			GLX_BULGE_MASS			1.0f						// Масса балджа
 #define			GLX_HALO_MASS			20.0f						// Масса гало
 

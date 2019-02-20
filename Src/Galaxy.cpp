@@ -88,7 +88,7 @@ static Particle CreateStar()
     particle.magnitude = RAND_RANGE(0.2f, 0.3f);
 
     int k = rand() % 3;
-    float rnd = RAND;
+    float rnd = RAND();
 
     switch (k)
     {

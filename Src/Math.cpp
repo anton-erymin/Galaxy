@@ -128,14 +128,14 @@ bool poisson3d(int numIter, float min, float max, int n, float ***data, float(*f
 
 float RandomStandardDistribution()
 {
-    float v1 = 2.0f * RAND - 1.0f;
-    float v2 = 2.0f * RAND - 1.0f;
+    float v1 = 2.0f * RAND() - 1.0f;
+    float v2 = 2.0f * RAND() - 1.0f;
     float r = v1 * v1 + v2 * v2;
 
     while (r >= 1.0f || r < 0.0000001f)
     {
-        v1 = 2.0f * RAND - 1.0f;
-        v2 = 2.0f * RAND - 1.0f;
+        v1 = 2.0f * RAND() - 1.0f;
+        v2 = 2.0f * RAND() - 1.0f;
         r = v1 * v1 + v2 * v2;
     }
 
