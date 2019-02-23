@@ -29,6 +29,7 @@
     <ClCompile Include="Src\SphericalModel.cpp" />
     <ClCompile Include="Src\Image.cpp" />
     <ClCompile Include="Src\Threading.cpp" />
+    <ClCompile Include="Src\UIOverlay.cpp" />
     <ClCompile Include="Src\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -42,6 +43,7 @@
     <ClInclude Include="Src\SphericalModel.h" />
     <ClInclude Include="Src\Image.h" />
     <ClInclude Include="Src\Threading.h" />
+    <ClInclude Include="Src\UIOverlay.h" />
     <ClInclude Include="Src\Utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -121,7 +123,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include;Lib\AntTweakBar\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
@@ -129,7 +131,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Lib\freeglut\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Lib\freeglut\lib;Lib\AntTweakBar\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>AntTweakBar.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d Lib\freeglut\bin\* $(OutDir)</Command>
@@ -141,7 +144,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include;Lib\AntTweakBar\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
@@ -149,10 +152,12 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Lib\freeglut\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Lib\freeglut\lib\x64;Lib\AntTweakBar\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>AntTweakBar64.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d Lib\freeglut\bin\x64\* $(OutDir)</Command>
+      <Command>xcopy /y /d Lib\freeglut\bin\x64\* $(OutDir)
+xcopy /y /d Lib\AntTweakBar\lib\AntTweakBar64.dll $(OutDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -166,14 +171,15 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include;Lib\AntTweakBar\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Lib\freeglut\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Lib\freeglut\lib;Lib\AntTweakBar\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>AntTweakBar.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d Lib\freeglut\bin\* $(OutDir)</Command>
@@ -187,7 +193,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include;Lib\AntTweakBar\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
@@ -197,10 +203,12 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Lib\freeglut\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Lib\freeglut\lib\x64;Lib\AntTweakBar\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>AntTweakBar64.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d Lib\freeglut\bin\x64\* $(OutDir)</Command>
+      <Command>xcopy /y /d Lib\freeglut\bin\x64\* $(OutDir)
+xcopy /y /d Lib\AntTweakBar\lib\AntTweakBar64.dll $(OutDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

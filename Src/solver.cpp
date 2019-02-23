@@ -36,32 +36,32 @@ static void IntegrateMotionEquationSIMD(Particle& particle, float dt)
     float *pos = &particle.position.m_x;
     float imdt = particle.inverseMass * dt;
 
-    __asm
-    {
-    	mov			eax, force
-    	movups		xmm0, [eax]		// xmm0 - force
-    	mov			ebx, linVel
-    	movups		xmm1, [ebx]		// xmm1 - velocity
-    	mov			ecx, pos
-    	movups		xmm2, [ecx]		// xmm2 - pos
-    	
-    	movss		xmm3, imdt
-    	movss		xmm4, dt
-    	shufps		xmm3, xmm3, 0	// xmm3 - imdt imdt imdt imdt
-    	shufps		xmm4, xmm4, 0	// xmm4 - dt dt dt dt
+    //__asm
+    //{
+    //	mov			eax, force
+    //	movups		xmm0, [eax]		// xmm0 - force
+    //	mov			ebx, linVel
+    //	movups		xmm1, [ebx]		// xmm1 - velocity
+    //	mov			ecx, pos
+    //	movups		xmm2, [ecx]		// xmm2 - pos
+    //	
+    //	movss		xmm3, imdt
+    //	movss		xmm4, dt
+    //	shufps		xmm3, xmm3, 0	// xmm3 - imdt imdt imdt imdt
+    //	shufps		xmm4, xmm4, 0	// xmm4 - dt dt dt dt
 
-    	mulps		xmm0, xmm3		// (dv) force *= imdt
-    	addps		xmm1, xmm0		// velocity += dv
-    	movups		xmm5, xmm1		// xmm5 - vel
-    	mulps		xmm1, xmm4		// (dp) velocity *= dt
-    	addps		xmm2, xmm1		// pos += dp
+    //	mulps		xmm0, xmm3		// (dv) force *= imdt
+    //	addps		xmm1, xmm0		// velocity += dv
+    //	movups		xmm5, xmm1		// xmm5 - vel
+    //	mulps		xmm1, xmm4		// (dp) velocity *= dt
+    //	addps		xmm2, xmm1		// pos += dp
 
-    	xorps		xmm0, xmm0		// force = 0
+    //	xorps		xmm0, xmm0		// force = 0
 
-    	movups		[eax], xmm0
-    	movups		[ebx], xmm5
-    	movups		[ecx], xmm2
-    }
+    //	movups		[eax], xmm0
+    //	movups		[ebx], xmm5
+    //	movups		[ecx], xmm2
+    //}
 }
 
 void BruteforceSolver::Solve(float dt, Universe& universe)

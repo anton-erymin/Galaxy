@@ -126,11 +126,11 @@ int Application::Run(int argc, char **argv)
     glutMouseFunc([](int button, int state, int x, int y) { Application::GetInstance().OnMousePressed(button, state, x, y); });
     glutMotionFunc([](int x, int y) { Application::GetInstance().OnMouseMove(x, y); });
     glutMouseWheelFunc([](int button, int dir, int x, int y) { Application::GetInstance().OnMouseWheel(button, dir, x, y); });
+    glutSpecialFunc([](int key, int x, int y) { Application::GetInstance().OnKeyboardSpecialFunc(key, x, y); });
+    glutPassiveMotionFunc([](int x, int y) { Application::GetInstance().OnMousePassiveMove(x, y); });
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glBlendFunc(GL_ONE, GL_ONE);
-    //glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_ALPHA_TEST);
 
     solverBruteforce = std::make_unique<BruteforceSolver>();
     solverBarneshut = std::make_unique<BarnesHutSolver>();
@@ -143,14 +143,19 @@ int Application::Run(int argc, char **argv)
     inputMappings['z'] = &inputState.brightnessDown;
 
     float dt = deltaTime;
-    std::thread solverThread([this, dt]() 
+    /*std::thread solverThread([this, dt]() 
     { 
         while (true)
         {
             solver->Solve(dt, GetUniverse());
-            simulationTime += deltaTime;
+            simulationTime += dt;
         }
-    });
+    });*/
+
+    ui.Init();
+    ui.Text("GPU", (const char*)glGetString(GL_RENDERER));
+    ui.ReadonlyFloat("FPS", &lastFps, 1);
+    ui.ReadonlyFloat("Simulation time, mln yrs", &simulationTimeMillionYears);
 
     glutMainLoop();
 
@@ -197,9 +202,6 @@ void Application::OnDraw()
     lpVec3 v1 = lpVec3(modelview[0], modelview[4], modelview[8]);
     lpVec3 v2 = lpVec3(modelview[1], modelview[5], modelview[9]);
 
-    
-    //glDepthMask(false);
-
     if (renderParams.particleMode == RenderParameters::ParticleMode::Point)
     {
         glBegin(GL_POINTS);
@@ -226,6 +228,8 @@ void Application::OnDraw()
     {
         glEnable(GL_BLEND);
         glEnable(GL_TEXTURE_2D);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_ALPHA_TEST);
 
         for (auto& galaxy : universe->GetGalaxies())
         {
@@ -288,33 +292,34 @@ void Application::OnDraw()
         glDisable(GL_BLEND);
     }
 
-    //glDepthMask(true);
-
     if (renderParams.renderTree)
     {   
         //DrawBarnesHutTree(universe->GetBarnesHutTree());
     }
 
+    ui.Draw();
+
     glutSwapBuffers();
 
-    static uint64_t lastUpdate = 0;
-    static int frames = 0;
-    char buf[256];
+    static uint32_t frames = 0;
     static auto lastTime = std::chrono::high_resolution_clock::now();
-    auto currentTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    frames++;
+    static float fpsTimer = 0.0f;
     auto now = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float>(now - lastTime).count();
     lastTime = now;
-    orbit.Update(time);
+    fpsTimer += time;
+    frames++;
 
-    if (currentTime - lastUpdate >= 1000000000)
+    simulationTimeMillionYears = simulationTime * cMillionYearsInTimeUnit;
+
+    if (fpsTimer >= 1.0f)
     {
-        std::sprintf(buf, "%s [FPS: %d] [Simulation time: %.1f mln yrs]", cWindowCaption, frames, simulationTime * cMillionYearsInTimeUnit);
-        glutSetWindowTitle(buf);
+        lastFps = frames * (1.0f / fpsTimer);
         frames = 0;
-        lastUpdate = currentTime;
+        fpsTimer = 0.0f;
     }
+
+    orbit.Update(time);
 
     glutPostRedisplay();
 
@@ -333,6 +338,8 @@ void Application::OnResize(int width, int height)
     glLoadIdentity();
     gluPerspective(60.0f, (float)width / (float)height, 0.001f, 1000.0f);
     glMatrixMode(GL_MODELVIEW);
+
+    ui.OnWindowSize(width, height);
 }
 
 void Application::OnIdle()
@@ -354,6 +361,11 @@ void Application::OnIdle()
 
 void Application::OnKeyboard(unsigned char key, int x, int y)
 {
+    if (ui.OnKeyboard(key, x, y))
+    {
+        return;
+    }
+
     if (key == 't')
     {
         renderParams.renderTree = !renderParams.renderTree;
@@ -404,6 +416,11 @@ void Application::OnKeyboardUp(unsigned char key, int x, int y)
 
 void Application::OnMousePressed(int button, int state, int x, int y)
 {
+    if (ui.OnMousePressed(button, state, x, y))
+    {
+        return;
+    }
+
     auto flag = 1u << button;
     if (state == GLUT_DOWN)
     {
@@ -418,6 +435,11 @@ void Application::OnMousePressed(int button, int state, int x, int y)
 
 void Application::OnMouseMove(int x, int y)
 {
+    if (ui.OnMousePassiveMove(x, y))
+    {
+        return;
+    }
+
     float2 delta = {float(x) - inputState.prevPos.x, float(y) - inputState.prevPos.y};
     inputState.prevPos = {float(x), float(y)};
 
@@ -440,9 +462,24 @@ void Application::OnMouseMove(int x, int y)
     }
 }
 
+void Application::OnMousePassiveMove(int x, int y)
+{
+    ui.OnMousePassiveMove(x, y);
+}
+
 void Application::OnMouseWheel(int button, int dir, int x, int y)
 {
+    if (ui.OnMouseWheel(button, dir, x, y))
+    {
+        return;
+    }
+
     orbit.MoveForward(-dir * orbit.GetDistance() * 0.1f);
+}
+
+void Application::OnKeyboardSpecialFunc(unsigned char key, int x, int y)
+{
+    ui.OnSpecialFunc(key, x, y);
 }
 
 void getLexem(char *line, char *lexem, int &i)

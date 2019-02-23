@@ -8,6 +8,7 @@
 #include <GL/freeglut.h>
 
 #include "Math.h"
+#include "UIOverlay.h"
 
 class ImageLoader;
 class Universe;
@@ -63,11 +64,11 @@ public:
 
         if (fabsf(thetaTarget - theta) > eps)
         {
-            theta += (thetaTarget - theta) * 10.0f * time;
+            theta += (thetaTarget - theta) * 6.0f * time;
         }
         if (fabsf(phiTarget - phi) > eps)
         {
-            phi += (phiTarget - phi) * 10.0f * time;
+            phi += (phiTarget - phi) * 6.0f * time;
         }
         if (fabsf(distanceTarget - distance) > eps)
         {
@@ -103,7 +104,9 @@ public:
     void OnKeyboardUp(unsigned char key, int x, int y); 
     void OnMousePressed(int button, int state, int x, int y);
     void OnMouseMove(int x, int y);
+    void OnMousePassiveMove(int x, int y);
     void OnMouseWheel(int button, int dir, int x, int y);
+    void OnKeyboardSpecialFunc(unsigned char key, int x, int y); 
 
     ImageLoader& GetImageLoader() { return *imageLoader; }
     Universe& GetUniverse() { return *universe; }
@@ -116,6 +119,8 @@ public:
 private:
     uint32_t width;
     uint32_t height;
+
+    UIOverlay ui;
 
     std::unique_ptr<ImageLoader> imageLoader;
     std::unique_ptr<Universe> universe;
@@ -141,16 +146,13 @@ private:
 
     float deltaTime = 0.0f;
     float simulationTime = 0.0f;
+    float simulationTimeMillionYears = 0.0f;
 
     float universeSize;
 
     bool started = false;
-    bool saveToFiles;
-    int mode;
-    int num1, num2;
-
-    uint64_t lastTime, newTime;
-    float accTime, frameTime;
+    bool saveToFiles = false;
+    uint32_t mode = 0;
 
     struct RenderParameters
     {
@@ -167,6 +169,8 @@ private:
     } renderParams;
 
     std::unordered_map<char, bool*> inputMappings;
+
+    float lastFps = 0.0f;
 
     static Application* instance;
 };
