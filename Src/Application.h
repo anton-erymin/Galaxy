@@ -60,7 +60,7 @@ public:
 
     void Update(float time)
     {
-        float eps = 0.001f;
+        float eps = 0.01f;
 
         if (fabsf(thetaTarget - theta) > eps)
         {
@@ -138,6 +138,7 @@ private:
     };
 
     InputState inputState;
+    std::unordered_map<char, bool*> inputMappings;
 
     Orbit orbit;
 
@@ -157,18 +158,10 @@ private:
     struct RenderParameters
     {
         bool renderTree = false;
-
-        enum class ParticleMode
-        {
-            Point,
-            Billboard
-        } particleMode = ParticleMode::Billboard;
-
+        bool renderPoints = false;
         float brightness = 1.0f;
 
     } renderParams;
-
-    std::unordered_map<char, bool*> inputMappings;
 
     float lastFps = 0.0f;
 

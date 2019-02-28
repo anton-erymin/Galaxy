@@ -12,6 +12,7 @@
 #include "Image.h"
 #include "Solver.h"
 #include "Threading.h"
+#include "BarnesHutTree.h"
 
 constexpr uint32_t cWindowWidth = 1400;
 constexpr uint32_t cWindowHeight = 800;
@@ -102,10 +103,6 @@ int Application::Run(int argc, char **argv)
     printf("SPACE    - Reset the galaxy\n");
     printf("']'      - Speed up\n");
     printf("'['      - Slow down\n");
-    printf("'t'      - Toggle quadtree drawing\n");
-    printf("'m'      - Toggle draw mode");
-
-    renderParams.renderTree = true;
 
     width = cWindowWidth;
     height = cWindowHeight;
@@ -132,8 +129,8 @@ int Application::Run(int argc, char **argv)
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glBlendFunc(GL_ONE, GL_ONE);
 
-    solverBruteforce = std::make_unique<BruteforceSolver>();
-    solverBarneshut = std::make_unique<BarnesHutSolver>();
+    solverBruteforce = std::make_unique<BruteforceSolver>(*universe);
+    solverBarneshut = std::make_unique<BarnesHutSolver>(*universe);
 
     solver = &*solverBarneshut;
 
@@ -142,20 +139,25 @@ int Application::Run(int argc, char **argv)
     inputMappings['a'] = &inputState.brightnessUp;
     inputMappings['z'] = &inputState.brightnessDown;
 
-    float dt = deltaTime;
-    /*std::thread solverThread([this, dt]() 
+    std::thread solverThread([this]() 
     { 
+        solver->Inititalize(deltaTime);
         while (true)
         {
-            solver->Solve(dt, GetUniverse());
-            simulationTime += dt;
+            solver->Solve(deltaTime);
+            simulationTime += deltaTime;
         }
-    });*/
+    });
 
     ui.Init();
     ui.Text("GPU", (const char*)glGetString(GL_RENDERER));
     ui.ReadonlyFloat("FPS", &lastFps, 1);
     ui.ReadonlyFloat("Simulation time, mln yrs", &simulationTimeMillionYears);
+    ui.Checkbox("Render points", &renderParams.renderPoints, "m");
+    ui.Checkbox("Render Barnes-Hut tree", &renderParams.renderTree, "t");
+    ui.SliderFloat("Brightness", &renderParams.brightness, 0.05f, 10.0f, 0.01f);
+
+    glutFullScreen();
 
     glutMainLoop();
 
@@ -191,21 +193,21 @@ void Application::OnDraw()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
+
     orbit.Transform();
 
+    glPushMatrix();
     glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-
-    int mode = GLX_RENDER_DISK | (renderParams.renderTree ? GLX_RENDER_TREE : 0);
 
     float modelview[16];
     glGetFloatv(GL_MODELVIEW_MATRIX, modelview);
     lpVec3 v1 = lpVec3(modelview[0], modelview[4], modelview[8]);
     lpVec3 v2 = lpVec3(modelview[1], modelview[5], modelview[9]);
 
-    if (renderParams.particleMode == RenderParameters::ParticleMode::Point)
+    if (renderParams.renderPoints)
     {
         glBegin(GL_POINTS);
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor3f(renderParams.brightness, renderParams.brightness, renderParams.brightness);
         for (auto& galaxy : universe->GetGalaxies())
         {
             for (auto& particle : galaxy.GetParticles())
@@ -214,12 +216,8 @@ void Application::OnDraw()
                 {
                     continue;
                 }
-
-                lpVec3 pos = particle.position;
-
- 
-                //glColor3f(particle.color.m_x, particle.color.m_y, particle.color.m_z);
-                glVertex3f(pos.m_x, pos.m_y, pos.m_z);
+                glColor3f(particle.color.m_x, particle.color.m_y, particle.color.m_z);
+                glVertex3f(particle.position.m_x, particle.position.m_y, particle.position.m_z);
             }
         }
         glEnd();
@@ -229,7 +227,7 @@ void Application::OnDraw()
         glEnable(GL_BLEND);
         glEnable(GL_TEXTURE_2D);
         glDisable(GL_DEPTH_TEST);
-        glDisable(GL_ALPHA_TEST);
+        //glDisable(GL_ALPHA_TEST);
 
         for (auto& galaxy : universe->GetGalaxies())
         {
@@ -249,23 +247,21 @@ void Application::OnDraw()
                         continue;
                     }
 
-                    lpVec3 pos = particle.position;
-
                     float s = 0.5f * particle.size;
 
-                    lpVec3 p1 = pos - v1 * s - v2 * s;
-                    lpVec3 p2 = pos - v1 * s + v2 * s;
-                    lpVec3 p3 = pos + v1 * s + v2 * s;
-                    lpVec3 p4 = pos + v1 * s - v2 * s;
+                    lpVec3 p1 = particle.position - v1 * s - v2 * s;
+                    lpVec3 p2 = particle.position - v1 * s + v2 * s;
+                    lpVec3 p3 = particle.position + v1 * s + v2 * s;
+                    lpVec3 p4 = particle.position + v1 * s - v2 * s;
 
-                    float mag = particle.magnitude * renderParams.brightness;
+                    float magnitude = particle.magnitude * renderParams.brightness;
                     // Квадрат расстояние до частицы от наблюдателя
                     //float dist = (cameraX - pos.m_x) * (cameraX - pos.m_x) + (cameraY - pos.m_y) * (cameraY - pos.m_y) + (cameraZ - pos.m_z) * (cameraZ - pos.m_z);
                     ////dist = sqrt(dist);
                     //if (dist > 5.0f) dist = 5.0f;
                     //mag /= (dist / 2);
 
-                    glColor3f(particle.color.m_x * mag, particle.color.m_y * mag, particle.color.m_z * mag);
+                    glColor3f(particle.color.m_x * magnitude, particle.color.m_y * magnitude, particle.color.m_z * magnitude);
 
                     glTexCoord2f(0.0f, 1.0f); glVertex3f(p1.m_x, p1.m_y, p1.m_z);
                     glTexCoord2f(0.0f, 0.0f); glVertex3f(p2.m_x, p2.m_y, p2.m_z);
@@ -279,9 +275,6 @@ void Application::OnDraw()
                         glTexCoord2f(1.0f, 0.0f); glVertex3fv(&p3.m_x);
                         glTexCoord2f(1.0f, 1.0f); glVertex3fv(&p4.m_x);
                     }
-
-
-                    //glPopMatrix();
                 }
 
                 glEnd();
@@ -294,7 +287,15 @@ void Application::OnDraw()
 
     if (renderParams.renderTree)
     {   
-        //DrawBarnesHutTree(universe->GetBarnesHutTree());
+        std::lock_guard<std::mutex> lock(solverBarneshut->GetTreeMutex());
+        DrawBarnesHutTree(solverBarneshut->GetBarnesHutTree());
+    }
+
+    glPopMatrix();
+
+    for (auto& galaxy : universe->GetGalaxies())
+    {
+        galaxy.GetHalo().PlotPotential();
     }
 
     ui.Draw();
@@ -393,18 +394,6 @@ void Application::OnKeyboard(unsigned char key, int x, int y)
 
 void Application::OnKeyboardUp(unsigned char key, int x, int y)
 {
-    if (key == 'm')
-    {
-        if (renderParams.particleMode == RenderParameters::ParticleMode::Billboard)
-        {
-            renderParams.particleMode = RenderParameters::ParticleMode::Point;
-        } 
-        else if (renderParams.particleMode == RenderParameters::ParticleMode::Point)
-        {
-            renderParams.particleMode = RenderParameters::ParticleMode::Billboard;
-        }
-    }
-
     for (auto& mapping : inputMappings)
     {
         if (mapping.first == key)

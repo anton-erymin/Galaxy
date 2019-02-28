@@ -3,7 +3,6 @@
 #include "AntTweakBar.h"
 #include "GL\freeglut.h"
 
-float g_Zoom;
 
 struct UIOverlayImpl
 {
@@ -19,17 +18,8 @@ void UIOverlay::Init()
     TwGLUTModifiersFunc(glutGetModifiers);
 
     impl->bar = TwNewBar("Galaxy");
-    //TwDefine(" GLOBAL help='This example shows how to integrate AntTweakBar with GLUT and OpenGL.' "); // Message added to the help bar.
     //TwDefine(" Controls size='200 400' color='96 216 224' "); // change default tweak bar size and color
-    TwDefine(" Galaxy size='400 300' valueswidth=fit color='0 0 100' alpha=0"); // change default tweak bar size and color
-    
-
-    /*TwAddVarRW(impl->bar, "Zoom", TW_TYPE_FLOAT, &g_Zoom, 
-        " min=0.01 max=2.5 step=0.01 keyIncr=z keyDecr=Z help='Scale the object (1=original size).' ");
-
-    TwAddVarRO(impl->bar, "", TW_TYPE_STDSTRING, &gpu, "");
-
-    TwSetTopBar(impl->bar);*/
+    TwDefine(" Galaxy size='400 300' valueswidth=fit color='0 0 100' alpha=50"); // change default tweak bar size and color
 }
 
 void UIOverlay::Draw()
@@ -81,4 +71,20 @@ void UIOverlay::ReadonlyFloat(const char* name, const float* value, uint8_t prec
 {
     std::string strPrecision = "precision=" + std::to_string(precision);
     TwAddVarRO(impl->bar, name, TW_TYPE_FLOAT, value, strPrecision.c_str());
+}
+
+void UIOverlay::Checkbox(const char* name, bool* value, const char* key)
+{
+    std::string def;
+    if (key)
+    {
+        def = "key=" + std::string(key);
+    }
+    TwAddVarRW(impl->bar, name, TW_TYPE_BOOLCPP, value, def.c_str());
+}
+
+void UIOverlay::SliderFloat(const char* name, float* value, float min, float max, float step)
+{
+    std::string def = "min=" + std::to_string(min) + " max=" + std::to_string(max) + " step=" + std::to_string(step);
+    TwAddVarRW(impl->bar, name, TW_TYPE_FLOAT, value, def.c_str());
 }

@@ -1,53 +1,17 @@
-//#pragma once
-//
-//#include "lpVec3.h"
-//
-//class Particle;
-//
-//class BarnesHutTree
-//{
-//public:
-//
-//	lpVec3				m_point;
-//	lpVec3				m_oppositePoint;
-//	float				m_length;
-//
-//	Particle	   *m_particle;
-//
-//	float				m_totalMass;
-//	lpVec3				m_mc;
-//
-//	bool				m_leaf;
-//	BarnesHutTree	  **m_subs;
-//
-//
-//
-//
-//	BarnesHutTree(const lpVec3 &GetPoint, float length);
-//
-//	void Insert(Particle *p);
-//	void calcForce(Particle *p);
-//
-//private:
-//	bool inline contains(Particle *p);
-//
-//};
-
-
 #pragma once
 
 #include <memory>
 
 #include "lpVec3.h"
 
-class Particle;
+struct Particle;
 
 class BarnesHutTree
 {
 public:
-    BarnesHutTree(const lpVec3 &GetPoint, float length);
+    BarnesHutTree(const lpVec3 &point, float length);
 
-    void Insert(const Particle &p);
+    void Insert(const Particle &p, uint32_t level = 0);
     lpVec3 CalculateForce(const Particle &particle) const;
     void Reset();
 
@@ -58,7 +22,7 @@ public:
     const BarnesHutTree& operator[](size_t i) const { return *children[i]; }
 
 private:
-    bool inline contains(const Particle &p) const;
+    bool inline Contains(const Particle &p) const;
 
     lpVec3 point;
     lpVec3 oppositePoint;

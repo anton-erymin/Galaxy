@@ -2,6 +2,8 @@
 
 #include <cstdlib>
 #include <cmath>
+#include <cstdint>
+#include <vector>
 
 #include "lpVec3.h"
 
@@ -17,12 +19,12 @@ inline float RAND_RANGE(float a, float b)
 
 inline float deg2rad(float deg)
 {
-    return M_PI / 180.0f * deg;
+    return float(M_PI) / 180.0f * deg;
 }
 
 inline float rad2deg(float rad)
 {
-    return 180.0f / M_PI * rad;
+    return 180.0f / float(M_PI) * rad;
 }
 
 struct float2
@@ -34,6 +36,8 @@ struct float2
 
 float integrate_rect(float a, float b, int n, float(*f)(float));
 float integrate_trap(float a, float b, int n, float(*f)(float));
+
+void Poisson1(uint32_t numIter, float min, float max, int n, float *data, const std::vector<float>& rightPart);
 
 bool poisson1d(int numIter, float min, float max, int n, float   *data, float(*f)(float));
 bool poisson2d(int numIter, float min, float max, int n, float  **data, float(*f)(float, float));

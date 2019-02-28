@@ -1,21 +1,54 @@
 #pragma once
 
+#include <memory>
+#include <mutex>
+
 class Universe;
+class BarnesHutTree;
 
 class Solver {
 public:
+    Solver(Universe& universe) 
+        : universe(universe)
+    {
+    }
+
     virtual ~Solver() = default;
 
-    virtual void Solve(float dt, Universe& universe) = 0;
+    virtual void Solve(float time) = 0;
+
+    virtual void Inititalize(float time) { }
+
+protected:
+    Universe& universe;
 };
 
 class BruteforceSolver : public Solver {
 public:
-    void Solve(float dt, Universe& universe) override;
+    BruteforceSolver(Universe& universe) 
+        : Solver(universe)
+    {
+    }
+
+    void Solve(float time) override;
 };
 
 class BarnesHutSolver : public Solver
 {
 public:
-    void Solve(float dt, Universe& universe) override;
+    BarnesHutSolver(Universe& universe) 
+        : Solver(universe)
+    {
+    }
+
+    void Solve(float time) override;
+
+    const BarnesHutTree& GetBarnesHutTree() const { return *barnesHutTree; }
+    std::mutex& GetTreeMutex() { return mu; }
+
+    void Inititalize(float time) override;
+
+private:
+    std::unique_ptr<BarnesHutTree> barnesHutTree;
+    std::mutex mu;
 };

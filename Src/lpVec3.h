@@ -59,3 +59,13 @@ public:
 	void	operator%=(const lpVec3 &other);
 
 };
+
+inline lpVec3 operator+(const lpVec3& lhs, const lpVec3& rhs)
+{
+    return {lhs.m_x + rhs.m_x, lhs.m_y + rhs.m_y, lhs.m_z + rhs.m_z};
+}
+
+inline lpVec3 operator-(const lpVec3& lhs, const lpVec3& rhs)
+{
+    return {lhs.m_x - rhs.m_x, lhs.m_y - rhs.m_y, lhs.m_z - rhs.m_z};
+}

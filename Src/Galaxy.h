@@ -5,7 +5,6 @@
 #include <unordered_map>
 
 #include "lpVec3.h"
-#include "BarnesHutTree.h"
 #include "SphericalModel.h"
 
 class Image;
@@ -35,8 +34,6 @@ struct Particle
 
     int	userData = 0;
 
-    Particle();
-
     void SetMass(float mass);
 };
 
@@ -46,13 +43,12 @@ public:
     Galaxy();
     Galaxy(lpVec3 center, int numBulgeStars, int numDiskStars, float bulgeRadius, float diskRadius, float haloRadius, float diskThickness,
         float bulgeMass, float haloMass, float starMass, bool ccw);
-    
-    void setVelocities();
 
     void update(float dt);
 
     std::vector<Particle>& GetParticles() { return particles; }
     const std::unordered_map<const Image*, std::vector<const Particle*>> GetParticlesByImage() const { return image_to_particles; }
+    const SphericalModel& GetHalo() const { return halo; }
 
 private:
     void CreateBulge();
@@ -78,7 +74,7 @@ private:
 
     bool ccw;
 
-    SphericalModel darkMatter;
+    SphericalModel halo;
 };
 
 class Universe
@@ -90,10 +86,10 @@ public:
     Galaxy& CreateGalaxy(lpVec3 center, int numBulgeStars, int numDiskStars, float bulgeRadius, float diskRadius, float haloRadius, float diskThickness,
         float bulgeMass, float haloMass, float starMass, bool ccw);
 
+    float GetSize() const { return size; }
     std::vector<Galaxy>& GetGalaxies() { return galaxies; }
-    BarnesHutTree& GetBarnesHutTree() { return *barnesHutTree; }
 
 private:
+    float size;
     std::vector<Galaxy> galaxies;
-    std::unique_ptr<BarnesHutTree> barnesHutTree;
 };

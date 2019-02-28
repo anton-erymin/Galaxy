@@ -9,18 +9,7 @@
 #include "Image.h"
 #include "Math.h"
 
-extern int curDepth;
-
-float **rhoData;
-float maxp, minp;
-
-float size;
-
 int curLayer = 0;
-
-Particle::Particle()
-{
-}
 
 void Particle::SetMass(float mass)
 {
@@ -39,7 +28,7 @@ static void SortParticlesByImages(const std::vector<Particle>& particles, std::u
 }
 
 Galaxy::Galaxy() 
-    : darkMatter(0.0f, 10.0f * GLX_HALO_RADIUS, GLX_HALO_RADIUS)
+    : halo(0.0f, 1.5f * GLX_HALO_RADIUS, GLX_HALO_RADIUS)
 {
     bulgeRadius = GLX_BULGE_RADIUS;
     numBulgeStars = GLX_BULGE_NUM;
@@ -72,7 +61,7 @@ Galaxy::Galaxy(lpVec3 center, int numBulgeStars, int numDiskStars, float bulgeRa
     haloMass(haloMass),
     starMass(starMass),
     ccw(ccw),
-    darkMatter(0.0f, 10.0f * haloRadius, haloRadius)
+    halo(0.0f, 10.0f * haloRadius, haloRadius)
 {
     particles.reserve(numBulgeStars + numDiskStars);
     CreateBulge();
@@ -265,8 +254,8 @@ void Galaxy::update(float dt)
 }
 
 Universe::Universe(float size)
+    : size(size)
 {
-    barnesHutTree = std::make_unique<BarnesHutTree>(lpVec3(-size * 0.5f), size);
 }
 
 Galaxy& Universe::CreateGalaxy()

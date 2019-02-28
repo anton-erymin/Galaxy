@@ -19,6 +19,8 @@ public:
     void Text(const char* name, const char* text);
     void ReadonlyInt(const char* name, const int32_t* value);
     void ReadonlyFloat(const char* name, const float* value, uint8_t precision = 2);
+    void Checkbox(const char* name, bool* value, const char* key = nullptr);
+    void SliderFloat(const char* name, float* value, float min, float max, float step = 0.0f);
 
 private:
     UIOverlayImpl* impl;

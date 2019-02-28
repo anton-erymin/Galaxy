@@ -3,11 +3,13 @@
 #include "Math.h"
 #include "lpVec3.h"
 
-#include <stdio.h>
+#include <cassert>
+#include <algorithm>
+
 #include <gl\glut.h>
 
 
-float coeff;
+static constexpr uint32_t N = 10000;
 
 float f(float x)
 {
@@ -15,46 +17,53 @@ float f(float x)
 }
 
 SphericalModel::SphericalModel(float gridXMin, float gridXMax, float radius)
-	: m_gridXMin(gridXMin),
-	  m_gridXMax(gridXMax),
-	  m_radius(radius)
+	: rmin(gridXMin),
+	  rmax(gridXMax),
+	  radius(radius)
 {
-    calcPotential();
-    calcGravityField();
+    r.resize(N);
+    rho.resize(N, 0.0f);
+    rightPartPoisson.resize(N);
+    potential.resize(N, 0.0f);
+    field.resize(N, 0.0f);
+
+    h = (rmax - rmin) / (N - 1);
+    for (size_t i = 0; i < r.size(); ++i)
+    {
+        r[i] = rmin + i * h;
+    }
+
+    CalculatePotential();
+    CalculateGravityField();
 }
 
-void SphericalModel::calcPotential()
+void SphericalModel::CalculatePotential()
 {
-	float x = m_gridXMin;
-	m_N = 10000;
-	m_h = (m_gridXMax - m_gridXMin) / (m_N - 1);
+    float rho0 = 10.0;
 
-	m_potential = new float[m_N];
-	for (int i = 0; i < m_N; i++)
-	{
-		m_potential[i] = 0.0f;
-	}
+    for (size_t i = 0; i < r.size(); ++i)
+    {
+        rho[i] = rho0 / (1.0f + (r[i] / radius) * (r[i] / radius));
+        rightPartPoisson[i] = 4.0f * M_PI * rho[i];
+    }
+
 
 	// Решаем уравнение Пуассона для нахождения потенциала
-	//bool res = poisson1d(5000, m_gridXMin, m_gridXMax, m_N, m_potential, rightPartPoisson);
-
+    Poisson1(100, rmin, rmax, N, potential.data(), rightPartPoisson);
 
 	// Isothermal
-	float M = 100.0f;
+	/*float M = 100.0f;
 	float r0 = 20.0;
-	float rho0 = M / (4.0f * M_PI * r0 * r0 * r0 * m_radius);
-	m_vc = sqrtf(4.0f * M_PI * r0 * r0 * r0 * rho0);
+	float rho0 = M / (4.0f * M_PI * r0 * r0 * r0 * radius);
+	vc = sqrtf(4.0f * M_PI * r0 * r0 * r0 * rho0);
 
-	for (int i = 1; i < m_N; i++)
+	for (int i = 0; i < N; i++)
 	{
-		float r = m_gridXMin + i * m_h;
-		m_potential[i] = 4.0f * M_PI * rho0 * r0 * r0 * r0 * log(r / r0);
-	}
+		float r = rmin + i * h;
+		potential[i] = 4.0f * M_PI * rho0 * r0 * r0 * r0 * log(r / r0);
+	}*/
 
-	m_potential[0] = 4 * m_potential[1];
-
-
-
+	//potential[0] = 4 * potential[1];
 
 	// Uniform
 	/*float M = 100.0f;
@@ -78,8 +87,6 @@ void SphericalModel::calcPotential()
 		
 	}*/
 
-
-
 	// Plummer
 	/*float M = 100.0f;
 	float a = 1.0;
@@ -95,64 +102,56 @@ void SphericalModel::calcPotential()
 
 }
 
-void SphericalModel::calcGravityField()
+void SphericalModel::CalculateGravityField()
 {
 	// Находим градиент потенциала
-	m_gravityField = new float[m_N];
 
-	float hd = 2.0f * m_h;
+	float hd = 2.0f * h;
 
-	m_potentialMin = 1.0e+38f;
-	m_potentialMax = 0.0f;
-
-	for (int i = 1; i < m_N - 1; i++)
+	for (int i = 1; i < N - 1; i++)
 	{
-		m_gravityField[i] = -(m_potential[i + 1] - m_potential[i - 1]) / hd;
+		field[i] = -(potential[i + 1] - potential[i - 1]) / hd;
 
-		float pot = m_potential[i];
-		if (pot > m_potentialMax)
-			m_potentialMax = pot;
-		else if (pot < m_potentialMin)
-			m_potentialMin = pot;
+		float pot = potential[i];
 	}
 
-	m_gravityField[0      ] = -(m_potential[1      ] - m_potential[0      ]) / m_h;
-	m_gravityField[m_N - 1] = -(m_potential[m_N - 1] - m_potential[m_N - 2]) / m_h;
+	field[0      ] = -(potential[1      ] - potential[0      ]) / h;
+	field[N - 1] = -(potential[N - 1] - potential[N - 2]) / h;
 }
 
-lpVec3 SphericalModel::getGravityVector(lpVec3 pos)
+lpVec3 SphericalModel::GetForce(lpVec3 pos) const
 {
 	float r = pos.normalize();
 
-	int ix = (int)((r - m_gridXMin) / m_h);
+	int ix = (int)((r - rmin) / h);
 
 	if (ix == 0)
 	{
 		int a = 1;
 	}
 
-	if (ix >= 0 && ix < m_N)
+	if (ix >= 0 && ix < N)
 	{
-		float g1 = m_gravityField[ix    ];
-		float g2 = m_gravityField[ix + 1];
-		float t = (r - (m_gridXMin + ix * m_h)) / m_h;
+		float g1 = field[ix    ];
+		float g2 = field[ix + 1];
+		float t = (r - (rmin + ix * h)) / h;
 		pos *= g1 + t * (g2 - g1);
 	}
 	else pos.clear();
 	return pos;
 }
 
-float SphericalModel::getCircularVelocity(float r)
+float SphericalModel::GetCircularVelocity(float r) const
 {
 	//float r2 = r * r;
 	//return sqrtf(100.0f * (r2 - 1.0f) / sqrtf(r2 * r2 * r2));
 
 	//return coeff * r;
 
-	return m_vc;
+	return vc;
 }
 
-float SphericalModel::densityDistribution(float r)
+static float DensityDistribution(float r)
 {
 	//if (r > 30.0f) return 0.0f;
 
@@ -169,35 +168,60 @@ float SphericalModel::densityDistribution(float r)
 
 }
 
-float SphericalModel::rightPartPoisson(float r)
+static float RightPartPoisson(float r)
 {
-	return 4.0f * M_PI * densityDistribution(r);
+	return 4.0f * M_PI * DensityDistribution(r);
 }
 
-void SphericalModel::plotPotential()
+static void Plot(const std::vector<float> x, const std::vector<float> y, float xscale, float yscale)
 {
-	float x = m_gridXMin;
+    assert(x.size() == y.size());
+
+    float minValue = std::numeric_limits<float>::max();
+    float maxValue = std::numeric_limits<float>::min();
+
+    for (const auto& value : y)
+    {
+        minValue = std::min(value, minValue);
+        maxValue = std::max(value, maxValue);
+    }
+
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+    glBegin(GL_LINE_STRIP);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    for (size_t i = 0; i < x.size(); ++i)
+    {
+        float color = (y[i] - minValue) / (maxValue - minValue);
+        color = 0.2f * (1.0f - color) + color;
+        glColor3f(color, color, color);
+        glVertex3f(x[i] * xscale, y[i] * yscale, 0.0f);
+    }
+
+    glEnd();
+}
+
+void SphericalModel::PlotPotential() const
+{
+    Plot(r, potential, 1.0f, 300.0f);
+    Plot(r, field, 1.0f, 300.0f);
+    //Plot(r, potential, 1.0f, 1.0f);
+
+	/*float x = rmin;
 
 	glDisable(GL_BLEND);
 	glDisable(GL_TEXTURE_2D);
 
 	glBegin(GL_LINE_STRIP);
 
-	float scale = 10.0f / m_potentialMin;
-	for (int i = 0; i < m_N; i++)
+	float scale = 10.0f / potentialMin;
+	for (int i = 0; i < N; i++)
 	{
-		
-		float p = m_potential[i];
+		float p = potential[i];
 		float ps = scale * p;
-		float dpi = 1.0f / (m_potentialMax - m_potentialMin);
-		glColor3f((0.5f*p - m_potentialMin) * dpi, 1.0f - (p - m_potentialMin) * dpi, 0.0f);
-		glVertex3f(x + i * m_h, -ps, 0.0f);
+		float dpi = 1.0f / (potentialMax - potentialMin);
+		glColor3f((0.5f*p - potentialMin) * dpi, 1.0f - (p - potentialMin) * dpi, 0.0f);
+		glVertex3f(x + i * h, -ps, 0.0f);
 	}
-	glEnd();
-}
-
-SphericalModel::~SphericalModel(void)
-{
-	delete[] m_gravityField;
-	delete[] m_potential;
+	glEnd();*/
 }

@@ -1,5 +1,7 @@
 ﻿#include "Math.h"
 
+#include <cassert>
+
 float integrate_rect(float a, float b, int n, float(*f)(float))
 {
     float res, h, hh;
@@ -32,6 +34,33 @@ float integrate_trap(float a, float b, int n, float(*f)(float))
     res *= h;
 
     return res;
+}
+
+void Poisson1(uint32_t numIter, float min, float max, int n, float *data, const std::vector<float>& rightPart)
+{
+    assert(numIter > 0);
+    assert(min < max);
+    assert(n > 3);
+    assert(data);
+
+    float h = (max - min) / (n - 1);
+    float h2 = h * h;
+    float nu;
+    float relax = 1.2f;
+
+    for (int iter = 0; iter < numIter; iter++)
+    {
+        for (int i = 1; i < n - 1; i++)
+        {
+            nu = 0.5f * (data[i - 1] + data[i + 1] - h2 * rightPart[i]);
+            data[i] += relax * (nu - data[i]);
+        }
+        data[0] = data[1];
+        data[n - 1] = data[n - 2];
+    }
+
+    data[0] = data[1];
+    data[n - 1] = data[n - 2];
 }
 
 bool poisson1d(int numIter, float min, float max, int n, float *data, float(*f)(float x))

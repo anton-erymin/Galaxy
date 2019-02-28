@@ -2,52 +2,36 @@
 
 #include "lpVec3.h"
 
+#include <vector>
 
-// Сферически симметричное распределение материи
-
+// Dark matter halo spherical model
 class SphericalModel
 {
 public:
+	float	  rmin;
+	float	  rmax;
+	float	  h;
 
-	// Кол-во расчетных точек
-	int		  m_N;
-	// Расчетная область
-	float	  m_gridXMin;
-	float	  m_gridXMax;
-	// Шаг разбиения
-	float	  m_h;
+	float     radius;
 
-	float     m_radius;
+    std::vector<float> r;
+    std::vector<float> rho;
+    std::vector<float> rightPartPoisson;
+	std::vector<float> potential;
+    std::vector<float> field;
 
-	// Гравитационный потенциал
-	float	 *m_potential;
-	// Напряженности гравитационного поля
-	float	 *m_gravityField;
-
-	float     m_potentialMax;
-	float	  m_potentialMin;
-
-	float	  m_vc;
-
+	float	  vc;
 
 	SphericalModel(float gridXMin, float gridXMax, float radius);
-	~SphericalModel(void);
 
 	// Расчет гравитационного потенциала
-	void calcPotential();
+	void CalculatePotential();
 	// Расчет напряженности
-	void calcGravityField();
+	void CalculateGravityField();
 
-	lpVec3 getGravityVector(lpVec3 pos);
-	float  getCircularVelocity(float r);
+	lpVec3 GetForce(lpVec3 pos) const;
+	float  GetCircularVelocity(float r) const;
 
-	void plotPotential();
-
-
-	// Функция распределения плотности
-	static float densityDistribution(float r);
-	// Правая часть уравнения Пуассона
-	static float rightPartPoisson(float r);
-
+	void PlotPotential() const;
 };
 
