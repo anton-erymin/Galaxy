@@ -153,6 +153,7 @@ int Application::Run(int argc, char **argv)
     ui.Text("GPU", (const char*)glGetString(GL_RENDERER));
     ui.ReadonlyFloat("FPS", &lastFps, 1);
     ui.ReadonlyFloat("Simulation time, mln yrs", &simulationTimeMillionYears);
+    ui.ReadonlyFloat("Camera distance, kpc", &orbit.GetDistance());
     ui.Checkbox("Render points", &renderParams.renderPoints, "m");
     ui.Checkbox("Render Barnes-Hut tree", &renderParams.renderTree, "t");
     ui.SliderFloat("Brightness", &renderParams.brightness, 0.05f, 10.0f, 0.01f);
@@ -337,7 +338,7 @@ void Application::OnResize(int width, int height)
     glViewport(0, 0, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60.0f, (float)width / (float)height, 0.001f, 1000.0f);
+    gluPerspective(60.0f, (float)width / (float)height, 0.001f, 1000000.0f);
     glMatrixMode(GL_MODELVIEW);
 
     ui.OnWindowSize(width, height);

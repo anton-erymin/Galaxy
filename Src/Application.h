@@ -56,7 +56,7 @@ public:
         center += up * y;
     }
 
-    float GetDistance() const { return distance; }
+    const float& GetDistance() const { return distance; }
 
     void Update(float time)
     {

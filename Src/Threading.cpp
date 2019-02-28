@@ -10,30 +10,9 @@ std::uint32_t                           ThreadPool::count_;
 std::uint32_t                           ThreadPool::block_size_;
 std::uint32_t                           ThreadPool::block_count_;
 std::atomic<std::uint32_t>              ThreadPool::block_index_;
-std::unique_ptr<ThreadPool::KernelBase> ThreadPool::kernel_;
 std::vector<std::thread>                ThreadPool::threads_;
 std::uint32_t                           ThreadPool::thread_count_;
-
-/**
-    Constructor.
-*/
-ThreadPool::KernelBase::KernelBase()
-{
-}
-
-/**
-    Destructor.
-*/
-ThreadPool::KernelBase::~KernelBase()
-{
-}
-
-/**
-    Runs the kernel.
-*/
-void ThreadPool::KernelBase::Run()
-{
-}
+ThreadPool::Kernel                      ThreadPool::kernel_;
 
 /**
     Constructor.
@@ -62,6 +41,9 @@ bool ThreadPool::Create(std::uint32_t thread_count)
 {
     terminate_ = false;
 
+    block_index_ = 0;
+    block_count_ = 0;
+
     thread_count_ = 0;
 
     thread_count = (std::max(thread_count, 1u) + 1u) & ~1u;
@@ -75,11 +57,13 @@ bool ThreadPool::Create(std::uint32_t thread_count)
     }
 
     // Wait for all threads to have started
-    for (;;)
+    while (true)
     {
         std::unique_lock<std::mutex> lock(mutex_);
         if (thread_count_ == threads_.size())
+        {
             break;  // all threads have started
+        }
         sync_.wait(lock);
     }
 
@@ -114,14 +98,29 @@ void ThreadPool::Destroy()
 */
 void ThreadPool::Worker()
 {
-    for (;;)
+    while (true)
     {
         // Put the thread to sleep until some blocks need processing
+        //while (true)
         {
             std::unique_lock<std::mutex> lock(mutex_);
+
             assert(thread_count_ < threads_.capacity());
-            if (++thread_count_ == threads_.capacity())
-                sync_.notify_one(); // all threads are back to the pool
+
+            if (thread_count_ < threads_.capacity())
+            {
+                ++thread_count_;
+                if (thread_count_ == threads_.capacity())
+                {
+                    sync_.notify_one(); // all threads are back to the pool
+                }
+            }
+
+            //if (block_index_ < block_count_ || terminate_)
+            //{
+            //    break; // Have some work or terminate
+            //}
+
             signal_.wait(lock);
         }
 
@@ -134,8 +133,65 @@ void ThreadPool::Worker()
         // Process all the available blocks
         {
             assert(kernel_);
-            kernel_->Run();
+
+            while (true)
+            {
+                auto const block_index = block_index_++;
+
+                if (block_index >= block_count_)
+                {
+                    break;  // everything has been processed
+                }
+
+                auto const begin = block_index * block_size_;
+                auto const end = std::min((block_index + 1) * block_size_, count_ - 1);
+
+                for (auto index = begin; index <= end; ++index)
+                {
+                    kernel_(index); // run the kernel
+                }
+            }
         }
     }
 }
 
+void ThreadPool::Dispatch(const Kernel& kernel, std::uint32_t count, std::uint32_t block_size) const
+{
+    // Set dispatch properties
+    count_ = count;
+    block_size_ = std::max(block_size, 1u);
+    block_count_ = (count_ + block_size_ - 1u) / block_size_;
+
+    // Special case - only 1 block? no need to go wide
+    if (block_count_ <= 1u)
+    {
+        for (auto i = 0u; i < count; ++i)
+        {
+            kernel(i);
+        }
+    }
+    else
+    {
+        // Install the kernel
+        block_index_ = 0u;
+        kernel_ = kernel;
+
+        // And dispatch
+        thread_count_ = 0;  // consume all threads from the pool
+        signal_.notify_all();
+
+        // Wait until all threads have returned to the pool
+        while (true)
+        {
+            std::unique_lock<std::mutex> lock(mutex_);
+            if (thread_count_ == threads_.size())
+            {
+                break;  // all threads have completed
+            }
+            sync_.wait(lock);
+        }
+
+        // Release kernel
+        kernel_ = nullptr;
+    }
+}

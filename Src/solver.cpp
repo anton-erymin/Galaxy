@@ -159,6 +159,7 @@ void BarnesHutSolver::Inititalize(float time)
 
         // Half step by velocity
         particle.linearVelocity += particle.force * particle.inverseMass * half;
+        // Full step by position using half stepped velocity
         particle.position += particle.linearVelocity * time;
 
     }, static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size()), 
