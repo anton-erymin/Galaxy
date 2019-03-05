@@ -22,7 +22,7 @@
     <ClCompile Include="Src\Application.cpp" />
     <ClCompile Include="Src\BarnesHutTree.cpp" />
     <ClCompile Include="Src\Galaxy.cpp" />
-    <ClCompile Include="Src\lpVec3.cpp" />
+    <ClCompile Include="Src\float3.cpp" />
     <ClCompile Include="Src\Main.cpp" />
     <ClCompile Include="Src\Math.cpp" />
     <ClCompile Include="Src\Solver.cpp" />
@@ -37,7 +37,7 @@
     <ClInclude Include="Src\BarnesHutTree.h" />
     <ClInclude Include="Src\Constants.h" />
     <ClInclude Include="Src\Galaxy.h" />
-    <ClInclude Include="Src\lpVec3.h" />
+    <ClInclude Include="Src\float3.h" />
     <ClInclude Include="Src\Math.h" />
     <ClInclude Include="Src\Solver.h" />
     <ClInclude Include="Src\SphericalModel.h" />

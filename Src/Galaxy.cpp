@@ -27,48 +27,6 @@ static void SortParticlesByImages(const std::vector<Particle>& particles, std::u
     }
 }
 
-Galaxy::Galaxy() 
-    : halo(0.0f, 1.5f * GLX_HALO_RADIUS, GLX_HALO_RADIUS)
-{
-    bulgeRadius = GLX_BULGE_RADIUS;
-    numBulgeStars = GLX_BULGE_NUM;
-    bulgeMass = GLX_BULGE_MASS;
-    diskRadius = GLX_DISK_RADIUS;
-    numDiskStars = GLX_DISK_NUM;
-    haloRadius = GLX_HALO_RADIUS;
-    haloMass = GLX_HALO_MASS;
-    diskThickness = GLX_DISK_THICKNESS;
-    starMass = GLX_STAR_MASS;
-
-    ccw = true;
-
-    particles.reserve(numBulgeStars + numDiskStars);
-    CreateBulge();
-    CreateDisk();
-    SortParticlesByImages(particles, image_to_particles);
-}
-
-Galaxy::Galaxy(lpVec3 center, int numBulgeStars, int numDiskStars, float bulgeRadius, float diskRadius, float haloRadius, float diskThickness,
-    float bulgeMass, float haloMass, float starMass, bool ccw)
-    : position(center),
-    numBulgeStars(numBulgeStars),
-    numDiskStars(numDiskStars),
-    bulgeRadius(bulgeRadius),
-    diskRadius(diskRadius),
-    haloRadius(haloRadius),
-    diskThickness(diskThickness),
-    bulgeMass(bulgeMass),
-    haloMass(haloMass),
-    starMass(starMass),
-    ccw(ccw),
-    halo(0.0f, 10.0f * haloRadius, haloRadius)
-{
-    particles.reserve(numBulgeStars + numDiskStars);
-    CreateBulge();
-    CreateDisk();
-    SortParticlesByImages(particles, image_to_particles);
-}
-
 static Particle CreateStar()
 {
     Particle particle;
@@ -93,7 +51,7 @@ static Particle CreateStar()
     }
 
     particle.image = &Application::GetInstance().GetImageLoader().GetImage("Star");
-    
+
     return particle;
 }
 
@@ -137,76 +95,98 @@ static Particle CreateH2()
     return particle;
 }
 
-void Galaxy::CreateBulge()
+Galaxy::Galaxy(const float3& position, const GalaxyParameters& parameters)
+    : position(position)
+    , parameters(parameters)
+    , halo(0.0f, 2.0f * parameters.haloRadius, parameters.haloRadius)
 {
-    int numDusts = numBulgeStars / 4;
+    Create();
+    SortParticlesByImages(particles, imageToParticles);
+}
 
-    for (int i = 0; i < numBulgeStars; i++)
+void Galaxy::SetRadialVelocitiesFromForce()
+{
+    for (size_t i = 1; i < particles.size(); ++i)
     {
-        Particle particle;
+        float3 relativePos = particles[i].position - position;
+        float3 v = {relativePos.m_y, -relativePos.m_x, 0.0f};
+        v.normalize();
 
-        if (i < numDusts)
-        {
-            particle = CreateDust();
-        }
-        else
-        {
-            particle = CreateStar();
-        }
+        //float radialFromHalo = RadialVelocity(halo.GetForce(relativePos.norm()), particles[i].mass, relativePos.norm());
+        float radial = RadialVelocity(particles[i].force.norm(), particles[i].mass, relativePos.norm());
+        v *= radial;// + radialFromHalo;
+        //float d = 0.1 * v.norm();
+        //v += lpVec3(d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f));
 
-        particle.SetMass(starMass);
+        particles[i].linearVelocity = v;//{0,0,0};
 
-        particle.position = position + SphericalToCartesian(RandomUniformSpherical(0, bulgeRadius));
+    }
+}
 
-        //speed = darkMatter.getCircularVelocity(r);
-        //vel.setTo(pos.m_y, -pos.m_x, 0.0f);
-        //vel.setTo(RAND_RANGE(-1.0f, 1.0f), RAND_RANGE(-1.0f, 1.0f), RAND_RANGE(-1.0f, 1.0f));
-        //vel.normalize();
-        //vel *= speed;
+void Galaxy::Create()
+{
+    particles.reserve(parameters.bulgeParticlesCount + parameters.diskParticlesCount);
 
-        //particle->linearVelocity = vel;
+    assert(parameters.diskMassRatio > 0.0f && parameters.diskMassRatio < 1.0f);
 
+    const float bulgeParticleMass = (1.0f - parameters.diskMassRatio) * parameters.mass / parameters.bulgeParticlesCount;
+    const float diskParticleMass = parameters.diskMassRatio * parameters.mass / parameters.diskParticlesCount;
+
+    const float dustRatio = 0.1f;
+
+    int numDusts = parameters.bulgeParticlesCount * dustRatio;
+
+    PlummerModel plummer;
+    
+    for (int i = 0; i < parameters.bulgeParticlesCount; ++i)
+    {
+        Particle particle = i < numDusts ? CreateDust() : CreateStar();
+        particle.SetMass(bulgeParticleMass);
+        float3 spherical = RandomUniformSpherical(0.0f, parameters.bulgeRadius);
+        float r = SampleDistribution(0.0f, 1.0f, plummer.GetDensity(0.0f), [&plummer](float x) { return plummer.GetDensity(x); }) / 1.0f;
+        spherical.m_x = r * parameters.bulgeRadius;
+        particle.position = position + SphericalToCartesian(spherical);
+        particles.push_back(particle);
+    }
+
+    numDusts = parameters.diskParticlesCount * dustRatio;
+
+    for (int i = 0; i < parameters.diskParticlesCount; i++)
+    {
+        Particle particle = i < numDusts ? CreateDust() : CreateStar();
+        particle.SetMass(diskParticleMass);
+        float3 cylindrical = RandomUniformCylindrical(0.0f, parameters.diskRadius, parameters.diskThickness);
+        float r = SampleDistribution(0.0f, 1.0f, plummer.GetDensity(0.0f), [&plummer](float x) { return plummer.GetDensity(x); }) / 1.0f;
+        cylindrical.m_x = r * parameters.diskRadius;
+        float3 relativePos = CylindricalToCartesian(cylindrical);
+        particle.position = position + relativePos;
         particles.push_back(particle);
     }
 
     particles[0].position = position;
+    particles[0].movable = false;
+    particles[0].SetMass(particles[0].mass * 1000.0f);
+
+    //for (size_t i = 1; i < particles.size(); ++i)
+    //{
+    //    //speed = darkMatter.getCircularVelocity(r);
+    //    float3 relativePos = particles[i].position - position;
+    //    float3 v = {relativePos.m_y, -relativePos.m_x, 0.0f};
+    //    v.normalize();
+    //    //v *= RadialVelocity(particles[0].mass, relativePos.norm());
+
+    //    float radialFromHalo = RadialVelocity(halo.GetForce(relativePos.norm()), particles[i].mass, relativePos.norm());
+    //    float radial = RadialVelocity(particles[0].mass, relativePos.norm());
+    //    v *= 100*radial;// + radialFromHalo;
+    //    float d = 0.1 * v.norm();
+    //    //v += lpVec3(d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f));
+
+    //    particles[i].linearVelocity = v;
+
+    //}
 }
 
-void Galaxy::CreateDisk()
-{
-    int numDusts = numDiskStars / 4;
-
-    for (int i = 0; i < numDiskStars; i++)
-    {
-        Particle particle;
-
-        if (i < numDusts)
-        {
-            particle = CreateDust();
-        }
-        else
-        {
-            particle = CreateStar();
-        }
-
-        particle.SetMass(starMass);
-
-        particle.position = position + CylindricalToCartesian(RandomUniformCylindrical(0.99f * bulgeRadius, diskRadius, diskThickness));
-
-        //speed = darkMatter.getCircularVelocity(r);
-        //vel.setTo(pos.m_y, -pos.m_x, 0.0f);
-        //vel.normalize();
-        //vel *= speed;
-        //d = 0.1 * speed;
-        //vel += lpVec3(d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f));
-
-        //particle->linearVelocity = vel;
-
-        particles.push_back(particle);
-    }
-}
-
-void Galaxy::update(float dt)
+void Galaxy::Update(float dt)
 {
     //position = particles[0]->position;
 
@@ -265,9 +245,9 @@ Galaxy& Universe::CreateGalaxy()
     return galaxies.back();
 }
 
-Galaxy& Universe::CreateGalaxy(lpVec3 center, int numBulgeStars, int numDiskStars, float bulgeRadius, float diskRadius, float haloRadius, float diskThickness, float bulgeMass, float haloMass, float starMass, bool ccw)
+Galaxy& Universe::CreateGalaxy(const float3& position, const GalaxyParameters& parameters = {})
 {
-    Galaxy galaxy{ center, numBulgeStars, numDiskStars, bulgeRadius, diskRadius, haloRadius, diskThickness, bulgeMass, haloMass, starMass, ccw };
+    Galaxy galaxy(position, parameters);
     galaxies.push_back(std::move(galaxy));
     return galaxies.back();
 }

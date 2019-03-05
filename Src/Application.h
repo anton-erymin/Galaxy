@@ -47,7 +47,7 @@ public:
 
     void MoveForward(float dist)
     {
-        distanceTarget = std::max(0.01f, distanceTarget + dist);
+        distanceTarget = std::max(0.00001f, distanceTarget + dist);
     }
 
     void Pan(float x, float y)
@@ -77,16 +77,16 @@ public:
     }
 
 private:
-    lpVec3 center;
+    float3 center;
     float distance = 30.0f;
     float distanceTarget = 30.0f;
     float phi = 0.0f;
     float phiTarget = 0.0f;
     float theta = 0.0f;
     float thetaTarget = 0.0f;
-    lpVec3 right;
-    lpVec3 up;
-    lpVec3 forward;
+    float3 right;
+    float3 up;
+    float3 forward;
 };
 
 class Application
@@ -117,8 +117,8 @@ public:
     static Application& GetInstance() { assert(instance);  return *instance; }
 
 private:
-    uint32_t width;
-    uint32_t height;
+    uint32_t width = 0;
+    uint32_t height = 0;
 
     UIOverlay ui;
 
@@ -146,6 +146,7 @@ private:
     float cMillionYearsInTimeUnit = 0;
 
     float deltaTime = 0.0f;
+    float deltaTimeYears = 0.0f;
     float simulationTime = 0.0f;
     float simulationTimeMillionYears = 0.0f;
 
@@ -164,6 +165,10 @@ private:
     } renderParams;
 
     float lastFps = 0.0f;
+
+    int32_t numSteps = 0;
+
+    int32_t totalParticlesCount = 0;
 
     static Application* instance;
 };

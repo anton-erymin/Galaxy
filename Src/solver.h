@@ -16,7 +16,7 @@ public:
     virtual ~Solver() = default;
 
     virtual void Solve(float time) = 0;
-
+    virtual void SolveForces() { }
     virtual void Inititalize(float time) { }
 
 protected:
@@ -42,13 +42,21 @@ public:
     }
 
     void Solve(float time) override;
+    void SolveForces() override;
 
     const BarnesHutTree& GetBarnesHutTree() const { return *barnesHutTree; }
     std::mutex& GetTreeMutex() { return mu; }
+    const float& GetBuildTreeTime() const { return buildTimeMsecs; }
+    const float& GetSolvingTime() const { return solvingTime; }
 
     void Inititalize(float time) override;
 
 private:
+    void BuildTree();
+
     std::unique_ptr<BarnesHutTree> barnesHutTree;
     std::mutex mu;
+
+    float buildTimeMsecs = 0.0f;
+    float solvingTime = 0.0f;
 };

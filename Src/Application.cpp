@@ -47,26 +47,27 @@ int Application::Run(int argc, char **argv)
 {
     ThreadPool::Create(std::thread::hardware_concurrency());
     
-    std::cout << "Galaxy Model 0.1\nCopyright (c) Laxe Studio 2012-2014" << std::endl << std::endl;
+    std::cout << "Galaxy Model 0.1\nCopyright (c) Laxe Studio 2012-2019" << std::endl << std::endl;
 
     imageLoader = std::make_unique<ImageLoader>();
 
-    // Загружаем текстуры
     GetImageLoader().Load("Star", "Data/star.png");
     GetImageLoader().Load("Dust1", "Data/dust1.png");
     GetImageLoader().Load("Dust2", "Data/dust2.png");
     GetImageLoader().Load("Dust3", "Data/dust3.png");
 
+    cSecsInTimeUnit = std::sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG));
+    cMillionYearsInTimeUnit = cSecsInTimeUnit / 3600 / 24 / 365 / 1e+6;
+
     // Значения по умолчанию глобальных параметров
     // Шаг во времени
-    deltaTime = 0.05f;
+    deltaTime = 0.00000005f;
+    deltaTimeYears = deltaTime * cMillionYearsInTimeUnit * 1e6;
     // Размер области разбиения
     universeSize = UNIVERSE_SIZE;
     // Флаг сохранения кадров (видео) на диск
     saveToFiles = false;
 
-    cSecsInTimeUnit = std::sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG));
-    cMillionYearsInTimeUnit = cSecsInTimeUnit / 3600 / 24 / 365 / 1e+6;
 
     srand(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 
@@ -115,6 +116,8 @@ int Application::Run(int argc, char **argv)
 
     glutCreateWindow(cWindowCaption);
 
+    //glutFullScreen();
+
     glutDisplayFunc([]() { Application::GetInstance().OnDraw(); });
     glutReshapeFunc([](int width, int height) { Application::GetInstance().OnResize(width, height); });
     glutIdleFunc([]() { Application::GetInstance().OnIdle(); });
@@ -139,26 +142,40 @@ int Application::Run(int argc, char **argv)
     inputMappings['a'] = &inputState.brightnessUp;
     inputMappings['z'] = &inputState.brightnessDown;
 
-    std::thread solverThread([this]() 
-    { 
-        solver->Inititalize(deltaTime);
-        while (true)
-        {
-            solver->Solve(deltaTime);
-            simulationTime += deltaTime;
-        }
-    });
+    totalParticlesCount = universe->GetParticlesCount();
 
     ui.Init();
     ui.Text("GPU", (const char*)glGetString(GL_RENDERER));
     ui.ReadonlyFloat("FPS", &lastFps, 1);
+    ui.Separator();
+    ui.ReadonlyInt("Number of particles", &totalParticlesCount);
+    ui.ReadonlyFloat("Timestep", &deltaTime, 4);
+    ui.ReadonlyFloat("Timestep, yrs", &deltaTimeYears);
     ui.ReadonlyFloat("Simulation time, mln yrs", &simulationTimeMillionYears);
+    ui.ReadonlyInt("Number of time steps", &numSteps);
     ui.ReadonlyFloat("Camera distance, kpc", &orbit.GetDistance());
+    ui.ReadonlyFloat("Build tree time, ms", &solverBarneshut->GetBuildTreeTime(), 1);
+    ui.ReadonlyFloat("Solving time, ms", &solverBarneshut->GetSolvingTime(), 1);
+    ui.Separator();
     ui.Checkbox("Render points", &renderParams.renderPoints, "m");
     ui.Checkbox("Render Barnes-Hut tree", &renderParams.renderTree, "t");
     ui.SliderFloat("Brightness", &renderParams.brightness, 0.05f, 10.0f, 0.01f);
 
-    glutFullScreen();
+    solver->Inititalize(deltaTime);
+    solver->SolveForces();
+    for (auto& galaxy : universe->GetGalaxies())
+    {
+        galaxy.SetRadialVelocitiesFromForce();
+    }
+    std::thread solverThread([this]() 
+    {     
+        while (true)
+        {
+            solver->Solve(deltaTime);
+            simulationTime += deltaTime;
+            ++numSteps;
+        }
+    });
 
     glutMainLoop();
 
@@ -167,7 +184,7 @@ int Application::Run(int argc, char **argv)
 
 static void DrawBarnesHutTree(const BarnesHutTree& node)
 {
-	lpVec3 p = node.point;
+	float3 p = node.point;
 	float l = node.length;
 
 	glBegin(GL_LINE_STRIP);
@@ -202,8 +219,8 @@ void Application::OnDraw()
 
     float modelview[16];
     glGetFloatv(GL_MODELVIEW_MATRIX, modelview);
-    lpVec3 v1 = lpVec3(modelview[0], modelview[4], modelview[8]);
-    lpVec3 v2 = lpVec3(modelview[1], modelview[5], modelview[9]);
+    float3 v1 = float3(modelview[0], modelview[4], modelview[8]);
+    float3 v2 = float3(modelview[1], modelview[5], modelview[9]);
 
     if (renderParams.renderPoints)
     {
@@ -250,10 +267,10 @@ void Application::OnDraw()
 
                     float s = 0.5f * particle.size;
 
-                    lpVec3 p1 = particle.position - v1 * s - v2 * s;
-                    lpVec3 p2 = particle.position - v1 * s + v2 * s;
-                    lpVec3 p3 = particle.position + v1 * s + v2 * s;
-                    lpVec3 p4 = particle.position + v1 * s - v2 * s;
+                    float3 p1 = particle.position - v1 * s - v2 * s;
+                    float3 p2 = particle.position - v1 * s + v2 * s;
+                    float3 p3 = particle.position + v1 * s + v2 * s;
+                    float3 p4 = particle.position + v1 * s - v2 * s;
 
                     float magnitude = particle.magnitude * renderParams.brightness;
                     // Квадрат расстояние до частицы от наблюдателя
@@ -374,8 +391,16 @@ void Application::OnKeyboard(unsigned char key, int x, int y)
 
         //ScreenShoter::GetScreenshot({ 0, 0, width, height }).SaveTga("Screenshot.tga");
     }
-    if (key == ']') deltaTime *= 1.2f;
-    if (key == '[') deltaTime *= 0.8f;
+    if (key == ']')
+    {
+        deltaTime *= 1.2f;
+        deltaTimeYears = deltaTime * cMillionYearsInTimeUnit * 1e6;
+    }
+    if (key == '[')
+    {
+        deltaTime *= 0.8f;
+        deltaTimeYears = deltaTime * cMillionYearsInTimeUnit * 1e6;
+    }
     if (key == ' ') started = false;
     if (key == 13)
     {
@@ -430,8 +455,9 @@ void Application::OnMouseMove(int x, int y)
         return;
     }
 
-    float2 delta = {float(x) - inputState.prevPos.x, float(y) - inputState.prevPos.y};
-    inputState.prevPos = {float(x), float(y)};
+    float2 pos = {float(x), float(y)};
+    float2 delta = pos - inputState.prevPos;
+    inputState.prevPos = pos;
 
     if (!inputState.buttons)
     {

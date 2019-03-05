@@ -47,7 +47,7 @@ const Image& ImageLoader::GetImage(const char* imageName) const
     return images.at(imageName);
 }
 
-void ImageLoader::GenTextureIds()
+void ImageLoader::GenTextureIds() const
 {
     for (const auto& image : images)
     {

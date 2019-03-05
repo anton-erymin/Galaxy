@@ -27,7 +27,7 @@ class ImageLoader
 public:
     void Load(const char* imageName, const char *filename);
     const Image& GetImage(const char* imageName) const;
-    void GenTextureIds();
+    void GenTextureIds() const;
 private:
     std::unordered_map<std::string, Image> images;
 };

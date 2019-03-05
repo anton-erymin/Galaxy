@@ -18,7 +18,6 @@ void UIOverlay::Init()
     TwGLUTModifiersFunc(glutGetModifiers);
 
     impl->bar = TwNewBar("Galaxy");
-    //TwDefine(" Controls size='200 400' color='96 216 224' "); // change default tweak bar size and color
     TwDefine(" Galaxy size='400 300' valueswidth=fit color='0 0 100' alpha=50"); // change default tweak bar size and color
 }
 
@@ -87,4 +86,9 @@ void UIOverlay::SliderFloat(const char* name, float* value, float min, float max
 {
     std::string def = "min=" + std::to_string(min) + " max=" + std::to_string(max) + " step=" + std::to_string(step);
     TwAddVarRW(impl->bar, name, TW_TYPE_FLOAT, value, def.c_str());
+}
+
+void UIOverlay::Separator()
+{
+    TwAddSeparator(impl->bar, nullptr, "");
 }

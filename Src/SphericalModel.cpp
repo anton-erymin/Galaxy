@@ -1,36 +1,26 @@
 #include "SphericalModel.h"
 
-#include "Math.h"
-#include "lpVec3.h"
-
-#include <cassert>
 #include <algorithm>
 
 #include <gl\glut.h>
 
-
-static constexpr uint32_t N = 10000;
-
-float f(float x)
-{
-	return sin(x);
-}
+static constexpr uint32_t N = 1000;
 
 SphericalModel::SphericalModel(float gridXMin, float gridXMax, float radius)
 	: rmin(gridXMin),
 	  rmax(gridXMax),
 	  radius(radius)
 {
-    r.resize(N);
+    rvec.resize(N);
     rho.resize(N, 0.0f);
     rightPartPoisson.resize(N);
     potential.resize(N, 0.0f);
     field.resize(N, 0.0f);
 
     h = (rmax - rmin) / (N - 1);
-    for (size_t i = 0; i < r.size(); ++i)
+    for (size_t i = 0; i < rvec.size(); ++i)
     {
-        r[i] = rmin + i * h;
+        rvec[i] = rmin + i * h;
     }
 
     CalculatePotential();
@@ -41,15 +31,20 @@ void SphericalModel::CalculatePotential()
 {
     float rho0 = 10.0;
 
-    for (size_t i = 0; i < r.size(); ++i)
+    // Plummer
+    float M = 10.0f;
+
+    for (size_t i = 0; i < rvec.size(); ++i)
     {
-        rho[i] = rho0 / (1.0f + (r[i] / radius) * (r[i] / radius));
+        //rho[i] = PseudoIsothermal(r[i], rho0, radius);
+        rho[i] = PlummerDensity(rvec[i], M, radius);
+        potential[i] = PlummerPotential(rvec[i], M, radius);
         rightPartPoisson[i] = 4.0f * M_PI * rho[i];
     }
 
 
 	// Решаем уравнение Пуассона для нахождения потенциала
-    Poisson1(100, rmin, rmax, N, potential.data(), rightPartPoisson);
+    //Poisson1(100, rmin, rmax, N, potential.data(), rightPartPoisson);
 
 	// Isothermal
 	/*float M = 100.0f;
@@ -86,59 +81,34 @@ void SphericalModel::CalculatePotential()
 
 		
 	}*/
-
-	// Plummer
-	/*float M = 100.0f;
-	float a = 1.0;
-	float asq = a * a;
-
-	for (int i = 0; i < m_N; i++)
-	{
-		float r = m_gridXMin + i * m_h;
-
-		m_potential[i] = - M / sqrtf(r * r + asq);
-	}*/
-
-
 }
 
 void SphericalModel::CalculateGravityField()
 {
-	// Находим градиент потенциала
-
-	float hd = 2.0f * h;
-
 	for (int i = 1; i < N - 1; i++)
 	{
-		field[i] = -(potential[i + 1] - potential[i - 1]) / hd;
-
-		float pot = potential[i];
+		field[i] = (potential[i + 1] - potential[i - 1]) / (2.0f * h);
 	}
 
-	field[0      ] = -(potential[1      ] - potential[0      ]) / h;
-	field[N - 1] = -(potential[N - 1] - potential[N - 2]) / h;
+	field[0    ] = (potential[1    ] - potential[0    ]) / h;
+	field[N - 1] = (potential[N - 1] - potential[N - 2]) / h;
 }
 
-lpVec3 SphericalModel::GetForce(lpVec3 pos) const
+float SphericalModel::GetForce(float r) const
 {
-	float r = pos.normalize();
+    float force = 0.0f;
 
-	int ix = (int)((r - rmin) / h);
+	int index = (int)((r - rmin) / h);
 
-	if (ix == 0)
+	if (index >= 0 && index < N - 1)
 	{
-		int a = 1;
+		float g1 = field[index    ];
+		float g2 = field[index + 1];
+		float alpha = (r - rvec[index]) / h;
+        force = lerp(g1, g2, alpha);
 	}
-
-	if (ix >= 0 && ix < N)
-	{
-		float g1 = field[ix    ];
-		float g2 = field[ix + 1];
-		float t = (r - (rmin + ix * h)) / h;
-		pos *= g1 + t * (g2 - g1);
-	}
-	else pos.clear();
-	return pos;
+	
+	return force;
 }
 
 float SphericalModel::GetCircularVelocity(float r) const
@@ -203,9 +173,9 @@ static void Plot(const std::vector<float> x, const std::vector<float> y, float x
 
 void SphericalModel::PlotPotential() const
 {
-    Plot(r, potential, 1.0f, 300.0f);
-    Plot(r, field, 1.0f, 300.0f);
-    //Plot(r, potential, 1.0f, 1.0f);
+    //Plot(r, rho, 1.0f, 1000.0f);
+    Plot(rvec, field, 1.0f, 10.0f);
+    Plot(rvec, potential, 1.0f, 10.0f);
 
 	/*float x = rmin;
 

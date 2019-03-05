@@ -2,20 +2,20 @@
 
 #include <memory>
 
-#include "lpVec3.h"
+#include "float3.h"
 
 struct Particle;
 
 class BarnesHutTree
 {
 public:
-    BarnesHutTree(const lpVec3 &point, float length);
+    BarnesHutTree(const float3 &point, float length);
 
     void Insert(const Particle &p, uint32_t level = 0);
-    lpVec3 CalculateForce(const Particle &particle) const;
+    float3 CalculateAcceleration(const Particle &particle, float soft) const;
     void Reset();
 
-    const lpVec3& GetPoint() const { return point; }
+    const float3& GetPoint() const { return point; }
     float GetLength() const { return length; }
     bool IsLeaf() const { return isLeaf; }
 
@@ -24,11 +24,11 @@ public:
 private:
     bool inline Contains(const Particle &p) const;
 
-    lpVec3 point;
-    lpVec3 oppositePoint;
+    float3 point;
+    float3 oppositePoint;
     float  length;
     float  totalMass;
-    lpVec3 massCenter;
+    float3 massCenter;
     bool   isLeaf;
 
     std::unique_ptr<BarnesHutTree> children[4];

@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "lpVec3.h"
+#include "float3.h"
 
 inline float RAND()
 {
@@ -27,12 +27,27 @@ inline float rad2deg(float rad)
     return 180.0f / float(M_PI) * rad;
 }
 
+inline float lerp(float a, float b, float t)
+{
+    return (1.0f - t) * a + t * b;
+}
+
 struct float2
 {
     float x, y;
 
     float2(float xp = 0.0f, float yp = 0.0f) : x(xp), y(yp) {}
 };
+
+inline float2 operator+(const float2& lhs, const float2& rhs)
+{
+    return {lhs.x + rhs.x, lhs.y + rhs.y};
+}
+
+inline float2 operator-(const float2& lhs, const float2& rhs)
+{
+    return {lhs.x - rhs.x, lhs.y - rhs.y};
+}
 
 float integrate_rect(float a, float b, int n, float(*f)(float));
 float integrate_trap(float a, float b, int n, float(*f)(float));
@@ -46,32 +61,84 @@ bool poisson3d(int numIter, float min, float max, int n, float ***data, float(*f
 // Случайное число с нормальным распределением
 float RandomStandardDistribution();
 
-inline lpVec3 SphericalToCartesian(float r, float phi, float theta)
+inline float3 SphericalToCartesian(float r, float phi, float theta)
 {
     return { r * std::sinf(theta) * std::cosf(phi), r * std::sinf(theta) * std::sinf(phi), r * std::cosf(theta) };
 }
 
-inline lpVec3 SphericalToCartesian(const lpVec3& spherical)
+inline float3 SphericalToCartesian(const float3& spherical)
 {
     return SphericalToCartesian(spherical.m_x, spherical.m_y, spherical.m_z);
 }
 
-inline lpVec3 CylindricalToCartesian(float r, float phi, float z)
+inline float3 CylindricalToCartesian(float r, float phi, float z)
 {
     return { r * std::cosf(phi), r * std::sinf(phi), z };
 }
 
-inline lpVec3 CylindricalToCartesian(const lpVec3& cylindrical)
+inline float3 CylindricalToCartesian(const float3& cylindrical)
 {
     return CylindricalToCartesian(cylindrical.m_x, cylindrical.m_y, cylindrical.m_z);
 }
 
-inline lpVec3 RandomUniformSpherical(float rmin, float rmax)
+inline float3 RandomUniformSpherical(float rmin, float rmax)
 {
-    return { RAND_RANGE(rmin, rmax), 2.0f * float(M_PI) * RAND() - float(M_PI), 2.0f * float(M_PI) * RAND() };
+    return { RAND_RANGE(rmin, rmax), 2.0f * float(M_PI) * RAND() /*- float(M_PI)*/, 2.0f * float(M_PI) * RAND() };
 }
 
-inline lpVec3 RandomUniformCylindrical(float rmin, float rmax, float height)
+inline float3 RandomUniformCylindrical(float rmin, float rmax, float height)
 {
     return { RAND_RANGE(rmin, rmax), 2.0f * float(M_PI) * RAND(), RAND_RANGE(-0.5f * height, 0.5f * height) };
+}
+
+inline float3 GravityAcceleration(const float3& point, float mass, float soft, float length = -1.0f)
+{
+    float3 acceleration = point;
+    float distance = length > 0.0f ? (length + soft) : acceleration.norm() + soft;
+    acceleration = acceleration * (mass / (distance * distance * distance));
+    return acceleration;
+}
+
+/** Radial velocity about body with certain mass at distance r. */
+inline float RadialVelocity(float mass, float r)
+{
+    return std::sqrtf(mass / r);
+}
+
+/** Radial velocity of body with mass in force field at distance r. */
+inline float RadialVelocity(float force, float mass, float r)
+{
+    return std::sqrtf(force * r / mass);
+}
+
+inline float PseudoIsothermal(float r, float rho0, float radius)
+{
+    return rho0 / (1.0f + (r / radius) * (r / radius));
+}
+
+inline float PlummerDensity(float r, float mass, float radius)
+{
+    return (3.0f * mass / (4.0f * float(M_PI) * radius * radius * radius)) * 
+        (1.0f / std::sqrtf(std::pow((1.0f + (r * r) / (radius * radius)), 5.0f)));
+}
+
+inline float PlummerPotential(float r, float mass, float radius)
+{
+    return -mass / (std::sqrtf(r * r + radius * radius));
+}
+
+template <typename Distribution>
+inline float SampleDistribution(float xmin, float xmax, float maxDistributionValue, Distribution distribution)
+{
+    float x = 0.0f, y = 0.0f;
+    while (true)
+    {
+        x = RAND_RANGE(xmin, xmax);
+        y = RAND_RANGE(0.0f, maxDistributionValue);
+        if (y < distribution(x))
+        {
+            break;
+        }
+    }
+    return x;
 }

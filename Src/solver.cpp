@@ -3,30 +3,16 @@
 #include "Math.h"
 #include "Threading.h"
 #include "BarnesHutTree.h"
+#include "Constants.h"
+#include "Utils.h"
 
 #include <cassert>
-
-static inline lpVec3 CalculateGravityForce(const Particle& p1, const Particle& p2)
-{
-    lpVec3 force = p2.position;
-    force -= p1.position;
-
-    float r = force.norm();
-
-    if (r < 50000.0f)
-    {
-        //r += 50000.0f;
-    }
-
-    force *= p1.mass * p2.mass / (r * r * r);
-
-    return force;
-}
 
 static inline void IntegrateMotionEquation(Particle& particle, float time)
 {
     // Euler-Cromer
-    particle.linearVelocity.addScaled(particle.force, particle.inverseMass * time);
+    particle.acceleration.addScaled(particle.force, particle.inverseMass);
+    particle.linearVelocity.addScaled(particle.acceleration, time);
     particle.position.addScaled(particle.linearVelocity, time);
 }
 
@@ -78,11 +64,12 @@ void BruteforceSolver::Solve(float time)
         {
             for (size_t jp = ip + 1; jp < galaxy1.GetParticles().size(); ++jp) 
             {
-                Particle& particle2 = galaxy1.GetParticles()[jp];
-                lpVec3 force = CalculateGravityForce(particle1, particle2);
+                /*Particle& particle2 = galaxy1.GetParticles()[jp];
+                lpVec3 force = GravityAcceleration(particle2.position - particle1.position,  );
+                lpVec3 force = GravityAcceleration(particle2.position - particle1.position,  );
 
-                particle1.force += force;
-                particle2.force -= force;
+                particle1.acceleration += force;
+                particle2.acceleration -= force;*/
             }
 
             /*for (size_t gj = ig + 1; gj < galaxies.size(); ++gj) {
@@ -107,46 +94,66 @@ void BruteforceSolver::Solve(float time)
     }
 }
 
+static inline void ComputeForce(Particle& particle, const Galaxy& galaxy, const BarnesHutTree& tree)
+{
+    particle.acceleration.clear();
+    particle.acceleration = tree.CalculateAcceleration(particle, cSoftFactor);
+
+    particle.force.clear();
+
+    float force = galaxy.GetHalo().GetForce(particle.position.norm());
+    float3 forceDir = particle.position;
+    forceDir.normalize();
+    //particle.force += forceDir * -force;
+}
+
 void BarnesHutSolver::Solve(float time)
 {
-    barnesHutTree->Reset();
-    {
-        std::lock_guard<std::mutex> lock(mu);
-        for (auto& galaxy : universe.GetGalaxies())
-        {
-            for (const auto& particle : galaxy.GetParticles())
-            {
-                barnesHutTree->Insert(particle);
-            }
-        }
-    }
+    BuildTree();
 
+    Timer<std::milli> timer(&solvingTime);
     // TODO: All galaxies
     ThreadPool().Dispatch([&](uint32_t i) 
     { 
         assert(i >= 0 && i < universe.GetGalaxies().front().GetParticles().size());
 
         Particle& particle = universe.GetGalaxies().front().GetParticles()[i];
-        particle.force = barnesHutTree->CalculateForce(particle);
-        IntegrateMotionEquation(particle, time);
+
+        if (particle.movable)
+        {
+            ComputeForce(particle, universe.GetGalaxies().front(), *barnesHutTree);
+            IntegrateMotionEquation(particle, time);
+        }
+
+    }, static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size()), 
+        static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size() / ThreadPool::GetThreadCount()));
+}
+
+void BarnesHutSolver::SolveForces()
+{
+    BuildTree();
+    ThreadPool().Dispatch([&](uint32_t i) 
+    { 
+        assert(i >= 0 && i < universe.GetGalaxies().front().GetParticles().size());
+
+        Particle& particle = universe.GetGalaxies().front().GetParticles()[i];
+
+        if (particle.movable)
+        {
+            ComputeForce(particle, universe.GetGalaxies().front(), *barnesHutTree);
+            particle.force += particle.acceleration * particle.mass;
+            particle.acceleration.clear();
+        }
+
     }, static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size()), 
         static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size() / ThreadPool::GetThreadCount()));
 }
 
 void BarnesHutSolver::Inititalize(float time)
 {
-    barnesHutTree = std::make_unique<BarnesHutTree>(lpVec3(-universe.GetSize() * 0.5f), universe.GetSize());
+    barnesHutTree = std::make_unique<BarnesHutTree>(float3(-universe.GetSize() * 0.5f), universe.GetSize());
 
-    {
-        std::lock_guard<std::mutex> lock(mu);
-        for (auto& galaxy : universe.GetGalaxies())
-        {
-            for (const auto& particle : galaxy.GetParticles())
-            {
-                barnesHutTree->Insert(particle);
-            }
-        }
-    }
+    BuildTree();
 
     float half = 0.5f * time;
 
@@ -155,13 +162,32 @@ void BarnesHutSolver::Inititalize(float time)
         assert(i >= 0 && i < universe.GetGalaxies().front().GetParticles().size());
 
         Particle& particle = universe.GetGalaxies().front().GetParticles()[i];
-        particle.force = barnesHutTree->CalculateForce(particle);
-
-        // Half step by velocity
-        particle.linearVelocity += particle.force * particle.inverseMass * half;
-        // Full step by position using half stepped velocity
-        particle.position += particle.linearVelocity * time;
+        if (particle.movable)
+        {
+            ComputeForce(particle, universe.GetGalaxies().front(), *barnesHutTree);
+            particle.acceleration.addScaled(particle.force, particle.inverseMass);
+            // Half step by velocity
+            particle.linearVelocity += particle.acceleration * half;
+            // Full step by position using half stepped velocity
+            particle.position += particle.linearVelocity * time;
+        }
 
     }, static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size()), 
         static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size() / ThreadPool::GetThreadCount()));
+}
+
+void BarnesHutSolver::BuildTree()
+{
+    std::lock_guard<std::mutex> lock(mu);
+    {
+        Timer<std::milli> timer(&buildTimeMsecs);
+        barnesHutTree->Reset();
+        for (auto& galaxy : universe.GetGalaxies())
+        {
+            for (const auto& particle : galaxy.GetParticles())
+            {
+                barnesHutTree->Insert(particle);
+            }
+        }
+    }
 }
