@@ -45,7 +45,27 @@ public:
         size_t groupSizeX, 
         size_t groupSizeY, 
         size_t groupSizeZ, 
-        const std::vector<EventPtr>& waitList, 
+        const std::vector<EventPtr>& waitList = {},
+        bool createEvent = false, 
+        EventPtr& event = EventPtr());
+
+    void EnqueueReadBuffer(
+        BufferPtr buffer, 
+        size_t offset, 
+        size_t size, 
+        void* data, 
+        bool blocking = true,
+        const std::vector<EventPtr>& waitList = {},
+        bool createEvent = false, 
+        EventPtr& event = EventPtr());
+
+    void EnqueueWriteBuffer(
+        BufferPtr buffer, 
+        size_t offset, 
+        size_t size, 
+        const void* data, 
+        bool blocking = true,
+        const std::vector<EventPtr>& waitList = {},
         bool createEvent = false, 
         EventPtr& event = EventPtr());
 

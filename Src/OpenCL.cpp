@@ -9,6 +9,7 @@ namespace cl
 {
 
 static thread_local std::vector<cl_event> events;
+static thread_local cl_event clEvent = nullptr;
 
 static inline void ClCheckStatus(cl_int status, const char* message = nullptr)
 {
@@ -59,6 +60,15 @@ OpenCL::~OpenCL()
     ClCheckStatus(clReleaseDevice(devices[0]), "Failed to release device");
 }
 
+static void PrepareEvents(const std::vector<EventPtr>& waitList)
+{
+    events.resize(waitList.size());
+    for (size_t i = 0; i < waitList.size(); ++i)
+    {
+        events[i] = waitList[i]->GetEvent();
+    }
+}
+
 void OpenCL::EnqueueKernel(
     KernelPtr kernel, 
     uint32_t numDimensions, 
@@ -76,13 +86,7 @@ void OpenCL::EnqueueKernel(
     assert(queue);
     assert(numDimensions >= 1 && numDimensions <= 3);
 
-    events.resize(waitList.size());
-    for (size_t i = 0; i < waitList.size(); ++i)
-    {
-        events[i] = waitList[i]->GetEvent();
-    }
-
-    cl_event clEvent = nullptr;
+    PrepareEvents(waitList);
 
     const size_t global[3] = { globalX, globalY, globalZ };
     const size_t group[3] = { groupSizeX, groupSizeY, groupSizeZ };
@@ -90,7 +94,62 @@ void OpenCL::EnqueueKernel(
         queue, kernel->GetKernel(), numDimensions, nullptr, global, group, static_cast<cl_uint>(waitList.size()), events.data(), createEvent ? &clEvent : nullptr), 
     "Failed to enqueue kernel");
 
-    event = std::make_shared<Event>(*this, clEvent);
+    if (createEvent)
+    {
+        event = std::make_shared<Event>(*this, clEvent);
+    }
+}
+
+void OpenCL::EnqueueReadBuffer(
+    BufferPtr buffer, 
+    size_t offset, 
+    size_t size, 
+    void* data, 
+    bool blocking, 
+    const std::vector<EventPtr>& waitList, 
+    bool createEvent, 
+    EventPtr& event)
+{
+    assert(buffer);
+    assert(offset + size <= buffer->GetSize());
+    assert(data);
+
+    PrepareEvents(waitList);
+
+    ClCheckStatus(clEnqueueReadBuffer(
+        queue, buffer->GetMemory(), blocking, offset, size, data, static_cast<cl_uint>(waitList.size()), events.data(), createEvent ? &clEvent : nullptr), 
+        "Failed to enqueue write buffer command");
+
+    if (createEvent)
+    {
+        event = std::make_shared<Event>(*this, clEvent);
+    }
+}
+
+void OpenCL::EnqueueWriteBuffer(
+    BufferPtr buffer, 
+    size_t offset, 
+    size_t size, 
+    const void* data, 
+    bool blocking, 
+    const std::vector<EventPtr>& waitList, 
+    bool createEvent, 
+    EventPtr& event)
+{
+    assert(buffer);
+    assert(offset + size <= buffer->GetSize());
+    assert(data);
+
+    PrepareEvents(waitList);
+
+    ClCheckStatus(clEnqueueWriteBuffer(
+        queue, buffer->GetMemory(), blocking, offset, size, data, static_cast<cl_uint>(waitList.size()), events.data(), createEvent ? &clEvent : nullptr), 
+    "Failed to enqueue write buffer command");
+
+    if (createEvent)
+    {
+        event = std::make_shared<Event>(*this, clEvent);
+    }
 }
 
 void OpenCL::FlushCommandQueue() const
