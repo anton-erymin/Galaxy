@@ -9,7 +9,7 @@
 #include "SphericalModel.h"
 #include "Constants.h"
 
-class Image;
+struct Image;
 
 struct Particle
 {
@@ -64,7 +64,7 @@ public:
     std::vector<Particle>& GetParticles() { return particles; }
     const std::unordered_map<const Image*, std::vector<const Particle*>> GetParticlesByImage() const { return imageToParticles; }
     const SphericalModel& GetHalo() const { return halo; }
-    uint32_t GetParticlesCount() const { return particles.size(); }
+    size_t GetParticlesCount() const { return particles.size(); }
 
     void SetRadialVelocitiesFromForce();
 
@@ -91,9 +91,9 @@ public:
     float GetSize() const { return size; }
     std::vector<Galaxy>& GetGalaxies() { return galaxies; }
 
-    uint32_t GetParticlesCount() const
+    size_t GetParticlesCount() const
     {
-        return std::accumulate(galaxies.begin(), galaxies.end(), 0, [](uint32_t sum, const Galaxy& galaxy) { return sum + galaxy.GetParticlesCount(); });
+        return std::accumulate(galaxies.begin(), galaxies.end(), 0ull, [](size_t sum, const Galaxy& galaxy) { return sum + galaxy.GetParticlesCount(); });
     }
 
 private:

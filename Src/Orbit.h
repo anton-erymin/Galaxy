@@ -48,7 +48,7 @@ public:
 
     void Update(float time)
     {
-        float eps = 0.01f;
+        constexpr float eps = 0.01f;
 
         if (fabsf(thetaTarget - theta) > eps)
         {

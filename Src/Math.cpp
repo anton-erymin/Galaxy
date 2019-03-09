@@ -48,7 +48,7 @@ void Poisson1(uint32_t numIter, float min, float max, int n, float *data, const 
     float nu;
     float relax = 1.2f;
 
-    for (int iter = 0; iter < numIter; iter++)
+    for (uint32_t iter = 0; iter < numIter; iter++)
     {
         for (int i = 1; i < n - 1; i++)
         {

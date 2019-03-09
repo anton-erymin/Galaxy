@@ -7,6 +7,8 @@
 
 #include "float3.h"
 
+#define PI (static_cast<float>(M_PI))
+
 inline float RAND()
 {
     return ((float)rand() / RAND_MAX);
@@ -19,12 +21,12 @@ inline float RAND_RANGE(float a, float b)
 
 inline float deg2rad(float deg)
 {
-    return float(M_PI) / 180.0f * deg;
+    return PI / 180.0f * deg;
 }
 
 inline float rad2deg(float rad)
 {
-    return 180.0f / float(M_PI) * rad;
+    return 180.0f / PI * rad;
 }
 
 inline float lerp(float a, float b, float t)
@@ -83,12 +85,12 @@ inline float3 CylindricalToCartesian(const float3& cylindrical)
 
 inline float3 RandomUniformSpherical(float rmin, float rmax)
 {
-    return { RAND_RANGE(rmin, rmax), 2.0f * float(M_PI) * RAND() /*- float(M_PI)*/, 2.0f * float(M_PI) * RAND() };
+    return { RAND_RANGE(rmin, rmax), 2.0f * PI * RAND() /*- PI*/, 2.0f * PI * RAND() };
 }
 
 inline float3 RandomUniformCylindrical(float rmin, float rmax, float height)
 {
-    return { RAND_RANGE(rmin, rmax), 2.0f * float(M_PI) * RAND(), RAND_RANGE(-0.5f * height, 0.5f * height) };
+    return { RAND_RANGE(rmin, rmax), 2.0f * PI * RAND(), RAND_RANGE(-0.5f * height, 0.5f * height) };
 }
 
 inline float3 GravityAcceleration(const float3& point, float mass, float soft, float length = -1.0f)
@@ -118,7 +120,7 @@ inline float PseudoIsothermal(float r, float rho0, float radius)
 
 inline float PlummerDensity(float r, float mass, float radius)
 {
-    return (3.0f * mass / (4.0f * float(M_PI) * radius * radius * radius)) * 
+    return (3.0f * mass / (4.0f * PI * radius * radius * radius)) * 
         (1.0f / std::sqrtf(std::pow((1.0f + (r * r) / (radius * radius)), 5.0f)));
 }
 

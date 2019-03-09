@@ -33,7 +33,7 @@ OpenCL::OpenCL()
 
     devices.resize(10);
     cl_uint numDevices = 0;
-    ClCheckStatus(clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, devices.size(), devices.data(), &numDevices), "Failed to get devices");
+    ClCheckStatus(clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, static_cast<cl_uint>(devices.size()), devices.data(), &numDevices), "Failed to get devices");
 
     if (numDevices == 0)
     {

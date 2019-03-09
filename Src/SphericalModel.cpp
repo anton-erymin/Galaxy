@@ -39,7 +39,7 @@ void SphericalModel::CalculatePotential()
         //rho[i] = PseudoIsothermal(r[i], rho0, radius);
         rho[i] = PlummerDensity(rvec[i], M, radius);
         potential[i] = PlummerPotential(rvec[i], M, radius);
-        rightPartPoisson[i] = 4.0f * M_PI * rho[i];
+        rightPartPoisson[i] = 4.0f * PI * rho[i];
     }
 
 
@@ -49,13 +49,13 @@ void SphericalModel::CalculatePotential()
 	// Isothermal
 	/*float M = 100.0f;
 	float r0 = 20.0;
-	float rho0 = M / (4.0f * M_PI * r0 * r0 * r0 * radius);
-	vc = sqrtf(4.0f * M_PI * r0 * r0 * r0 * rho0);
+	float rho0 = M / (4.0f * PI * r0 * r0 * r0 * radius);
+	vc = sqrtf(4.0f * PI * r0 * r0 * r0 * rho0);
 
 	for (int i = 0; i < N; i++)
 	{
 		float r = rmin + i * h;
-		potential[i] = 4.0f * M_PI * rho0 * r0 * r0 * r0 * log(r / r0);
+		potential[i] = 4.0f * PI * rho0 * r0 * r0 * r0 * log(r / r0);
 	}*/
 
 	//potential[0] = 4 * potential[1];
@@ -63,8 +63,8 @@ void SphericalModel::CalculatePotential()
 	// Uniform
 	/*float M = 100.0f;
 	float a = m_radius;
-	float rho0 = 3.0f * M / (4.0f * M_PI * powf(a, 3.0f));
-	coeff = sqrtf(4.0f * M_PI * rho0 / 3.0f);
+	float rho0 = 3.0f * M / (4.0f * PI * powf(a, 3.0f));
+	coeff = sqrtf(4.0f * PI * rho0 / 3.0f);
 
 	for (int i = 0; i < m_N; i++)
 	{
@@ -72,7 +72,7 @@ void SphericalModel::CalculatePotential()
 
 		if (r < a)
 		{
-			m_potential[i] = -2.0f * M_PI * rho0 * (a * a - r * r / 3.0f);
+			m_potential[i] = -2.0f * PI * rho0 * (a * a - r * r / 3.0f);
 		}
 		else
 		{
@@ -128,19 +128,19 @@ static float DensityDistribution(float r)
 	//return 100.0f * exp(-r * 1e-3f);
 
 
-	//float rho = 3.0f * 1e+12/(4.0f * M_PI * 100000.0f * 100000.0f * 100000.0f);
+	//float rho = 3.0f * 1e+12/(4.0f * PI * 100000.0f * 100000.0f * 100000.0f);
 	//return 0.00024f;// * exp(-r * 0.000005);	
 
 	return 10000.0f;
-	return 3.0f * 100.0f / (4.0f * M_PI * 30.0f * 30.0f * 30.0f);
+	return 3.0f * 100.0f / (4.0f * PI * 30.0f * 30.0f * 30.0f);
 	float a = 16.0f;
-	return 3.0f * 1000.0f/(4.0f * M_PI * a * a * a) / sqrtf( pow(1.0f + pow(r / a, 2), 5) );
+	return 3.0f * 1000.0f/(4.0f * PI * a * a * a) / sqrtf( pow(1.0f + pow(r / a, 2), 5) );
 
 }
 
 static float RightPartPoisson(float r)
 {
-	return 4.0f * M_PI * DensityDistribution(r);
+	return 4.0f * PI * DensityDistribution(r);
 }
 
 static void Plot(const std::vector<float> x, const std::vector<float> y, float xscale, float yscale)

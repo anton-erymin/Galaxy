@@ -118,7 +118,13 @@ void UIOverlay::Group(const char* group)
     }
 }
 
-void UIOverlay::Button(const char* name, void(*callback)(void*))
+void UIOverlay::Button(const char* name, void(*callback)(void*), const char* key)
 {
-    TwAddButton(impl->bar, name, callback, nullptr, currentGroup.c_str());
+    std::string def;
+    if (key)
+    {
+        def = " key=" + std::string(key);
+    }
+    def += " " + currentGroup;
+    TwAddButton(impl->bar, name, callback, nullptr, def.c_str());
 }

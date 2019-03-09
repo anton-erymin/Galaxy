@@ -52,9 +52,17 @@ public:
 
     const SimulationParameters& GetSimulationParamaters() const { return simulationParams; }
 
-private:
-    void InitializeUniverse();
+    struct Timings
+    {
+        float buildTreeTimeMsecs = 0.0f;
+        float solvingTimeMsecs = 0.0f;
+    };
 
+    Timings& GetTimings() { return timings; }
+
+    void Reset();
+
+private:
     uint32_t width = 0;
     uint32_t height = 0;
 
@@ -110,8 +118,8 @@ private:
     } renderParams;
 
     SimulationParameters simulationParams;
-
     GalaxyParameters model;
+    Timings timings;
 
     cl::OpenCL cl;
 

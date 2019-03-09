@@ -134,11 +134,11 @@ void Galaxy::Create()
 
     const float dustRatio = 0.1f;
 
-    int numDusts = parameters.bulgeParticlesCount * dustRatio;
+    uint32_t numDusts = static_cast<uint32_t>(parameters.bulgeParticlesCount * dustRatio);
 
     PlummerModel plummer;
     
-    for (int i = 0; i < parameters.bulgeParticlesCount; ++i)
+    for (uint32_t i = 0; i < parameters.bulgeParticlesCount; ++i)
     {
         Particle particle = i < numDusts ? CreateDust() : CreateStar();
         particle.SetMass(bulgeParticleMass);
@@ -149,9 +149,9 @@ void Galaxy::Create()
         particles.push_back(particle);
     }
 
-    numDusts = parameters.diskParticlesCount * dustRatio;
+    numDusts = static_cast<uint32_t>(parameters.diskParticlesCount * dustRatio);
 
-    for (int i = 0; i < parameters.diskParticlesCount; i++)
+    for (uint32_t i = 0; i < parameters.diskParticlesCount; i++)
     {
         Particle particle = i < numDusts ? CreateDust() : CreateStar();
         particle.SetMass(diskParticleMass);

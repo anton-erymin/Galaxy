@@ -9,6 +9,15 @@
 #include <functional>
 #include <chrono>
 
+// TODOs:
+// Hot disk
+// Kuzmin model and more sphere models
+// Choose density model
+// Octree
+// OpenCL compute
+// Collision
+// Video
+
 Application* Application::instance = nullptr;
 
 Application application;
@@ -24,13 +33,6 @@ Application::~Application()
     ThreadPool::Destroy();
 }
 
-static Universe* CreateDefaultUniverse()
-{
-    Universe* universe = new Universe(UNIVERSE_SIZE);
-    universe->CreateGalaxy();
-    return universe;
-}
-
 int Application::Run(int argc, char **argv)
 {
     ThreadPool::Create(std::thread::hardware_concurrency());
@@ -44,49 +46,15 @@ int Application::Run(int argc, char **argv)
     GetImageLoader().Load("Dust2", "Data/dust2.png");
     GetImageLoader().Load("Dust3", "Data/dust3.png");
 
-    cSecondsPerTimeUnit = std::sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG));
-    cMillionYearsPerTimeUnit = cSecondsPerTimeUnit / 3600 / 24 / 365 / 1e+6;
+    cSecondsPerTimeUnit = static_cast<float>(std::sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG)));
+    cMillionYearsPerTimeUnit = cSecondsPerTimeUnit / 3600.0f / 24.0f / 365.0f / 1e+6f;
 
     deltaTime = 0.00000005f;
-    deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6;
+    deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6f;
 
     saveToFiles = false;
 
-    srand(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-
-    if (argc > 1)
-    {
-        // Если программа запущена через файл описания модели то считываем файл
-        //readModelFromGlxFile(argv[1]);
-    }
-    else
-    {
-        printf("TO CHOOSE THE DEFAULT VALUE JUST PRESS ENTER\n\n");
-
-        char c;
-
-        // Будем ли писать кадры на диск?
-        printf("Save the frames to the disk    (default is NO) [y/n]?: ");
-        //c = getchar();
-        c = 13;
-        if (c == 13 || c == 10)
-            saveToFiles = false;
-        else if (c == 'n' || c == 'N')
-            saveToFiles = false;
-        else if (c == 'y' || c == 'Y')
-            saveToFiles = true;
-        else return false;
-
-
-        // Создаем модель по умолчанию если не задан файл проекта
-        universe.reset(CreateDefaultUniverse());
-    }
-
-    printf("\nControl keys:\n\n");
-    printf("ENTER    - Start\n");
-    printf("SPACE    - Reset the galaxy\n");
-    printf("']'      - Speed up\n");
-    printf("'['      - Slow down\n");
+    srand(static_cast<uint32_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count()));
 
     width = cWindowWidth;
     height = cWindowHeight;
@@ -115,17 +83,12 @@ int Application::Run(int argc, char **argv)
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glBlendFunc(GL_ONE, GL_ONE);
 
-    solverBruteforce = std::make_unique<BruteforceSolver>(*universe);
-    solverBarneshut = std::make_unique<BarnesHutSolver>(*universe);
-
-    solver = &*solverBarneshut;
+    Reset();
 
     GetImageLoader().GenTextureIds();
 
     inputMappings['a'] = &inputState.brightnessUp;
     inputMappings['z'] = &inputState.brightnessDown;
-
-    totalParticlesCount = universe->GetParticlesCount();
 
     ui.Init();
     ui.Text("GPU", (const char*)glGetString(GL_RENDERER));
@@ -137,8 +100,8 @@ int Application::Run(int argc, char **argv)
     ui.ReadonlyFloat("Timestep, yrs", &deltaTimeYears);
     ui.ReadonlyFloat("Simulation time, mln yrs", &simulationTimeMillionYears);
     ui.ReadonlyInt("Number of time steps", &numSteps);
-    ui.ReadonlyFloat("Build tree time, ms", &solverBarneshut->GetBuildTreeTime(), 1);
-    ui.ReadonlyFloat("Solving time, ms", &solverBarneshut->GetSolvingTime(), 1);
+    ui.ReadonlyFloat("Build tree time, ms", &timings.buildTreeTimeMsecs, 1);
+    ui.ReadonlyFloat("Solving time, ms", &timings.solvingTimeMsecs, 1);
     ui.Group("Rendering");
     ui.ReadonlyFloat("Camera distance, kpc", &orbit.GetDistance());
     ui.Checkbox("Render points", &renderParams.renderPoints, "m");
@@ -146,6 +109,22 @@ int Application::Run(int argc, char **argv)
     ui.Checkbox("Plot potential", &renderParams.plotFunctions);
     ui.SliderFloat("Brightness", &renderParams.brightness, 0.05f, 10.0f, 0.01f);
     ui.SliderFloat("Particles size scale", &renderParams.particlesSizeScale, 0.01f, 10.0f, 0.01f);
+
+    ui.Button("Fullscreen toggle", [](void*) 
+    { 
+        static bool fullscreen = false;
+        if (!fullscreen)
+        {
+            glutFullScreen();
+        }
+        else
+        {
+            //Application::GetInstance().OnResize(cWindowWidth, cWindowHeight);
+            glutReshapeWindow(cWindowWidth, cWindowHeight);
+        }
+        fullscreen = !fullscreen;
+    }, "ALT+RETURN");
+
     ui.Group("Model");
     ui.SliderFloat("Mass", &model.mass, 0.1f, 10000.0f, 1.0f);
     ui.SliderFloat("Disk mass ratio", &model.diskMassRatio, 0.0f, 1.0f, 0.01f);
@@ -156,22 +135,39 @@ int Application::Run(int argc, char **argv)
     ui.SliderFloat("Halo radius", &model.haloRadius, 0.01f, 10000.0f);
     ui.SliderFloat("Disk thickness", &model.diskThickness, 0.0f, 100.0f);
     ui.Checkbox("Dark matter", &simulationParams.darkMatter, "d");
+
     ui.Button("Apply", [](void*) 
     {
     });
+
     ui.Button("Reset", [](void*) 
     {
-    });
-
-    InitializeUniverse();
+        Application::GetInstance().Reset();
+    }, "F5");
 
     glutMainLoop();
 
     return 0;
 }
 
-void Application::InitializeUniverse()
+void Application::Reset()
 {
+    if (started)
+    {
+        started = false;
+        solverThread.join();
+    }
+    started = true;
+
+    universe = std::make_unique<Universe>(GLX_UNIVERSE_SIZE);
+    universe->CreateGalaxy({}, model);
+    totalParticlesCount = static_cast<int32_t>(universe->GetParticlesCount());
+
+    solverBruteforce = std::make_unique<BruteforceSolver>(*universe);
+    solverBarneshut = std::make_unique<BarnesHutSolver>(*universe);
+
+    solver = &*solverBarneshut;
+
     solver->Inititalize(deltaTime);
     solver->SolveForces();
 
@@ -182,7 +178,7 @@ void Application::InitializeUniverse()
 
     solverThread = std::thread([this]() 
     {     
-        while (true)
+        while (started)
         {
             solver->Solve(deltaTime);
             simulationTime += deltaTime;
@@ -399,12 +395,12 @@ void Application::OnKeyboard(unsigned char key, int x, int y)
     if (key == ']')
     {
         deltaTime *= 1.2f;
-        deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6;
+        deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6f;
     }
     if (key == '[')
     {
         deltaTime *= 0.8f;
-        deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6;
+        deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6f;
     }
 
     if (inputMappings.count(key))

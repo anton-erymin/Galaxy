@@ -115,7 +115,7 @@ void BarnesHutSolver::Solve(float time)
 {
     BuildTree();
 
-    Timer<std::milli> timer(&solvingTime);
+    Timer<std::milli> timer(&Application::GetInstance().GetTimings().solvingTimeMsecs);
     // TODO: All galaxies
     ThreadPool().Dispatch([&](uint32_t i) 
     { 
@@ -184,7 +184,7 @@ void BarnesHutSolver::BuildTree()
 {
     std::lock_guard<std::mutex> lock(mu);
     {
-        Timer<std::milli> timer(&buildTimeMsecs);
+        Timer<std::milli> timer(&Application::GetInstance().GetTimings().buildTreeTimeMsecs);
         barnesHutTree->Reset();
         for (auto& galaxy : universe.GetGalaxies())
         {

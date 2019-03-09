@@ -90,7 +90,7 @@ void Image::SaveTga(const char* filename) const
     int			  colorMode = 0;
 
     // Открываем файл скриншота
-    sFile = fopen(filename, "wb");
+    fopen_s(&sFile, filename, "wb");
 
     // Устанавливаем цветовой режим и глубину цвета:
     colorMode = 3;

@@ -26,7 +26,7 @@ public:
     void SliderFloat(const char* name, float* value, float min, float max, float step = 0.1f);
     void Separator();
     void Group(const char* group);
-    void Button(const char* name, void(*callback)(void*));
+    void Button(const char* name, void(*callback)(void*), const char* key = nullptr);
 
 private:
     UIOverlayImpl* impl;
