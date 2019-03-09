@@ -12,7 +12,7 @@ public:
     BarnesHutTree(const float3 &point, float length);
 
     void Insert(const Particle &p, uint32_t level = 0);
-    float3 CalculateAcceleration(const Particle &particle, float soft) const;
+    float3 ComputeAcceleration(const Particle &particle, float soft) const;
     void Reset();
 
     const float3& GetPoint() const { return point; }

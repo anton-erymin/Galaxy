@@ -63,6 +63,8 @@ public:
     void Reset();
 
 private:
+    void CreateProgramFromFile(const char* filename);
+
     uint32_t width = 0;
     uint32_t height = 0;
 
@@ -122,6 +124,7 @@ private:
     Timings timings;
 
     cl::OpenCL cl;
+    std::unordered_map<std::string, cl::ProgramPtr> programs;
 
     static Application* instance;
 };

@@ -19,7 +19,7 @@ constexpr double cKiloParsec = 1000 * cParsec;    // m
 constexpr double cSolarMass = 1.9885e+30;         // kg
 constexpr double cMassUnit = 1e+10 * cSolarMass;  // kg
 
-constexpr float cSoftFactor = 0.05f;
+constexpr float cSoftFactor = 0.001f;
 
 constexpr float cRenderFps = 30;
 constexpr float cFrameTime = 1.0f / cRenderFps;

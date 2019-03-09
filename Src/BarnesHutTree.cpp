@@ -28,7 +28,6 @@ void BarnesHutTree::Insert(const Particle &p, uint32_t level)
         return;
     }
 
-    // Вставка частицы в дерево
     if (level > cMaxTreeLevel)
     {
         return;
@@ -138,7 +137,7 @@ bool BarnesHutTree::Contains(const Particle &p) const
     return false;
 }
 
-float3 BarnesHutTree::CalculateAcceleration(const Particle &particle, float soft) const
+float3 BarnesHutTree::ComputeAcceleration(const Particle &particle, float softFactor) const
 {
     float3 acceleration = {};
 
@@ -146,7 +145,7 @@ float3 BarnesHutTree::CalculateAcceleration(const Particle &particle, float soft
     {
         if (particle_ != &particle)
         {
-            acceleration = GravityAcceleration(particle_->position - particle.position, particle_->mass, soft);
+            acceleration = GravityAcceleration(particle_->position - particle.position, particle_->mass, softFactor);
         }
     }
     else if (!isLeaf)
@@ -162,14 +161,14 @@ float3 BarnesHutTree::CalculateAcceleration(const Particle &particle, float soft
 
         if (theta < 0.7f)
         {
-            acceleration = GravityAcceleration(vec, totalMass, soft, r);
+            acceleration = GravityAcceleration(vec, totalMass, softFactor, r);
         }
         else
         {
             // Если частица близко к узлу рекурсивно считаем силу с потомками
             for (int i = 0; i < 4; i++)
             {
-                acceleration += children[i]->CalculateAcceleration(particle, soft);
+                acceleration += children[i]->ComputeAcceleration(particle, softFactor);
             }
         }
     }

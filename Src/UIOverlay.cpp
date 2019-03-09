@@ -18,7 +18,7 @@ void UIOverlay::Init()
     TwGLUTModifiersFunc(glutGetModifiers);
 
     impl->bar = TwNewBar("Galaxy");
-    TwDefine(" Galaxy size='350 500' valueswidth=fit color='0 0 100' alpha=50"); // change default tweak bar size and color
+    TwDefine(" Galaxy size='350 600' valueswidth=fit color='0 0 100' alpha=50"); // change default tweak bar size and color
 }
 
 void UIOverlay::Draw()

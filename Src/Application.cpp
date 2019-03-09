@@ -8,6 +8,7 @@
 #include <iostream>
 #include <functional>
 #include <chrono>
+#include <fstream>
 
 // TODOs:
 // Hot disk
@@ -130,10 +131,11 @@ int Application::Run(int argc, char **argv)
     ui.SliderFloat("Disk mass ratio", &model.diskMassRatio, 0.0f, 1.0f, 0.01f);
     ui.SliderUint("Disk particles", &model.diskParticlesCount);
     ui.SliderUint("Bulge particles", &model.bulgeParticlesCount);
-    ui.SliderFloat("Disk radius", &model.diskRadius, 0.01f, 10000.0f);
-    ui.SliderFloat("Bulge radius", &model.bulgeRadius, 0.01f, 10000.0f);
-    ui.SliderFloat("Halo radius", &model.haloRadius, 0.01f, 10000.0f);
-    ui.SliderFloat("Disk thickness", &model.diskThickness, 0.0f, 100.0f);
+    ui.SliderFloat("Disk radius", &model.diskRadius, 0.01f, 10000.0f, 0.01f);
+    ui.SliderFloat("Bulge radius", &model.bulgeRadius, 0.01f, 10000.0f, 0.01f);
+    ui.SliderFloat("Halo radius", &model.haloRadius, 0.01f, 10000.0f, 0.01f);
+    ui.SliderFloat("Disk thickness", &model.diskThickness, 0.0f, 100.0f, 0.01f);
+    ui.SliderFloat("Black hole mass", &model.blackHoleMass, 1.0f, 10000.0f, 10.0f);
     ui.Checkbox("Dark matter", &simulationParams.darkMatter, "d");
 
     ui.Button("Apply", [](void*) 
@@ -144,6 +146,22 @@ int Application::Run(int argc, char **argv)
     {
         Application::GetInstance().Reset();
     }, "F5");
+
+    CreateProgramFromFile("Kernels/Integration.cl");
+    cl::KernelPtr kernel = programs["Kernels/Integration.cl"]->GetKernel("Integrate");
+
+    const size_t N = 100000;
+    std::vector<float> a(N), b(N);
+
+
+    cl::BufferPtr bufferA = cl.CreateBuffer(N * sizeof(float));
+    cl::BufferPtr bufferB = cl.CreateBuffer(N * sizeof(float));
+
+    kernel->SetArg(&*bufferA, 0);
+    kernel->SetArg(&*bufferB, 1);
+
+    cl.EnqueueKernel(kernel, 1, N, 0, 0, 64, 0, 0, {});
+    cl.WaitIdle();
 
     glutMainLoop();
 
@@ -185,6 +203,20 @@ void Application::Reset()
             ++numSteps;
         }
     });
+}
+
+void Application::CreateProgramFromFile(const char* filename)
+{
+    std::ifstream file(filename);
+    if (!file)
+    {
+        throw std::runtime_error("Failed to open file " + std::string(filename));
+    }
+
+    std::string source;
+    source = std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+    
+    programs[filename] = cl.CreateProgram(source);
 }
 
 static void DrawBarnesHutTree(const BarnesHutTree& node)

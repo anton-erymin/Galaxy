@@ -98,7 +98,7 @@ void BruteforceSolver::Solve(float time)
 static inline void ComputeForce(Particle& particle, const Galaxy& galaxy, const BarnesHutTree& tree)
 {
     particle.acceleration.clear();
-    particle.acceleration = tree.CalculateAcceleration(particle, cSoftFactor);
+    //particle.acceleration = tree.CalculateAcceleration(particle, cSoftFactor);
 
     particle.force.clear();
 

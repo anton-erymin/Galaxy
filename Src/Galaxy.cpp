@@ -165,7 +165,7 @@ void Galaxy::Create()
 
     particles[0].position = position;
     particles[0].movable = false;
-    particles[0].SetMass(particles[0].mass * 1000.0f);
+    particles[0].SetMass(particles[0].mass * parameters.blackHoleMass);
 
     //for (size_t i = 1; i < particles.size(); ++i)
     //{

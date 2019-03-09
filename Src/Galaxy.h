@@ -52,6 +52,7 @@ struct GalaxyParameters
     float diskMassRatio = GLX_DISK_MASS_RATIO;
     float bulgeRadius = GLX_BULGE_RADIUS;
     float haloRadius = GLX_HALO_RADIUS;
+    float blackHoleMass = 1.0f;
 };
 
 class Galaxy
