@@ -18,7 +18,7 @@ void UIOverlay::Init()
     TwGLUTModifiersFunc(glutGetModifiers);
 
     impl->bar = TwNewBar("Galaxy");
-    TwDefine(" Galaxy size='400 300' valueswidth=fit color='0 0 100' alpha=50"); // change default tweak bar size and color
+    TwDefine(" Galaxy size='350 500' valueswidth=fit color='0 0 100' alpha=50"); // change default tweak bar size and color
 }
 
 void UIOverlay::Draw()
@@ -58,18 +58,18 @@ int UIOverlay::OnSpecialFunc(int key, int x, int y)
 
 void UIOverlay::Text(const char* name, const char* text)
 {
-    TwAddVarRO(impl->bar, name, TW_TYPE_CSSTRING(256), text, "");
+    TwAddVarRO(impl->bar, name, TW_TYPE_CSSTRING(256), text, currentGroup.c_str());
 }
 
 void UIOverlay::ReadonlyInt(const char* name, const int32_t* value)
 {
-    TwAddVarRO(impl->bar, name, TW_TYPE_INT32, value, "");
+    TwAddVarRO(impl->bar, name, TW_TYPE_INT32, value, currentGroup.c_str());
 }
 
 void UIOverlay::ReadonlyFloat(const char* name, const float* value, uint8_t precision)
 {
-    std::string strPrecision = "precision=" + std::to_string(precision);
-    TwAddVarRO(impl->bar, name, TW_TYPE_FLOAT, value, strPrecision.c_str());
+    std::string def = "precision=" + std::to_string(precision) + " " + currentGroup;
+    TwAddVarRO(impl->bar, name, TW_TYPE_FLOAT, value, def.c_str());
 }
 
 void UIOverlay::Checkbox(const char* name, bool* value, const char* key)
@@ -77,18 +77,48 @@ void UIOverlay::Checkbox(const char* name, bool* value, const char* key)
     std::string def;
     if (key)
     {
-        def = "key=" + std::string(key);
+        def = " key=" + std::string(key);
     }
+    def += " " + currentGroup;
     TwAddVarRW(impl->bar, name, TW_TYPE_BOOLCPP, value, def.c_str());
+}
+
+void UIOverlay::SliderUint(const char* name, uint32_t* value)
+{
+    std::string def = currentGroup;
+    TwAddVarRW(impl->bar, name, TW_TYPE_UINT32, value, def.c_str());
+}
+
+void UIOverlay::SliderFloat(const char* name, float* value)
+{
+    std::string def = currentGroup;
+    TwAddVarRW(impl->bar, name, TW_TYPE_FLOAT, value, def.c_str());
 }
 
 void UIOverlay::SliderFloat(const char* name, float* value, float min, float max, float step)
 {
-    std::string def = "min=" + std::to_string(min) + " max=" + std::to_string(max) + " step=" + std::to_string(step);
+    std::string def = "min=" + std::to_string(min) + " max=" + std::to_string(max) + " step=" + std::to_string(step) + " " + currentGroup;
     TwAddVarRW(impl->bar, name, TW_TYPE_FLOAT, value, def.c_str());
 }
 
 void UIOverlay::Separator()
 {
-    TwAddSeparator(impl->bar, nullptr, "");
+    TwAddSeparator(impl->bar, nullptr, currentGroup.c_str());
+}
+
+void UIOverlay::Group(const char* group)
+{
+    if (group)
+    {
+        currentGroup = "group=" + std::string(group);
+    }
+    else
+    {
+        currentGroup.assign("");
+    }
+}
+
+void UIOverlay::Button(const char* name, void(*callback)(void*))
+{
+    TwAddButton(impl->bar, name, callback, nullptr, currentGroup.c_str());
 }

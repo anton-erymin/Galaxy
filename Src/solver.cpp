@@ -5,6 +5,7 @@
 #include "BarnesHutTree.h"
 #include "Constants.h"
 #include "Utils.h"
+#include "Application.h"
 
 #include <cassert>
 
@@ -101,10 +102,13 @@ static inline void ComputeForce(Particle& particle, const Galaxy& galaxy, const 
 
     particle.force.clear();
 
-    float force = galaxy.GetHalo().GetForce(particle.position.norm());
-    float3 forceDir = particle.position;
-    forceDir.normalize();
-    //particle.force += forceDir * -force;
+    if (Application::GetInstance().GetSimulationParamaters().darkMatter)
+    {    
+        float darkMatterForce = galaxy.GetHalo().GetForce(particle.position.norm());
+        float3 forceDir = particle.position;
+        forceDir.normalize();
+        particle.force += forceDir * -darkMatterForce;
+    }
 }
 
 void BarnesHutSolver::Solve(float time)

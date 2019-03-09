@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 struct UIOverlayImpl;
 
@@ -20,10 +21,15 @@ public:
     void ReadonlyInt(const char* name, const int32_t* value);
     void ReadonlyFloat(const char* name, const float* value, uint8_t precision = 2);
     void Checkbox(const char* name, bool* value, const char* key = nullptr);
-    void SliderFloat(const char* name, float* value, float min, float max, float step = 0.0f);
+    void SliderUint(const char* name, uint32_t* value);
+    void SliderFloat(const char* name, float* value);
+    void SliderFloat(const char* name, float* value, float min, float max, float step = 0.1f);
     void Separator();
-
+    void Group(const char* group);
+    void Button(const char* name, void(*callback)(void*));
 
 private:
     UIOverlayImpl* impl;
+
+    std::string currentGroup;
 }; 

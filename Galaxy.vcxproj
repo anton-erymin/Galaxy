@@ -25,6 +25,7 @@
     <ClCompile Include="Src\float3.cpp" />
     <ClCompile Include="Src\Main.cpp" />
     <ClCompile Include="Src\Math.cpp" />
+    <ClCompile Include="Src\OpenCL.cpp" />
     <ClCompile Include="Src\Solver.cpp" />
     <ClCompile Include="Src\SphericalModel.cpp" />
     <ClCompile Include="Src\Image.cpp" />
@@ -39,6 +40,8 @@
     <ClInclude Include="Src\Galaxy.h" />
     <ClInclude Include="Src\float3.h" />
     <ClInclude Include="Src\Math.h" />
+    <ClInclude Include="Src\OpenCL.h" />
+    <ClInclude Include="Src\Orbit.h" />
     <ClInclude Include="Src\Solver.h" />
     <ClInclude Include="Src\SphericalModel.h" />
     <ClInclude Include="Src\Image.h" />
@@ -123,7 +126,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include;Lib\AntTweakBar\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include;Lib\AntTweakBar\include;Lib\OpenCL\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
@@ -131,8 +134,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Lib\freeglut\lib;Lib\AntTweakBar\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalOptions>AntTweakBar.lib %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>Lib\freeglut\lib;Lib\AntTweakBar\lib\;Lib\OpenCL\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>AntTweakBar.lib opencl.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d Lib\freeglut\bin\* $(OutDir)</Command>
@@ -144,7 +147,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include;Lib\AntTweakBar\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include;Lib\AntTweakBar\include;Lib\OpenCL\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
@@ -152,8 +155,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Lib\freeglut\lib\x64;Lib\AntTweakBar\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalOptions>AntTweakBar64.lib %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>Lib\freeglut\lib\x64;Lib\AntTweakBar\lib\;Lib\OpenCL\lib\x86_64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>AntTweakBar64.lib opencl.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d Lib\freeglut\bin\x64\* $(OutDir)
@@ -171,15 +174,15 @@ xcopy /y /d Lib\AntTweakBar\lib\AntTweakBar64.dll $(OutDir)</Command>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include;Lib\AntTweakBar\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include;Lib\AntTweakBar\include;Lib\OpenCL\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Lib\freeglut\lib;Lib\AntTweakBar\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalOptions>AntTweakBar.lib %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>Lib\freeglut\lib;Lib\AntTweakBar\lib\;Lib\OpenCL\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>AntTweakBar.lib opencl.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d Lib\freeglut\bin\* $(OutDir)</Command>
@@ -193,7 +196,7 @@ xcopy /y /d Lib\AntTweakBar\lib\AntTweakBar64.dll $(OutDir)</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include;Lib\AntTweakBar\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Lib\irrlicht\include;Lib\stb_image;Lib\freeglut\include;Lib\AntTweakBar\include;Lib\OpenCL\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
@@ -203,8 +206,8 @@ xcopy /y /d Lib\AntTweakBar\lib\AntTweakBar64.dll $(OutDir)</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>Lib\freeglut\lib\x64;Lib\AntTweakBar\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalOptions>AntTweakBar64.lib %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>Lib\freeglut\lib\x64;Lib\AntTweakBar\lib\;Lib\OpenCL\lib\x86_64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>AntTweakBar64.lib opencl.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d Lib\freeglut\bin\x64\* $(OutDir)

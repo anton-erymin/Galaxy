@@ -1,25 +1,13 @@
 ﻿#include "Application.h"
-
-#include <iostream>
-#include <functional>
-#include <chrono>
-
-#include <Windows.h>
-#include <stdio.h>
-
-#include "Galaxy.h"
 #include "Constants.h"
 #include "Image.h"
 #include "Solver.h"
 #include "Threading.h"
 #include "BarnesHutTree.h"
 
-constexpr uint32_t cWindowWidth = 1400;
-constexpr uint32_t cWindowHeight = 800;
-
-constexpr char* cWindowCaption = "Galaxy Model 0.1";
-
-extern int curLayer;
+#include <iostream>
+#include <functional>
+#include <chrono>
 
 Application* Application::instance = nullptr;
 
@@ -56,18 +44,13 @@ int Application::Run(int argc, char **argv)
     GetImageLoader().Load("Dust2", "Data/dust2.png");
     GetImageLoader().Load("Dust3", "Data/dust3.png");
 
-    cSecsInTimeUnit = std::sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG));
-    cMillionYearsInTimeUnit = cSecsInTimeUnit / 3600 / 24 / 365 / 1e+6;
+    cSecondsPerTimeUnit = std::sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG));
+    cMillionYearsPerTimeUnit = cSecondsPerTimeUnit / 3600 / 24 / 365 / 1e+6;
 
-    // Значения по умолчанию глобальных параметров
-    // Шаг во времени
     deltaTime = 0.00000005f;
-    deltaTimeYears = deltaTime * cMillionYearsInTimeUnit * 1e6;
-    // Размер области разбиения
-    universeSize = UNIVERSE_SIZE;
-    // Флаг сохранения кадров (видео) на диск
-    saveToFiles = false;
+    deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6;
 
+    saveToFiles = false;
 
     srand(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 
@@ -147,27 +130,57 @@ int Application::Run(int argc, char **argv)
     ui.Init();
     ui.Text("GPU", (const char*)glGetString(GL_RENDERER));
     ui.ReadonlyFloat("FPS", &lastFps, 1);
-    ui.Separator();
+    
+    ui.Group("'Simulation parameters'");
     ui.ReadonlyInt("Number of particles", &totalParticlesCount);
-    ui.ReadonlyFloat("Timestep", &deltaTime, 4);
+    ui.ReadonlyFloat("Timestep", &deltaTime, 8);
     ui.ReadonlyFloat("Timestep, yrs", &deltaTimeYears);
     ui.ReadonlyFloat("Simulation time, mln yrs", &simulationTimeMillionYears);
     ui.ReadonlyInt("Number of time steps", &numSteps);
-    ui.ReadonlyFloat("Camera distance, kpc", &orbit.GetDistance());
     ui.ReadonlyFloat("Build tree time, ms", &solverBarneshut->GetBuildTreeTime(), 1);
     ui.ReadonlyFloat("Solving time, ms", &solverBarneshut->GetSolvingTime(), 1);
-    ui.Separator();
+    ui.Group("Rendering");
+    ui.ReadonlyFloat("Camera distance, kpc", &orbit.GetDistance());
     ui.Checkbox("Render points", &renderParams.renderPoints, "m");
     ui.Checkbox("Render Barnes-Hut tree", &renderParams.renderTree, "t");
+    ui.Checkbox("Plot potential", &renderParams.plotFunctions);
     ui.SliderFloat("Brightness", &renderParams.brightness, 0.05f, 10.0f, 0.01f);
+    ui.SliderFloat("Particles size scale", &renderParams.particlesSizeScale, 0.01f, 10.0f, 0.01f);
+    ui.Group("Model");
+    ui.SliderFloat("Mass", &model.mass, 0.1f, 10000.0f, 1.0f);
+    ui.SliderFloat("Disk mass ratio", &model.diskMassRatio, 0.0f, 1.0f, 0.01f);
+    ui.SliderUint("Disk particles", &model.diskParticlesCount);
+    ui.SliderUint("Bulge particles", &model.bulgeParticlesCount);
+    ui.SliderFloat("Disk radius", &model.diskRadius, 0.01f, 10000.0f);
+    ui.SliderFloat("Bulge radius", &model.bulgeRadius, 0.01f, 10000.0f);
+    ui.SliderFloat("Halo radius", &model.haloRadius, 0.01f, 10000.0f);
+    ui.SliderFloat("Disk thickness", &model.diskThickness, 0.0f, 100.0f);
+    ui.Checkbox("Dark matter", &simulationParams.darkMatter, "d");
+    ui.Button("Apply", [](void*) 
+    {
+    });
+    ui.Button("Reset", [](void*) 
+    {
+    });
 
+    InitializeUniverse();
+
+    glutMainLoop();
+
+    return 0;
+}
+
+void Application::InitializeUniverse()
+{
     solver->Inititalize(deltaTime);
     solver->SolveForces();
+
     for (auto& galaxy : universe->GetGalaxies())
     {
         galaxy.SetRadialVelocitiesFromForce();
     }
-    std::thread solverThread([this]() 
+
+    solverThread = std::thread([this]() 
     {     
         while (true)
         {
@@ -176,10 +189,6 @@ int Application::Run(int argc, char **argv)
             ++numSteps;
         }
     });
-
-    glutMainLoop();
-
-    return 0;
 }
 
 static void DrawBarnesHutTree(const BarnesHutTree& node)
@@ -208,6 +217,8 @@ static void DrawBarnesHutTree(const BarnesHutTree& node)
 
 void Application::OnDraw()
 {
+    ++frameCounter;
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
@@ -225,7 +236,7 @@ void Application::OnDraw()
     if (renderParams.renderPoints)
     {
         glBegin(GL_POINTS);
-        glColor3f(renderParams.brightness, renderParams.brightness, renderParams.brightness);
+        //glColor3f(renderParams.brightness, renderParams.brightness, renderParams.brightness);
         for (auto& galaxy : universe->GetGalaxies())
         {
             for (auto& particle : galaxy.GetParticles())
@@ -265,7 +276,7 @@ void Application::OnDraw()
                         continue;
                     }
 
-                    float s = 0.5f * particle.size;
+                    float s = 0.5f * particle.size * renderParams.particlesSizeScale;
 
                     float3 p1 = particle.position - v1 * s - v2 * s;
                     float3 p2 = particle.position - v1 * s + v2 * s;
@@ -311,40 +322,57 @@ void Application::OnDraw()
 
     glPopMatrix();
 
-    for (auto& galaxy : universe->GetGalaxies())
+    if (renderParams.plotFunctions)
     {
-        galaxy.GetHalo().PlotPotential();
+        for (auto& galaxy : universe->GetGalaxies())
+        {
+            galaxy.GetHalo().PlotPotential();
+        }
     }
 
     ui.Draw();
 
     glutSwapBuffers();
+}
 
-    static uint32_t frames = 0;
+void Application::OnIdle()
+{
     static auto lastTime = std::chrono::high_resolution_clock::now();
     static float fpsTimer = 0.0f;
+    static float frameTimer = 0.0f;
+
     auto now = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float>(now - lastTime).count();
     lastTime = now;
-    fpsTimer += time;
-    frames++;
 
-    simulationTimeMillionYears = simulationTime * cMillionYearsInTimeUnit;
+    frameTimer += time;
+    fpsTimer += time;
+
+    if (frameTimer > cFrameTime)
+    {
+        glutPostRedisplay();
+        frameTimer -= cFrameTime;
+    }
 
     if (fpsTimer >= 1.0f)
     {
-        lastFps = frames * (1.0f / fpsTimer);
-        frames = 0;
+        lastFps = frameCounter * (1.0f / fpsTimer);
+        frameCounter = 0;
         fpsTimer = 0.0f;
     }
 
+    simulationTimeMillionYears = simulationTime * cMillionYearsPerTimeUnit;
+
     orbit.Update(time);
 
-    glutPostRedisplay();
-
-    static int imageId = 0;
-    /*if (started && saveToFiles)
-        makeScreenShot(imageId++);*/
+    if (inputState.brightnessUp)
+    {
+        renderParams.brightness = std::min(10.0f, renderParams.brightness + time);
+    }
+    if (inputState.brightnessDown)
+    {
+        renderParams.brightness = std::max(0.01f, renderParams.brightness - time);
+    }
 }
 
 void Application::OnResize(int width, int height)
@@ -361,23 +389,6 @@ void Application::OnResize(int width, int height)
     ui.OnWindowSize(width, height);
 }
 
-void Application::OnIdle()
-{
-    if (started)
-    {
-        //solver->Solve(delta_time, *universe);
-    }
-
-    if (inputState.brightnessUp)
-    {
-        renderParams.brightness = std::min(10.0f, renderParams.brightness * 1.1f);
-    }
-    if (inputState.brightnessDown)
-    {
-        renderParams.brightness = std::max(0.01f, renderParams.brightness / 1.1f);
-    }
-}
-
 void Application::OnKeyboard(unsigned char key, int x, int y)
 {
     if (ui.OnKeyboard(key, x, y))
@@ -385,47 +396,28 @@ void Application::OnKeyboard(unsigned char key, int x, int y)
         return;
     }
 
-    if (key == 't')
-    {
-        renderParams.renderTree = !renderParams.renderTree;
-
-        //ScreenShoter::GetScreenshot({ 0, 0, width, height }).SaveTga("Screenshot.tga");
-    }
     if (key == ']')
     {
         deltaTime *= 1.2f;
-        deltaTimeYears = deltaTime * cMillionYearsInTimeUnit * 1e6;
+        deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6;
     }
     if (key == '[')
     {
         deltaTime *= 0.8f;
-        deltaTimeYears = deltaTime * cMillionYearsInTimeUnit * 1e6;
-    }
-    if (key == ' ') started = false;
-    if (key == 13)
-    {
-        if (!started) started = true;
+        deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6;
     }
 
-    if (key == 'u') curLayer++;
-
-    for (auto& mapping : inputMappings)
+    if (inputMappings.count(key))
     {
-        if (mapping.first == key)
-        {
-            *mapping.second = true;
-        }
+        *inputMappings[key] = true;
     }
 }
 
 void Application::OnKeyboardUp(unsigned char key, int x, int y)
 {
-    for (auto& mapping : inputMappings)
+    if (inputMappings.count(key))
     {
-        if (mapping.first == key)
-        {
-            *mapping.second = false;
-        }
+        *inputMappings[key] = false;
     }
 }
 

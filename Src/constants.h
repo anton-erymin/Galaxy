@@ -1,18 +1,16 @@
 #pragma once
 
-// Константы
+constexpr uint32_t cWindowWidth = 1400;
+constexpr uint32_t cWindowHeight = 800;
 
-#define		GLX_RENDER_GALO			1
-#define		GLX_RENDER_DISK			2
-#define		GLX_RENDER_TREE			4
+constexpr char* cWindowCaption = "Galaxy Model 0.1";
 
-#define		GLX_RENDER_ALL			7
-
-/* Единицы измерения:
-длина - килопарсек
-масса - 10^10 солнечных масс
-время - 4.7 млн. лет
-Гравитационная постоянная в этих единницах G = 1
+/* 
+Measure units:
+Length - kiloparsec
+Mass - 10^10 solar masses
+Time - 4.7 million years
+Gravitational constant in these units is 1.
 */
 
 constexpr double cG = 6.67408e-11;                // m^3 / (kg * sec^2)
@@ -22,6 +20,9 @@ constexpr double cSolarMass = 1.9885e+30;         // kg
 constexpr double cMassUnit = 1e+10 * cSolarMass;  // kg
 
 constexpr float cSoftFactor = 0.05f;
+
+constexpr float cRenderFps = 30;
+constexpr float cFrameTime = 1.0f / cRenderFps;
 
 // Параметры по умолчанию для стандартной модели
 
