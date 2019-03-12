@@ -321,7 +321,7 @@ void Application::OnDraw()
     {
         for (auto& galaxy : universe->GetGalaxies())
         {
-            galaxy.GetHalo().PlotPotential();
+            galaxy->GetHalo().PlotPotential();
         }
     }
 

@@ -126,7 +126,7 @@ void Galaxy::Create()
     {
         Particle particle = i < numDusts ? CreateDust() : CreateStar();
         particle.SetMass(diskParticleMass);
-        float3 cylindrical = RandomUniformCylindrical(0.0f, parameters.diskRadius, parameters.diskThickness);
+        float3 cylindrical = RandomUniformCylindrical(parameters.bulgeRadius, parameters.diskRadius, parameters.diskThickness);
         float r = SampleDistribution(0.0f, 1.0f, plummer.GetDensity(0.0f), [&plummer](float x) { return plummer.GetDensity(x); }) / 1.0f;
         cylindrical.m_x = r * parameters.diskRadius;
         float3 relativePos = CylindricalToCartesian(cylindrical);
@@ -212,29 +212,29 @@ Universe::Universe(float size)
 
 Galaxy& Universe::CreateGalaxy()
 {
-    Galaxy galaxy;
+    std::unique_ptr<Galaxy> galaxy = std::make_unique<Galaxy>();
     AddGalaxy(galaxy);
-    return galaxies.back();
+    return *galaxies.back();
 }
 
 Galaxy& Universe::CreateGalaxy(const float3& position, const GalaxyParameters& parameters = {})
 {
-    Galaxy galaxy(position, parameters);
+    std::unique_ptr<Galaxy> galaxy = std::make_unique<Galaxy>(position, parameters);
     AddGalaxy(galaxy);
-    return galaxies.back();
+    return *galaxies.back();
 }
 
-void Universe::AddGalaxy(Galaxy& galaxy)
+void Universe::AddGalaxy(std::unique_ptr<Galaxy>& galaxy)
 {
-    position.reserve(position.size() + galaxy.GetParticlesCount());
-    velocity.reserve(position.size() + galaxy.GetParticlesCount());
-    acceleration.reserve(position.size() + galaxy.GetParticlesCount());
-    force.reserve(position.size() + galaxy.GetParticlesCount());
-    inverseMass.reserve(position.size() + galaxy.GetParticlesCount());
+    position.reserve(position.size() + galaxy->GetParticlesCount());
+    velocity.reserve(position.size() + galaxy->GetParticlesCount());
+    acceleration.reserve(position.size() + galaxy->GetParticlesCount());
+    force.reserve(position.size() + galaxy->GetParticlesCount());
+    inverseMass.reserve(position.size() + galaxy->GetParticlesCount());
 
-    particles.reserve(position.size() + galaxy.GetParticlesCount());
+    particles.reserve(position.size() + galaxy->GetParticlesCount());
 
-    for (const auto& particle : galaxy.GetParticles())
+    for (const auto& particle : galaxy->GetParticles())
     {
         position.push_back(particle.position);
         velocity.push_back(particle.linearVelocity);
@@ -265,7 +265,7 @@ void Universe::SetRadialVelocitiesFromForce()
                     //float d = 0.1 * v.norm();
                     //v += lpVec3(d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f));
 
-        velocity[i] = {0,0,0};
+        velocity[i] = v;//{0,0,0};
 
     }
 }

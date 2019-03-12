@@ -17,7 +17,7 @@ void BarnesHutTree::Reset()
     isBusy = false;
 }
 
-void BarnesHutTree::Insert(const float3 &position, float mass, uint32_t level)
+void BarnesHutTree::Insert(const float3 &position, float bodyMass, uint32_t level)
 {
     if (!Contains(position))
     {
@@ -36,7 +36,7 @@ void BarnesHutTree::Insert(const float3 &position, float mass, uint32_t level)
         {
             // И пустой, то вставляем в него частицу
             center = position;
-            this->mass = mass;
+            this->mass = bodyMass;
             isBusy = true;
             return;
         }
@@ -76,7 +76,7 @@ void BarnesHutTree::Insert(const float3 &position, float mass, uint32_t level)
             {
                 if (children[i]->Contains(center))
                 {
-                    children[i]->Insert(center, this->mass, level + 1);
+                    children[i]->Insert(center, mass, level + 1);
                     break;
                 }
             }
@@ -86,37 +86,41 @@ void BarnesHutTree::Insert(const float3 &position, float mass, uint32_t level)
             {
                 if (children[i]->Contains(position))
                 {
-                    children[i]->Insert(position, mass, level + 1);
+                    children[i]->Insert(position, bodyMass, level + 1);
                     break;
                 }
             }
 
-            float totalMass = mass + this->mass;
-            center = (position * mass + center * this->mass) * (1.0f / totalMass);
-            this->mass = totalMass;            
+            float totalMass = bodyMass + mass;
+            center.scale(mass);
+            center.addScaled(position, bodyMass);
+            center *= (1.0f / totalMass);
+            mass = totalMass; 
         }
     }
     else
     {
         // Если это внутренний узел
 
-        float totalMass = mass + this->mass;
-        center = (position * mass + center * this->mass) * (1.0f / totalMass);
-        this->mass = totalMass;
+        float totalMass = bodyMass + mass;
+        center.scale(mass);
+        center.addScaled(position, bodyMass);
+        center *= (1.0f / totalMass);
+        mass = totalMass;
 
         // Рекурсивно вставляем в нужный потомок частицу
         for (int i = 0; i < 4; i++)
         {
             if (children[i]->Contains(position))
             {
-                children[i]->Insert(position, mass, level + 1);
+                children[i]->Insert(position, bodyMass, level + 1);
                 break;
             }
         }
     }
 }
 
-bool BarnesHutTree::Contains(const float3 &position) const
+inline bool BarnesHutTree::Contains(const float3 &position) const
 {
     if (position.m_x >= point.m_x && position.m_x <= oppositePoint.m_x &&
         position.m_y >= point.m_y && position.m_y <= oppositePoint.m_y)

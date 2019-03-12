@@ -48,7 +48,7 @@ void BruteforceSolver::Solve(float time)
 {
     // Bruteforce
 
-    size_t ig = 0;
+    /*size_t ig = 0;
     for (auto &galaxy1 : universe.GetGalaxies()) 
     {
         size_t ip = 0;
@@ -57,22 +57,22 @@ void BruteforceSolver::Solve(float time)
         {
             for (size_t jp = ip + 1; jp < galaxy1.GetParticles().size(); ++jp) 
             {
-                /*Particle& particle2 = galaxy1.GetParticles()[jp];
+                Particle& particle2 = galaxy1.GetParticles()[jp];
                 lpVec3 force = GravityAcceleration(particle2.position - particle1.position,  );
                 lpVec3 force = GravityAcceleration(particle2.position - particle1.position,  );
 
                 particle1.acceleration += force;
-                particle2.acceleration -= force;*/
+                particle2.acceleration -= force;
             }
 
-            /*for (size_t gj = ig + 1; gj < galaxies.size(); ++gj) {
+            for (size_t gj = ig + 1; gj < galaxies.size(); ++gj) {
                 for (auto &p2 : galaxies[gj].particles()) {
                     auto force = p1.caclGravityForce(p2);
 
                     p1.m_forceAccum += force;
                     p2.m_forceAccum -= force;
                 }
-            }*/
+            }
             ++ip;
         }
         ++ig;
@@ -82,24 +82,24 @@ void BruteforceSolver::Solve(float time)
     {
         for (auto& particle : galaxy.GetParticles())
         {
-            //IntegrateMotionEquation(particle, time);
+            IntegrateMotionEquation(particle, time);
         }
-    }
+    }*/
 }
 
 static inline void ComputeForce(const float3& position, float3& acceleration, float3& force, const Galaxy& galaxy, const BarnesHutTree& tree)
 {
     acceleration.clear();
-    acceleration = tree.ComputeAcceleration(position, cSoftFactor);
-
     force.clear();
+
+    acceleration = tree.ComputeAcceleration(position, cSoftFactor);
 
     if (Application::GetInstance().GetSimulationParamaters().darkMatter)
     {    
         float darkMatterForce = galaxy.GetHalo().GetForce(position.norm());
         float3 forceDir = position;
         forceDir.normalize();
-        //force += forceDir * -darkMatterForce;
+        force += forceDir * -darkMatterForce;
     }
 }
 
@@ -122,8 +122,15 @@ void BarnesHutCPUSolver::Solve(float time)
 
         if (particle.movable)
         {
-            ComputeForce(universe.position[i], universe.acceleration[i], universe.force[i], *particle.galaxy, *barnesHutTree);
-            IntegrateMotionEquation(time, universe.position[i], universe.velocity[i], universe.acceleration[i], universe.force[i], universe.inverseMass[i]);
+            auto position = universe.position[i];
+            auto velocity = universe.velocity[i];
+            auto acceleration = universe.acceleration[i];
+            auto force = universe.force[i];
+            auto inverseMass = universe.inverseMass[i];
+            ComputeForce(position, acceleration, force, *particle.galaxy, *barnesHutTree);
+            IntegrateMotionEquation(time, position, velocity, acceleration, force, inverseMass);
+            universe.position[i] = position;
+            universe.velocity[i] = velocity;
         }
 
     }, static_cast<uint32_t>(universe.GetParticlesCount()), 
@@ -187,7 +194,7 @@ void BarnesHutCPUSolver::BuildTree()
 
         for (size_t i = 0; i < universe.GetParticlesCount(); ++i)
         {
-            barnesHutTree->Insert(universe.position[i], universe.GetParticles()[i]->mass);
+            barnesHutTree->Insert(universe.position[i], universe.particles[i]->mass);
         }
     }
 }

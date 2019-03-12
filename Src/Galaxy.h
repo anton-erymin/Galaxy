@@ -93,7 +93,7 @@ public:
     void SetRadialVelocitiesFromForce();
 
     float GetSize() const { return size; }
-    std::vector<Galaxy>& GetGalaxies() { return galaxies; }
+    std::vector<std::unique_ptr<Galaxy>>& GetGalaxies() { return galaxies; }
     const std::vector<const Particle*> GetParticles() const { return particles; }
     const std::unordered_map<const Image*, std::vector<size_t>> GetParticlesByImage() const { return imageToParticles; }
 
@@ -103,11 +103,11 @@ public:
     }
 
 private:
-    void AddGalaxy(Galaxy& galaxy);
+    void AddGalaxy(std::unique_ptr<Galaxy>& galaxy);
 
     float size;
 
-    std::vector<Galaxy> galaxies;
+    std::vector<std::unique_ptr<Galaxy>> galaxies;
 
 public:
     std::vector<float3> position;
@@ -116,8 +116,8 @@ public:
     std::vector<float3> force;
     std::vector<float> inverseMass;
 
-private:
     std::vector<const Particle*> particles;
+private:
 
     std::unordered_map<const Image*, std::vector<size_t>> imageToParticles;
 };

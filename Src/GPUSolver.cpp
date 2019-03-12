@@ -49,34 +49,34 @@ BarnesHutGPUSolver::BarnesHutGPUSolver(Universe& universe)
 
 void BarnesHutGPUSolver::Solve(float time)
 {
-    BuildTree();
+    //BuildTree();
 
-    Timer<std::milli> timer(&Application::GetInstance().GetTimings().solvingTimeMsecs);
-    // TODO: All galaxies
-    ThreadPool().Dispatch([&](uint32_t i) 
-    { 
-        assert(i >= 0 && i < universe.GetGalaxies().front().GetParticles().size());
+    //Timer<std::milli> timer(&Application::GetInstance().GetTimings().solvingTimeMsecs);
+    //// TODO: All galaxies
+    //ThreadPool().Dispatch([&](uint32_t i) 
+    //{ 
+    //    assert(i >= 0 && i < universe.GetGalaxies().front().GetParticles().size());
 
-        Particle& particle = universe.GetGalaxies().front().GetParticles()[i];
+    //    Particle& particle = universe.GetGalaxies().front().GetParticles()[i];
 
-        if (particle.movable)
-        {
-            ComputeForce(particle, universe.GetGalaxies().front(), *barnesHutTree);
-        }
+    //    if (particle.movable)
+    //    {
+    //        ComputeForce(particle, universe.GetGalaxies().front(), *barnesHutTree);
+    //    }
 
-    }, static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size()), 
-        static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size() / ThreadPool::GetThreadCount()));
+    //}, static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size()), 
+    //    static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size() / ThreadPool::GetThreadCount()));
 
-    cl.EnqueueWriteBuffer(bufParticles, 0, bufParticles->GetSize(), universe.GetGalaxies().front().GetParticles().data());
-    kernelIntegrate->SetArg(cl_float(time), 1);
-    cl.EnqueueKernel(kernelIntegrate, 1, universe.GetGalaxies().front().GetParticles().size(), 0, 0, 256, 0, 0);
-    cl.WaitIdle();
-    cl.EnqueueReadBuffer(bufParticles, 0, bufParticles->GetSize(), universe.GetGalaxies().front().GetParticles().data());
+    //cl.EnqueueWriteBuffer(bufParticles, 0, bufParticles->GetSize(), universe.GetGalaxies().front().GetParticles().data());
+    //kernelIntegrate->SetArg(cl_float(time), 1);
+    //cl.EnqueueKernel(kernelIntegrate, 1, universe.GetGalaxies().front().GetParticles().size(), 0, 0, 256, 0, 0);
+    //cl.WaitIdle();
+    //cl.EnqueueReadBuffer(bufParticles, 0, bufParticles->GetSize(), universe.GetGalaxies().front().GetParticles().data());
 }
 
 void BarnesHutGPUSolver::SolveForces()
 {
-    BuildTree();
+    /*BuildTree();
     ThreadPool().Dispatch([&](uint32_t i) 
     { 
         assert(i >= 0 && i < universe.GetGalaxies().front().GetParticles().size());
@@ -91,7 +91,7 @@ void BarnesHutGPUSolver::SolveForces()
         }
 
     }, static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size()), 
-        static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size() / ThreadPool::GetThreadCount()));
+        static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size() / ThreadPool::GetThreadCount()));*/
 }
 
 void BarnesHutGPUSolver::Inititalize(float time)
@@ -102,37 +102,37 @@ void BarnesHutGPUSolver::Inititalize(float time)
 
     float half = 0.5f * time;
 
-    ThreadPool().Dispatch([&](uint32_t i) 
-    { 
-        assert(i >= 0 && i < universe.GetGalaxies().front().GetParticles().size());
+    //ThreadPool().Dispatch([&](uint32_t i) 
+    //{ 
+    //    assert(i >= 0 && i < universe.GetGalaxies().front().GetParticles().size());
 
-        Particle& particle = universe.GetGalaxies().front().GetParticles()[i];
-        if (particle.movable)
-        {
-            ComputeForce(particle, universe.GetGalaxies().front(), *barnesHutTree);
-            particle.acceleration.addScaled(particle.force, particle.inverseMass);
-            // Half step by velocity
-            particle.linearVelocity += particle.acceleration * half;
-            // Full step by position using half stepped velocity
-            particle.position += particle.linearVelocity * time;
-        }
+    //    Particle& particle = universe.GetGalaxies().front().GetParticles()[i];
+    //    if (particle.movable)
+    //    {
+    //        ComputeForce(particle, universe.GetGalaxies().front(), *barnesHutTree);
+    //        particle.acceleration.addScaled(particle.force, particle.inverseMass);
+    //        // Half step by velocity
+    //        particle.linearVelocity += particle.acceleration * half;
+    //        // Full step by position using half stepped velocity
+    //        particle.position += particle.linearVelocity * time;
+    //    }
 
-    }, static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size()), 
-        static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size() / ThreadPool::GetThreadCount()));
+    //}, static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size()), 
+    //    static_cast<uint32_t>(universe.GetGalaxies().front().GetParticles().size() / ThreadPool::GetThreadCount()));
 }
 
 void BarnesHutGPUSolver::BuildTree()
 {
-    std::lock_guard<std::mutex> lock(mu);
-    {
-        Timer<std::milli> timer(&Application::GetInstance().GetTimings().buildTreeTimeMsecs);
-        barnesHutTree->Reset();
-        for (auto& galaxy : universe.GetGalaxies())
-        {
-            for (const auto& particle : galaxy.GetParticles())
-            {
-                //barnesHutTree->Insert(particle);
-            }
-        }
-    }
+    //std::lock_guard<std::mutex> lock(mu);
+    //{
+    //    Timer<std::milli> timer(&Application::GetInstance().GetTimings().buildTreeTimeMsecs);
+    //    barnesHutTree->Reset();
+    //    for (auto& galaxy : universe.GetGalaxies())
+    //    {
+    //        for (const auto& particle : galaxy.GetParticles())
+    //        {
+    //            //barnesHutTree->Insert(particle);
+    //        }
+    //    }
+    //}
 }

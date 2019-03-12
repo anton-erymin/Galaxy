@@ -9,7 +9,7 @@ class BarnesHutTree
 public:
     BarnesHutTree(const float3 &point, float length);
 
-    void Insert(const float3 &position, float mass, uint32_t level = 0);
+    void Insert(const float3 &position, float bodyMass, uint32_t level = 0);
     float3 ComputeAcceleration(const float3 &position, float soft) const;
     void Reset();
 

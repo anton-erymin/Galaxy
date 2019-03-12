@@ -145,10 +145,13 @@ inline float SampleDistribution(float xmin, float xmax, float maxDistributionVal
     return x;
 }
 
-inline void IntegrateMotionEquation(float time, float3& position, float3& velocity, const float3& acceleration, const float3& force, float inverseMass)
+inline void IntegrateMotionEquation(float time, float3& position, float3& velocity, float3& acceleration, const float3& force, float inverseMass)
 {
     // Euler-Cromer
-    float3 a = acceleration + force * inverseMass;
+    /*float3 a = acceleration + force * inverseMass;
     velocity += acceleration * time;
-    position += velocity * time;
+    position += velocity * time;*/
+    acceleration.addScaled(force, inverseMass);
+    velocity.addScaled(acceleration, time);
+    position.addScaled(velocity, time);
 }
