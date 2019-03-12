@@ -2,6 +2,7 @@
 #include "Constants.h"
 #include "Image.h"
 #include "Solver.h"
+#include "GPUSolver.h"
 #include "Threading.h"
 #include "BarnesHutTree.h"
 
@@ -84,8 +85,6 @@ int Application::Run(int argc, char **argv)
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glBlendFunc(GL_ONE, GL_ONE);
 
-    Reset();
-
     GetImageLoader().GenTextureIds();
 
     inputMappings['a'] = &inputState.brightnessUp;
@@ -120,7 +119,6 @@ int Application::Run(int argc, char **argv)
         }
         else
         {
-            //Application::GetInstance().OnResize(cWindowWidth, cWindowHeight);
             glutReshapeWindow(cWindowWidth, cWindowHeight);
         }
         fullscreen = !fullscreen;
@@ -147,6 +145,8 @@ int Application::Run(int argc, char **argv)
         Application::GetInstance().Reset();
     }, "F5");
 
+    Reset();
+
     glutMainLoop();
 
     return 0;
@@ -166,68 +166,25 @@ void Application::Reset()
     totalParticlesCount = static_cast<int32_t>(universe->GetParticlesCount());
 
     solverBruteforce = std::make_unique<BruteforceSolver>(*universe);
-    solverBarneshut = std::make_unique<BarnesHutSolver>(*universe);
+    solverBarneshut = std::make_unique<BarnesHutCPUSolver>(*universe);
+    solverBarneshutGPU = std::make_unique<BarnesHutGPUSolver>(*universe);
 
-    solver = &*solverBarneshut;
+    currentSolver = &*solverBarneshut;
 
-    solver->Inititalize(deltaTime);
-    solver->SolveForces();
+    currentSolver->Inititalize(deltaTime);
+    currentSolver->SolveForces();
 
-    for (auto& galaxy : universe->GetGalaxies())
-    {
-        galaxy.SetRadialVelocitiesFromForce();
-    }
+    universe->SetRadialVelocitiesFromForce();
 
     solverThread = std::thread([this]() 
     {     
         while (started)
         {
-            solver->Solve(deltaTime);
+            currentSolver->Solve(deltaTime);
             simulationTime += deltaTime;
             ++numSteps;
         }
     });
-
-    CreateProgramFromFile("Kernels/Integration.cl");
-    cl::KernelPtr kernel = programs["Kernels/Integration.cl"]->GetKernel("Integrate");
-
-    const size_t N = 100000;
-    std::vector<float> a(N), b(N);
-
-    for (size_t i = 0; i < N; ++i)
-    {
-        a[i] = i;
-        b[i] = i;
-    }
-
-    cl::BufferPtr bufferA = cl.CreateBuffer(N * sizeof(float));
-    cl::BufferPtr bufferB = cl.CreateBuffer(N * sizeof(float));
-
-    cl.EnqueueWriteBuffer(bufferA, 0, bufferA->GetSize(), a.data());
-    cl.EnqueueWriteBuffer(bufferB, 0, bufferB->GetSize(), b.data());
-
-    kernel->SetArg(&*bufferA, 0);
-    kernel->SetArg(&*bufferB, 1);
-    
-    cl::EventPtr event;
-
-    cl.EnqueueKernel(kernel, 1, N, 0, 0, 1, 0, 0, {}, true, event);
-    cl.EnqueueReadBuffer(bufferA, 0, bufferA->GetSize(), a.data(), true);//, {event});
-
-}
-
-void Application::CreateProgramFromFile(const char* filename)
-{
-    std::ifstream file(filename);
-    if (!file)
-    {
-        throw std::runtime_error("Failed to open file " + std::string(filename));
-    }
-
-    std::string source;
-    source = std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-    
-    programs[filename] = cl.CreateProgram(source);
 }
 
 static void DrawBarnesHutTree(const BarnesHutTree& node)
@@ -272,21 +229,21 @@ void Application::OnDraw()
     float3 v1 = float3(modelview[0], modelview[4], modelview[8]);
     float3 v2 = float3(modelview[1], modelview[5], modelview[9]);
 
+    const auto particles = universe->GetParticles();
+
     if (renderParams.renderPoints)
     {
         glBegin(GL_POINTS);
-        //glColor3f(renderParams.brightness, renderParams.brightness, renderParams.brightness);
-        for (auto& galaxy : universe->GetGalaxies())
+        for (size_t i = 0; i < universe->GetParticlesCount(); i++)
         {
-            for (auto& particle : galaxy.GetParticles())
+            const auto* particle = particles[i];
+            if (!particle->active)
             {
-                if (!particle.active)
-                {
-                    continue;
-                }
-                glColor3f(particle.color.m_x, particle.color.m_y, particle.color.m_z);
-                glVertex3f(particle.position.m_x, particle.position.m_y, particle.position.m_z);
+                continue;
             }
+            glColor3f(particle->color.m_x, particle->color.m_y, particle->color.m_z);
+            float3 pos = universe->position[i];
+            glVertex3f(pos.m_x, pos.m_y, pos.m_z);
         }
         glEnd();
     }
@@ -297,56 +254,55 @@ void Application::OnDraw()
         glDisable(GL_DEPTH_TEST);
         //glDisable(GL_ALPHA_TEST);
 
-        for (auto& galaxy : universe->GetGalaxies())
+        for (auto& particlesByImage : universe->GetParticlesByImage())
         {
-            for (auto& particlesByImage : galaxy.GetParticlesByImage())
+            assert(particlesByImage.first);
+            glBindTexture(GL_TEXTURE_2D, particlesByImage.first->GetTextureId());
+
+            glBegin(GL_QUADS);
+
+            for (const auto i : particlesByImage.second)
             {
-                assert(particlesByImage.first);
-                glBindTexture(GL_TEXTURE_2D, particlesByImage.first->GetTextureId());
-
-                glBegin(GL_QUADS);
-
-                for (const auto* p : particlesByImage.second)
+                assert(i < universe->GetParticlesCount());
+                const Particle& particle = *particles[i];
+                if (!particle.active)
                 {
-                    assert(p);
-                    const Particle& particle = *p;
-                    if (!particle.active)
-                    {
-                        continue;
-                    }
-
-                    float s = 0.5f * particle.size * renderParams.particlesSizeScale;
-
-                    float3 p1 = particle.position - v1 * s - v2 * s;
-                    float3 p2 = particle.position - v1 * s + v2 * s;
-                    float3 p3 = particle.position + v1 * s + v2 * s;
-                    float3 p4 = particle.position + v1 * s - v2 * s;
-
-                    float magnitude = particle.magnitude * renderParams.brightness;
-                    // Квадрат расстояние до частицы от наблюдателя
-                    //float dist = (cameraX - pos.m_x) * (cameraX - pos.m_x) + (cameraY - pos.m_y) * (cameraY - pos.m_y) + (cameraZ - pos.m_z) * (cameraZ - pos.m_z);
-                    ////dist = sqrt(dist);
-                    //if (dist > 5.0f) dist = 5.0f;
-                    //mag /= (dist / 2);
-
-                    glColor3f(particle.color.m_x * magnitude, particle.color.m_y * magnitude, particle.color.m_z * magnitude);
-
-                    glTexCoord2f(0.0f, 1.0f); glVertex3f(p1.m_x, p1.m_y, p1.m_z);
-                    glTexCoord2f(0.0f, 0.0f); glVertex3f(p2.m_x, p2.m_y, p2.m_z);
-                    glTexCoord2f(1.0f, 0.0f); glVertex3f(p3.m_x, p3.m_y, p3.m_z);
-                    glTexCoord2f(1.0f, 1.0f); glVertex3f(p4.m_x, p4.m_y, p4.m_z);
-
-                    if (particle.doubleDrawing)
-                    {
-                        glTexCoord2f(0.0f, 1.0f); glVertex3fv(&p1.m_x);
-                        glTexCoord2f(0.0f, 0.0f); glVertex3fv(&p2.m_x);
-                        glTexCoord2f(1.0f, 0.0f); glVertex3fv(&p3.m_x);
-                        glTexCoord2f(1.0f, 1.0f); glVertex3fv(&p4.m_x);
-                    }
+                    continue;
                 }
 
-                glEnd();
+                float s = 0.5f * particle.size * renderParams.particlesSizeScale;
+
+                float3 pos = universe->position[i];
+
+                float3 p1 = pos - v1 * s - v2 * s;
+                float3 p2 = pos - v1 * s + v2 * s;
+                float3 p3 = pos + v1 * s + v2 * s;
+                float3 p4 = pos + v1 * s - v2 * s;
+
+                float magnitude = particle.magnitude * renderParams.brightness;
+                // Квадрат расстояние до частицы от наблюдателя
+                //float dist = (cameraX - pos.m_x) * (cameraX - pos.m_x) + (cameraY - pos.m_y) * (cameraY - pos.m_y) + (cameraZ - pos.m_z) * (cameraZ - pos.m_z);
+                ////dist = sqrt(dist);
+                //if (dist > 5.0f) dist = 5.0f;
+                //mag /= (dist / 2);
+
+                glColor3f(particle.color.m_x * magnitude, particle.color.m_y * magnitude, particle.color.m_z * magnitude);
+
+                glTexCoord2f(0.0f, 1.0f); glVertex3f(p1.m_x, p1.m_y, p1.m_z);
+                glTexCoord2f(0.0f, 0.0f); glVertex3f(p2.m_x, p2.m_y, p2.m_z);
+                glTexCoord2f(1.0f, 0.0f); glVertex3f(p3.m_x, p3.m_y, p3.m_z);
+                glTexCoord2f(1.0f, 1.0f); glVertex3f(p4.m_x, p4.m_y, p4.m_z);
+
+                if (particle.doubleDrawing)
+                {
+                    glTexCoord2f(0.0f, 1.0f); glVertex3fv(&p1.m_x);
+                    glTexCoord2f(0.0f, 0.0f); glVertex3fv(&p2.m_x);
+                    glTexCoord2f(1.0f, 0.0f); glVertex3fv(&p3.m_x);
+                    glTexCoord2f(1.0f, 1.0f); glVertex3fv(&p4.m_x);
+                }
             }
+
+            glEnd();
         }
 
         glDisable(GL_TEXTURE_2D);

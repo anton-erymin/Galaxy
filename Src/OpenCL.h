@@ -26,6 +26,8 @@ enum class MemoryType
     ReadWrite = 2
 };
 
+void ClCheckStatus(cl_int status, const char* message = nullptr);
+
 class OpenCL
 {
 public:
@@ -104,6 +106,8 @@ public:
     const std::string& GetName() const { return name; }
     Program& GetProgram() { return program; }
 
+    template <typename T>
+    void SetArg(T value, uint32_t arg = 0);
     void SetArg(Buffer* buffer, uint32_t arg = 0);
 
 private:
@@ -169,5 +173,12 @@ private:
     cl_event event = nullptr;
     bool isUserEvent = true;
 };
+
+template<typename T>
+void Kernel::SetArg(T value, uint32_t arg)
+{
+    T val = value;
+    ClCheckStatus(clSetKernelArg(kernel, arg, sizeof(T), &val), "Failed to set kernel arg");
+}
 
 }

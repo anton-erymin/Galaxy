@@ -10,6 +10,7 @@
 #include "Constants.h"
 
 struct Image;
+class Galaxy;
 
 struct Particle
 {
@@ -39,6 +40,8 @@ struct Particle
 
     int	userData = 0;
 
+    Galaxy* galaxy = nullptr;
+
     void SetMass(float mass);
 };
 
@@ -62,12 +65,11 @@ public:
 
     void Update(float dt);
 
+    const float3& GetPosition() const { return position; }
     std::vector<Particle>& GetParticles() { return particles; }
-    const std::unordered_map<const Image*, std::vector<const Particle*>> GetParticlesByImage() const { return imageToParticles; }
     const SphericalModel& GetHalo() const { return halo; }
     size_t GetParticlesCount() const { return particles.size(); }
-
-    void SetRadialVelocitiesFromForce();
+    const GalaxyParameters& GetParameters() const { return parameters; }
 
 private:
     void Create();
@@ -76,7 +78,6 @@ private:
     GalaxyParameters parameters;
 
     std::vector<Particle> particles;
-    std::unordered_map<const Image*, std::vector<const Particle*>> imageToParticles;
 
     SphericalModel halo;
 };
@@ -89,15 +90,34 @@ public:
     Galaxy& CreateGalaxy();
     Galaxy& CreateGalaxy(const float3& position, const GalaxyParameters& parameters);
 
+    void SetRadialVelocitiesFromForce();
+
     float GetSize() const { return size; }
     std::vector<Galaxy>& GetGalaxies() { return galaxies; }
+    const std::vector<const Particle*> GetParticles() const { return particles; }
+    const std::unordered_map<const Image*, std::vector<size_t>> GetParticlesByImage() const { return imageToParticles; }
 
     size_t GetParticlesCount() const
     {
-        return std::accumulate(galaxies.begin(), galaxies.end(), 0ull, [](size_t sum, const Galaxy& galaxy) { return sum + galaxy.GetParticlesCount(); });
+        return particles.size();
     }
 
 private:
+    void AddGalaxy(Galaxy& galaxy);
+
     float size;
+
     std::vector<Galaxy> galaxies;
+
+public:
+    std::vector<float3> position;
+    std::vector<float3> velocity;
+    std::vector<float3> acceleration;
+    std::vector<float3> force;
+    std::vector<float> inverseMass;
+
+private:
+    std::vector<const Particle*> particles;
+
+    std::unordered_map<const Image*, std::vector<size_t>> imageToParticles;
 };

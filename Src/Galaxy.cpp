@@ -17,16 +17,6 @@ void Particle::SetMass(float mass)
     inverseMass = 1.0f / mass;
 }
 
-static void SortParticlesByImages(const std::vector<Particle>& particles, std::unordered_map<const Image*, std::vector<const Particle*>>& image_to_particles)
-{
-    image_to_particles.clear();
-    for (const auto& particle : particles)
-    {
-        assert(particle.image);
-        image_to_particles[particle.image].push_back(&particle);
-    }
-}
-
 static Particle CreateStar()
 {
     Particle particle;
@@ -101,26 +91,6 @@ Galaxy::Galaxy(const float3& position, const GalaxyParameters& parameters)
     , halo(0.0f, 2.0f * parameters.haloRadius, parameters.haloRadius)
 {
     Create();
-    SortParticlesByImages(particles, imageToParticles);
-}
-
-void Galaxy::SetRadialVelocitiesFromForce()
-{
-    for (size_t i = 1; i < particles.size(); ++i)
-    {
-        float3 relativePos = particles[i].position - position;
-        float3 v = {relativePos.m_y, -relativePos.m_x, 0.0f};
-        v.normalize();
-
-        //float radialFromHalo = RadialVelocity(halo.GetForce(relativePos.norm()), particles[i].mass, relativePos.norm());
-        float radial = RadialVelocity(particles[i].force.norm(), particles[i].mass, relativePos.norm());
-        v *= radial;// + radialFromHalo;
-        //float d = 0.1 * v.norm();
-        //v += lpVec3(d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f));
-
-        particles[i].linearVelocity = v;//{0,0,0};
-
-    }
 }
 
 void Galaxy::Create()
@@ -146,6 +116,7 @@ void Galaxy::Create()
         float r = SampleDistribution(0.0f, 1.0f, plummer.GetDensity(0.0f), [&plummer](float x) { return plummer.GetDensity(x); }) / 1.0f;
         spherical.m_x = r * parameters.bulgeRadius;
         particle.position = position + SphericalToCartesian(spherical);
+        particle.galaxy = this;
         particles.push_back(particle);
     }
 
@@ -160,6 +131,7 @@ void Galaxy::Create()
         cylindrical.m_x = r * parameters.diskRadius;
         float3 relativePos = CylindricalToCartesian(cylindrical);
         particle.position = position + relativePos;
+        particle.galaxy = this;
         particles.push_back(particle);
     }
 
@@ -241,13 +213,59 @@ Universe::Universe(float size)
 Galaxy& Universe::CreateGalaxy()
 {
     Galaxy galaxy;
-    galaxies.push_back(std::move(galaxy));
+    AddGalaxy(galaxy);
     return galaxies.back();
 }
 
 Galaxy& Universe::CreateGalaxy(const float3& position, const GalaxyParameters& parameters = {})
 {
     Galaxy galaxy(position, parameters);
-    galaxies.push_back(std::move(galaxy));
+    AddGalaxy(galaxy);
     return galaxies.back();
+}
+
+void Universe::AddGalaxy(Galaxy& galaxy)
+{
+    position.reserve(position.size() + galaxy.GetParticlesCount());
+    velocity.reserve(position.size() + galaxy.GetParticlesCount());
+    acceleration.reserve(position.size() + galaxy.GetParticlesCount());
+    force.reserve(position.size() + galaxy.GetParticlesCount());
+    inverseMass.reserve(position.size() + galaxy.GetParticlesCount());
+
+    particles.reserve(position.size() + galaxy.GetParticlesCount());
+
+    for (const auto& particle : galaxy.GetParticles())
+    {
+        position.push_back(particle.position);
+        velocity.push_back(particle.linearVelocity);
+        acceleration.push_back(particle.acceleration);
+        force.push_back(particle.force);
+        inverseMass.push_back(particle.inverseMass);
+
+        assert(particle.image);
+        imageToParticles[particle.image].push_back(position.size() - 1);
+
+        particles.push_back(&particle);
+    }
+
+    galaxies.push_back(std::move(galaxy));
+}
+
+void Universe::SetRadialVelocitiesFromForce()
+{
+    for (size_t i = 0; i < particles.size(); ++i)
+    {
+        float3 relativePos = position[i] - particles[i]->galaxy->GetPosition();
+        float3 v = {relativePos.m_y, -relativePos.m_x, 0.0f};
+        v.normalize();
+
+        //float radialFromHalo = RadialVelocity(halo.GetForce(relativePos.norm()), particles[i].mass, relativePos.norm());
+        float radial = RadialVelocity(force[i].norm(), particles[i]->mass, relativePos.norm());
+        v *= radial;// + radialFromHalo;
+                    //float d = 0.1 * v.norm();
+                    //v += lpVec3(d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f));
+
+        velocity[i] = {0,0,0};
+
+    }
 }

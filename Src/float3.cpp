@@ -12,14 +12,12 @@ float3::float3(float x, float y, float z)
 	m_z = z;
 }
 
-
 float3::float3(float s)
 {
 	m_x = s;
 	m_y = s;
 	m_z = s;
 }
-
 
 float3::float3(float *v)
 {
@@ -28,16 +26,12 @@ float3::float3(float *v)
 	m_z = v[2];
 }
 
-
-
 void float3::clear()
 {
 	m_x   = 0.0f;
 	m_y   = 0.0f;
 	m_z	  = 0.0f;
-	m_pad = 0.0f;
 }
-
 
 void float3::setTo(float x, float y, float z)
 {
@@ -46,7 +40,6 @@ void float3::setTo(float x, float y, float z)
 	m_z = z;
 }
 
-
 void float3::add(const float3& other)
 {
 	m_x += other.m_x;
@@ -54,12 +47,10 @@ void float3::add(const float3& other)
 	m_z += other.m_z;
 }
 
-
 float3 float3::addR(const float3& other) const
 {
 	return float3(m_x + other.m_x, m_y + other.m_y, m_z + other.m_z);
 }
-
 
 void float3::sub(const float3& other)
 {
@@ -68,12 +59,10 @@ void float3::sub(const float3& other)
 	m_z -= other.m_z;
 }
 
-
 float3 float3::subR(const float3& other) const
 {
 	return float3(m_x - other.m_x, m_y - other.m_y, m_z - other.m_z);
 }
-
 
 void float3::scale(float s)
 {
@@ -82,12 +71,10 @@ void float3::scale(float s)
 	m_z *= s;
 }
 
-
 float3 float3::scaleR(float s) const
 {
 	return float3(s * m_x, s * m_y, s * m_z);
 }
-
 
 void float3::addScaled(const float3& other, float s)
 {
@@ -96,19 +83,15 @@ void float3::addScaled(const float3& other, float s)
 	m_z += s * other.m_z;
 }
 
-
 float3 float3::addScaledR(const float3& other, float s) const
 {
 	return float3(m_x + s * other.m_x,	m_y + s * other.m_y, m_z + s * other.m_z);
 }
 
-
-
 float float3::dot(const float3& other)
 {
 	return m_x * other.m_x + m_y * other.m_y + m_z * other.m_z;
 }
-
 
 void float3::cross(const float3& other)
 {
@@ -120,15 +103,12 @@ void float3::cross(const float3& other)
 	m_z = nz;
 }
 
-
 float3 float3::crossR(const float3& other) const
 {
 	return float3(m_y * other.m_z - m_z * other.m_y, m_z * other.m_x - m_x * other.m_z, m_x * other.m_y - m_y * other.m_x);
 }
 
-
-
-float float3::norm()
+float float3::norm() const
 {
 	return sqrtf(m_x * m_x + m_y * m_y + m_z * m_z);
 }
@@ -138,7 +118,6 @@ float float3::normSq()
 {
 	return m_x * m_x + m_y * m_y + m_z * m_z;
 }
-
 
 float float3::normalize()
 {
@@ -154,26 +133,12 @@ float float3::normalize()
 	return norm;
 }
 
-
-float3 float3::operator+(const float3& other)
-{
-	return float3(m_x + other.m_x, m_y + other.m_y, m_z + other.m_z);
-}
-
-
 void float3::operator+=(const float3& other)
 {
 	m_x += other.m_x;
 	m_y += other.m_y;
 	m_z += other.m_z;
 }
-
-
-float3 float3::operator-(const float3& other)
-{
-	return float3(m_x - other.m_x, m_y - other.m_y, m_z - other.m_z);
-}
-
 
 void float3::operator -=(const float3& other)
 {
@@ -182,18 +147,10 @@ void float3::operator -=(const float3& other)
 	m_z -= other.m_z;
 }
 
-
-float float3::operator*(const float3& other)
-{
-	return m_x * other.m_x + m_y * other.m_y + m_z * other.m_z;
-}
-
-
-float3 float3::operator*(float s)
+float3 float3::operator*(float s) const
 {
 	return float3(s * m_x, s * m_y, s * m_z);
 }
-
 
 void float3::operator*=(float s)
 {
@@ -202,12 +159,10 @@ void float3::operator*=(float s)
 	m_z *= s;
 }
 
-
-float3 float3::operator %(const float3& other)
+float3 float3::operator %(const float3& other) const
 {
 	return float3(m_y * other.m_z - m_z * other.m_y, m_z * other.m_x - m_x * other.m_z, m_x * other.m_y - m_y * other.m_x);
 }
-
 
 void float3::operator %=(const float3& other)
 {

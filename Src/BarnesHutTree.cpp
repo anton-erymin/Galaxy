@@ -1,16 +1,12 @@
 #include "BarnesHutTree.h"
 
-#include "Galaxy.h"
 #include "Math.h"
 
 static constexpr uint32_t cMaxTreeLevel = 50;
 
 BarnesHutTree::BarnesHutTree(const float3 &point, float length)
     : point(point),
-    length(length),
-    isLeaf(true),
-    particle_(nullptr),
-    totalMass(0.0f)
+    length(length)
 {
     oppositePoint = point + float3{ length };
 }
@@ -18,12 +14,12 @@ BarnesHutTree::BarnesHutTree(const float3 &point, float length)
 void BarnesHutTree::Reset()
 {
     isLeaf = true;
-    particle_ = nullptr;
+    isBusy = false;
 }
 
-void BarnesHutTree::Insert(const Particle &p, uint32_t level)
+void BarnesHutTree::Insert(const float3 &position, float mass, uint32_t level)
 {
-    if (!Contains(p))
+    if (!Contains(position))
     {
         return;
     }
@@ -36,10 +32,12 @@ void BarnesHutTree::Insert(const Particle &p, uint32_t level)
     if (isLeaf)
     {
         // Если узел - лист
-        if (!particle_)
+        if (!isBusy)
         {
             // И пустой, то вставляем в него частицу
-            particle_ = &p;
+            center = position;
+            this->mass = mass;
+            isBusy = true;
             return;
         }
         else
@@ -76,9 +74,9 @@ void BarnesHutTree::Insert(const Particle &p, uint32_t level)
             // Далее вставляем в нужный потомок частицу которая была в текущем узле
             for (int i = 0; i < 4; i++)
             {
-                if (children[i]->Contains(*particle_))
+                if (children[i]->Contains(center))
                 {
-                    children[i]->Insert(*particle_, level + 1);
+                    children[i]->Insert(center, this->mass, level + 1);
                     break;
                 }
             }
@@ -86,66 +84,56 @@ void BarnesHutTree::Insert(const Particle &p, uint32_t level)
             // И новую частицу
             for (int i = 0; i < 4; i++)
             {
-                if (children[i]->Contains(p))
+                if (children[i]->Contains(position))
                 {
-                    children[i]->Insert(p, level + 1);
+                    children[i]->Insert(position, mass, level + 1);
                     break;
                 }
             }
 
-            // Суммарная масса узла
-            totalMass = particle_->mass + p.mass;
-
-            // Центр тяжести
-            massCenter = p.position.scaleR(p.mass);
-            massCenter.addScaled(particle_->position, particle_->mass);
-            massCenter *= 1.0f / totalMass;
+            float totalMass = mass + this->mass;
+            center = (position * mass + center * this->mass) * (1.0f / totalMass);
+            this->mass = totalMass;            
         }
     }
     else
     {
         // Если это внутренний узел
 
-        // Обновляем суммарную массу добавлением к ней массы новой частицы
-        float total = totalMass + p.mass;
-
-        // Также обновляем центр масс
-        massCenter *= totalMass;
-        massCenter.addScaled(p.position, p.mass);
-        massCenter *= 1.0f / total;
-        totalMass = total;
+        float totalMass = mass + this->mass;
+        center = (position * mass + center * this->mass) * (1.0f / totalMass);
+        this->mass = totalMass;
 
         // Рекурсивно вставляем в нужный потомок частицу
         for (int i = 0; i < 4; i++)
         {
-            if (children[i]->Contains(p))
+            if (children[i]->Contains(position))
             {
-                children[i]->Insert(p, level + 1);
+                children[i]->Insert(position, mass, level + 1);
                 break;
             }
         }
     }
 }
 
-bool BarnesHutTree::Contains(const Particle &p) const
+bool BarnesHutTree::Contains(const float3 &position) const
 {
-    float3 v = p.position;
-    if (v.m_x >= point.m_x && v.m_x <= oppositePoint.m_x &&
-        v.m_y >= point.m_y && v.m_y <= oppositePoint.m_y)
+    if (position.m_x >= point.m_x && position.m_x <= oppositePoint.m_x &&
+        position.m_y >= point.m_y && position.m_y <= oppositePoint.m_y)
         return true;
 
     return false;
 }
 
-float3 BarnesHutTree::ComputeAcceleration(const Particle &particle, float softFactor) const
+float3 BarnesHutTree::ComputeAcceleration(const float3& position, float softFactor) const
 {
     float3 acceleration = {};
 
-    if (isLeaf && particle_)
+    if (isLeaf && isBusy)
     {
-        if (particle_ != &particle)
+        if (!equal(position, center, 0.00001f))
         {
-            acceleration = GravityAcceleration(particle_->position - particle.position, particle_->mass, softFactor);
+            acceleration = GravityAcceleration(center - position, mass, softFactor);
         }
     }
     else if (!isLeaf)
@@ -153,7 +141,7 @@ float3 BarnesHutTree::ComputeAcceleration(const Particle &particle, float softFa
         // Если это внутренний узел
 
         // Находим расстояние от частицы до центра масс этого узла
-        float3 vec = massCenter - particle.position;
+        float3 vec = center - position;
         float r = vec.norm();
 
         // Находим соотношение размера узла к расстоянию
@@ -161,14 +149,14 @@ float3 BarnesHutTree::ComputeAcceleration(const Particle &particle, float softFa
 
         if (theta < 0.7f)
         {
-            acceleration = GravityAcceleration(vec, totalMass, softFactor, r);
+            acceleration = GravityAcceleration(vec, mass, softFactor, r);
         }
         else
         {
             // Если частица близко к узлу рекурсивно считаем силу с потомками
             for (int i = 0; i < 4; i++)
             {
-                acceleration += children[i]->ComputeAcceleration(particle, softFactor);
+                acceleration += children[i]->ComputeAcceleration(position, softFactor);
             }
         }
     }

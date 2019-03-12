@@ -33,13 +33,10 @@ public:
     void Solve(float time) override;
 };
 
-class BarnesHutSolver : public Solver
+class BarnesHutCPUSolver : public Solver
 {
 public:
-    BarnesHutSolver(Universe& universe) 
-        : Solver(universe)
-    {
-    }
+    BarnesHutCPUSolver(Universe& universe);
 
     void Solve(float time) override;
     void SolveForces() override;

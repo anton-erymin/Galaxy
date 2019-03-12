@@ -1,7 +1,7 @@
 #pragma once
 
 #define _USE_MATH_DEFINES
-#include <math.h>
+#include <cmath>
 
 // Вектор в трехмерном пространстве
 class float3
@@ -41,21 +41,19 @@ public:
 	void		cross(const float3 &other);
 	float3		crossR(const float3 &other) const;
 
-	float		norm();
+	float		norm() const;
 	float		normSq();
 	float		normalize();
 
-	float3	operator+(const float3 &other);
+
 	void	operator+=(const float3 &other);
 
-	float3	operator-(const float3 &other);
 	void	operator-=(const float3 &other);
 
-	float   operator*(const float3 &other);
-	float3  operator*(float s);
+	float3  operator*(float s) const;
 	void	operator*=(float s);
 
-	float3	operator%(const float3 &other);
+	float3	operator%(const float3 &other) const;
 	void	operator%=(const float3 &other);
 
 };
@@ -68,4 +66,9 @@ inline float3 operator+(const float3& lhs, const float3& rhs)
 inline float3 operator-(const float3& lhs, const float3& rhs)
 {
     return {lhs.m_x - rhs.m_x, lhs.m_y - rhs.m_y, lhs.m_z - rhs.m_z};
+}
+
+inline bool equal(const float3& lhs, const float3& rhs, float eps)
+{
+    return std::fabsf(lhs.m_x - rhs.m_x) < eps && std::fabsf(lhs.m_y - rhs.m_y) < eps && std::fabsf(lhs.m_z - rhs.m_z) < eps;
 }

@@ -7,7 +7,7 @@
 
 #include "float3.h"
 
-#define PI (static_cast<float>(M_PI))
+#define PI (static_cast<float>(3.14159265358979323846))
 
 inline float RAND()
 {
@@ -143,4 +143,12 @@ inline float SampleDistribution(float xmin, float xmax, float maxDistributionVal
         }
     }
     return x;
+}
+
+inline void IntegrateMotionEquation(float time, float3& position, float3& velocity, const float3& acceleration, const float3& force, float inverseMass)
+{
+    // Euler-Cromer
+    float3 a = acceleration + force * inverseMass;
+    velocity += acceleration * time;
+    position += velocity * time;
 }

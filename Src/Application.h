@@ -10,12 +10,12 @@
 #include "Orbit.h"
 #include "Math.h"
 #include "UIOverlay.h"
-#include "OpenCL.h"
 
 class ImageLoader;
 class Universe;
 class BruteforceSolver;
-class BarnesHutSolver;
+class BarnesHutCPUSolver;
+class BarnesHutGPUSolver;
 class Solver;
 
 class Application
@@ -62,9 +62,7 @@ public:
 
     void Reset();
 
-private:
-    void CreateProgramFromFile(const char* filename);
-
+private:    
     uint32_t width = 0;
     uint32_t height = 0;
 
@@ -90,9 +88,10 @@ private:
     std::unique_ptr<ImageLoader> imageLoader;
     std::unique_ptr<Universe> universe;
     std::unique_ptr<BruteforceSolver> solverBruteforce;
-    std::unique_ptr<BarnesHutSolver> solverBarneshut;
+    std::unique_ptr<BarnesHutCPUSolver> solverBarneshut;
+    std::unique_ptr<BarnesHutGPUSolver> solverBarneshutGPU;
 
-    Solver* solver = nullptr;
+    Solver* currentSolver = nullptr;
 
     std::thread solverThread;
 
@@ -122,9 +121,6 @@ private:
     SimulationParameters simulationParams;
     GalaxyParameters model;
     Timings timings;
-
-    cl::OpenCL cl;
-    std::unordered_map<std::string, cl::ProgramPtr> programs;
 
     static Application* instance;
 };

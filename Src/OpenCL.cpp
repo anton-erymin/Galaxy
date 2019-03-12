@@ -11,7 +11,7 @@ namespace cl
 static thread_local std::vector<cl_event> events;
 static thread_local cl_event clEvent = nullptr;
 
-static inline void ClCheckStatus(cl_int status, const char* message = nullptr)
+inline void ClCheckStatus(cl_int status, const char* message)
 {
     if (status < CL_SUCCESS)
     {
@@ -292,6 +292,8 @@ static cl_mem_flags MemoryTypeToMemFlags(MemoryType type)
         assert(!"Unknown");
         break;
     }
+
+    return CL_MEM_READ_ONLY;
 }
 
 Buffer::Buffer(OpenCL& cl, size_t size, MemoryType memoryType, void* hostPtr)
