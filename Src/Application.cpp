@@ -187,47 +187,6 @@ void Application::Reset()
             ++numSteps;
         }
     });
-
-    CreateProgramFromFile("Kernels/Integration.cl");
-    cl::KernelPtr kernel = programs["Kernels/Integration.cl"]->GetKernel("Integrate");
-
-    const size_t N = 100000;
-    std::vector<float> a(N), b(N);
-
-    for (size_t i = 0; i < N; ++i)
-    {
-        a[i] = i;
-        b[i] = i;
-    }
-
-    cl::BufferPtr bufferA = cl.CreateBuffer(N * sizeof(float));
-    cl::BufferPtr bufferB = cl.CreateBuffer(N * sizeof(float));
-
-    cl.EnqueueWriteBuffer(bufferA, 0, bufferA->GetSize(), a.data());
-    cl.EnqueueWriteBuffer(bufferB, 0, bufferB->GetSize(), b.data());
-
-    kernel->SetArg(&*bufferA, 0);
-    kernel->SetArg(&*bufferB, 1);
-    
-    cl::EventPtr event;
-
-    cl.EnqueueKernel(kernel, 1, N, 0, 0, 1, 0, 0, {}, true, event);
-    cl.EnqueueReadBuffer(bufferA, 0, bufferA->GetSize(), a.data(), true);//, {event});
-
-}
-
-void Application::CreateProgramFromFile(const char* filename)
-{
-    std::ifstream file(filename);
-    if (!file)
-    {
-        throw std::runtime_error("Failed to open file " + std::string(filename));
-    }
-
-    std::string source;
-    source = std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-    
-    programs[filename] = cl.CreateProgram(source);
 }
 
 static void DrawBarnesHutTree(const BarnesHutTree& node)

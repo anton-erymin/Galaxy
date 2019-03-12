@@ -19,14 +19,14 @@ constexpr double cKiloParsec = 1000 * cParsec;    // m
 constexpr double cSolarMass = 1.9885e+30;         // kg
 constexpr double cMassUnit = 1e+10 * cSolarMass;  // kg
 
-constexpr float cSoftFactor = 0.001f;
+constexpr float cSoftFactor = 0.0001f;
 
 constexpr float cRenderFps = 30;
 constexpr float cFrameTime = 1.0f / cRenderFps;
 
 // Параметры по умолчанию для стандартной модели
 
-#define         GLX_TOTAL_MASS          500.0f;
+#define         GLX_TOTAL_MASS          100.0f;
 
 #define			GLX_DISK_RADIUS			15.0f						// Радиус галактики
 #define			GLX_BULGE_RADIUS		1.0f						// Радиус ядра галактики
