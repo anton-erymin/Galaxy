@@ -46,7 +46,7 @@ bool ThreadPool::Create(std::uint32_t thread_count)
 
     thread_count_ = 0;
 
-    thread_count = (std::max(thread_count, 1u) + 1u) & ~1u;
+    thread_count = thread_count == 1 ? 1 : (std::max(thread_count, 1u) + 1u) & ~1u;
 
     threads_.reserve(thread_count);
 

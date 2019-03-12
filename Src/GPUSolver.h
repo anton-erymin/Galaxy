@@ -18,6 +18,7 @@ public:
     std::mutex& GetTreeMutex() { return mu; }
 
     void Inititalize(float time) override;
+    void Prepare() override;
 
 private:
     void BuildTree();
@@ -30,6 +31,9 @@ private:
     cl::ProgramPtr programIntegrate;
     cl::KernelPtr kernelIntegrate;
 
-    cl::BufferPtr bufParticles;
-
+    cl::BufferPtr position;
+    cl::BufferPtr velocity;
+    cl::BufferPtr acceleration;
+    cl::BufferPtr force;
+    cl::BufferPtr inverseMass;
 };

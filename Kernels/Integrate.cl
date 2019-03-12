@@ -8,10 +8,8 @@ kernel void Integrate(
 {
     size_t i = get_global_id(0);
     
-    //float3 acceleration = acceleration[i] + inverseMass[i] * force[i];
-    //float3 velocity = velocity[i] + acceleration * time;
-    //velocity[i] = velocity;
-    //position[i] += velocity * time;
-    float3 v = {0.1f, 0, 0};
+    float3 a = acceleration[i] + inverseMass[i] * force[i];
+    float3 v = velocity[i] + a * time;
+    velocity[i] = v;
     position[i] += v * time;
 }

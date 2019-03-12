@@ -138,24 +138,6 @@ void Galaxy::Create()
     particles[0].position = position;
     particles[0].movable = false;
     particles[0].SetMass(particles[0].mass * parameters.blackHoleMass);
-
-    //for (size_t i = 1; i < particles.size(); ++i)
-    //{
-    //    //speed = darkMatter.getCircularVelocity(r);
-    //    float3 relativePos = particles[i].position - position;
-    //    float3 v = {relativePos.m_y, -relativePos.m_x, 0.0f};
-    //    v.normalize();
-    //    //v *= RadialVelocity(particles[0].mass, relativePos.norm());
-
-    //    float radialFromHalo = RadialVelocity(halo.GetForce(relativePos.norm()), particles[i].mass, relativePos.norm());
-    //    float radial = RadialVelocity(particles[0].mass, relativePos.norm());
-    //    v *= 100*radial;// + radialFromHalo;
-    //    float d = 0.1 * v.norm();
-    //    //v += lpVec3(d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f));
-
-    //    particles[i].linearVelocity = v;
-
-    //}
 }
 
 void Galaxy::Update(float dt)

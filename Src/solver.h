@@ -18,6 +18,7 @@ public:
     virtual void Solve(float time) = 0;
     virtual void SolveForces() { }
     virtual void Inititalize(float time) { }
+    virtual void Prepare() { }
 
 protected:
     Universe& universe;

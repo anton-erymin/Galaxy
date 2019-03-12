@@ -17,7 +17,7 @@ static void IntegrateMotionEquationSIMD(Particle& particle, float time)
     float imdt = particle.inverseMass * time;
 
     //__asm
-    //{
+    //{ 
     //	mov			eax, force
     //	movups		xmm0, [eax]		// xmm0 - force
     //	mov			ebx, linVel
@@ -92,7 +92,7 @@ static inline void ComputeForce(const float3& position, float3& acceleration, fl
     acceleration.clear();
     force.clear();
 
-    acceleration = tree.ComputeAcceleration(position, cSoftFactor);
+    acceleration = tree.ComputeAccelerationFlat(position, cSoftFactor);
 
     if (Application::GetInstance().GetSimulationParamaters().darkMatter)
     {    

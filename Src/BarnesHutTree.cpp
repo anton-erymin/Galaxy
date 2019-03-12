@@ -1,6 +1,7 @@
 #include "BarnesHutTree.h"
-
 #include "Math.h"
+
+#include <cassert>
 
 static constexpr uint32_t cMaxTreeLevel = 50;
 
@@ -26,9 +27,9 @@ void BarnesHutTree::Insert(const float3 &position, float bodyMass, uint32_t leve
 
     if (level > cMaxTreeLevel)
     {
-        return;
+        //return;
     }
-
+    
     if (isLeaf)
     {
         // Если узел - лист
@@ -129,7 +130,7 @@ inline bool BarnesHutTree::Contains(const float3 &position) const
     return false;
 }
 
-float3 BarnesHutTree::ComputeAcceleration(const float3& position, float softFactor) const
+float3 BarnesHutTree::ComputeAcceleration(const float3& position, float soft) const
 {
     float3 acceleration = {};
 
@@ -137,7 +138,7 @@ float3 BarnesHutTree::ComputeAcceleration(const float3& position, float softFact
     {
         if (!equal(position, center, 0.00001f))
         {
-            acceleration = GravityAcceleration(center - position, mass, softFactor);
+            acceleration = GravityAcceleration(center - position, mass, soft);
         }
     }
     else if (!isLeaf)
@@ -153,14 +154,68 @@ float3 BarnesHutTree::ComputeAcceleration(const float3& position, float softFact
 
         if (theta < 0.7f)
         {
-            acceleration = GravityAcceleration(vec, mass, softFactor, r);
+            acceleration = GravityAcceleration(vec, mass, soft, r);
         }
         else
         {
             // Если частица близко к узлу рекурсивно считаем силу с потомками
             for (int i = 0; i < 4; i++)
             {
-                acceleration += children[i]->ComputeAcceleration(position, softFactor);
+                acceleration += children[i]->ComputeAcceleration(position, soft);
+            }
+        }
+    }
+
+    return acceleration;
+}
+
+float3 BarnesHutTree::ComputeAccelerationFlat(const float3& position, float soft) const
+{
+    float3 acceleration = {};
+
+    const size_t stackSize = 100;
+    size_t count = 0;
+    const BarnesHutTree* stack[stackSize];
+    stack[count++] = this;
+
+    while (count)
+    {
+        const BarnesHutTree& node = *stack[--count];
+
+        if (node.isLeaf && node.isBusy)
+        {
+            if (!equal(position, node.center, 0.00001f))
+            {
+                acceleration += GravityAcceleration(node.center - position, node.mass, soft);
+            }
+        }
+        else if (!isLeaf)
+        {
+            // Если это внутренний узел
+
+            // Находим расстояние от частицы до центра масс этого узла
+            float3 vec = node.center - position;
+            float r = vec.norm();
+
+            // Находим соотношение размера узла к расстоянию
+            float theta = node.length / r;
+
+            if (theta < 0.7f)
+            {
+                acceleration += GravityAcceleration(vec, node.mass, soft, r);
+            }
+            else
+            {
+                // Если частица близко к узлу рекурсивно считаем силу с потомками
+                for (int i = 0; i < 4; i++)
+                {
+                    auto child = node.children[i].get();
+                    if (child)
+                    {
+                        assert(count < stackSize);
+                        stack[count++] = child;
+                    }
+                }
             }
         }
     }

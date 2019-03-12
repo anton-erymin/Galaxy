@@ -70,6 +70,11 @@ public:
         const std::vector<EventPtr>& waitList = {},
         bool createEvent = false, 
         EventPtr& event = EventPtr());
+    
+    void EnqueueBarrier(
+        const std::vector<EventPtr>& waitList = {},
+        bool createEvent = false, 
+        EventPtr& event = EventPtr());
 
     cl_device_id GetDevice() const { return devices[0]; }
     cl_context GetContext() const { return context; }

@@ -11,15 +11,6 @@
 #include <chrono>
 #include <fstream>
 
-// TODOs:
-// Hot disk
-// Kuzmin model and more sphere models
-// Choose density model
-// Octree
-// OpenCL compute
-// Collision
-// Video
-
 Application* Application::instance = nullptr;
 
 Application application;
@@ -168,13 +159,12 @@ void Application::Reset()
     solverBruteforce = std::make_unique<BruteforceSolver>(*universe);
     solverBarneshut = std::make_unique<BarnesHutCPUSolver>(*universe);
     solverBarneshutGPU = std::make_unique<BarnesHutGPUSolver>(*universe);
-
-    currentSolver = &*solverBarneshut;
+    currentSolver = &*solverBarneshutGPU;
 
     currentSolver->Inititalize(deltaTime);
     currentSolver->SolveForces();
-
     universe->SetRadialVelocitiesFromForce();
+    currentSolver->Prepare();
 
     solverThread = std::thread([this]() 
     {     
@@ -311,8 +301,8 @@ void Application::OnDraw()
 
     if (renderParams.renderTree)
     {   
-        std::lock_guard<std::mutex> lock(solverBarneshut->GetTreeMutex());
-        DrawBarnesHutTree(solverBarneshut->GetBarnesHutTree());
+        std::lock_guard<std::mutex> lock(solverBarneshutGPU->GetTreeMutex());
+        DrawBarnesHutTree(solverBarneshutGPU->GetBarnesHutTree());
     }
 
     glPopMatrix();

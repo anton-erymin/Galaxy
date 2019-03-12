@@ -3,6 +3,7 @@
 #include <cassert>
 #include <stdexcept>
 #include <string>
+#include <vector>
 #include <iostream>
 
 namespace cl
@@ -145,6 +146,20 @@ void OpenCL::EnqueueWriteBuffer(
     ClCheckStatus(clEnqueueWriteBuffer(
         queue, buffer->GetMemory(), blocking, offset, size, data, static_cast<cl_uint>(waitList.size()), events.data(), createEvent ? &clEvent : nullptr), 
     "Failed to enqueue write buffer command");
+
+    if (createEvent)
+    {
+        event = std::make_shared<Event>(*this, clEvent);
+    }
+}
+
+void OpenCL::EnqueueBarrier(const std::vector<EventPtr>& waitList, bool createEvent, EventPtr& event)
+{
+    PrepareEvents(waitList);
+
+    ClCheckStatus(clEnqueueBarrierWithWaitList(
+        queue, static_cast<cl_uint>(waitList.size()), events.data(), createEvent ? &clEvent : nullptr), 
+        "Failed to enqueue barrier");
 
     if (createEvent)
     {
