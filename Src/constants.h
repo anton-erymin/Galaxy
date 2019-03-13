@@ -19,7 +19,7 @@ constexpr double cKiloParsec = 1000 * cParsec;    // m
 constexpr double cSolarMass = 1.9885e+30;         // kg
 constexpr double cMassUnit = 1e+10 * cSolarMass;  // kg
 
-constexpr float cSoftFactor = 0.005f;
+constexpr float cSoftFactor = 0.01f;
 
 constexpr float cRenderFps = 30;
 constexpr float cFrameTime = 1.0f / cRenderFps;
@@ -36,7 +36,7 @@ constexpr float cFrameTime = 1.0f / cRenderFps;
 
 #define			GLX_HALO_MASS			20.0f						// Масса гало
 
-#define			GLX_UNIVERSE_SIZE			50.0f						// Размеры пространства симуляции
+#define			GLX_UNIVERSE_SIZE	    50.0f						// Размеры пространства симуляции
 
 #define			GLX_BULGE_NUM			3000						// Количесто частиц в балдже
 #define			GLX_DISK_NUM			7000						// Количесто частиц в диске

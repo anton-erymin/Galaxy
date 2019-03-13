@@ -60,8 +60,6 @@ int Application::Run(int argc, char **argv)
 
     glutCreateWindow(cWindowCaption);
 
-    //glutFullScreen();
-
     glutDisplayFunc([]() { Application::GetInstance().OnDraw(); });
     glutReshapeFunc([](int width, int height) { Application::GetInstance().OnResize(width, height); });
     glutIdleFunc([]() { Application::GetInstance().OnIdle(); });

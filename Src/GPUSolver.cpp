@@ -60,7 +60,7 @@ void BarnesHutGPUSolver::Solve(float time)
 
     cl.EnqueueWriteBuffer(acceleration, 0, acceleration->GetSize(), universe.acceleration.data(), false);
     cl.EnqueueWriteBuffer(force, 0, force->GetSize(), universe.force.data(), false);
-    
+    cl.EnqueueBarrier();
 
     kernelIntegrate->SetArg(time, 0);
     cl.EnqueueKernel(kernelIntegrate, 1, universe.GetParticlesCount(), 0, 0, 256, 0, 0);
@@ -125,14 +125,12 @@ void BarnesHutGPUSolver::Prepare()
 
     size_t count = universe.GetParticlesCount();
 
-    // Buffers
     position = cl.CreateBuffer(count * sizeof(float3));
     velocity = cl.CreateBuffer(count * sizeof(float3));
     acceleration = cl.CreateBuffer(count * sizeof(float3));
     force = cl.CreateBuffer(count * sizeof(float3));
     inverseMass = cl.CreateBuffer(count * sizeof(float3));
 
-    // Kernel args
     kernelIntegrate->SetArg(&*position, 1);
     kernelIntegrate->SetArg(&*velocity, 2);
     kernelIntegrate->SetArg(&*acceleration, 3);
@@ -149,8 +147,8 @@ void BarnesHutGPUSolver::BuildTree()
     std::lock_guard<std::mutex> lock(mu);
     {
         Timer<std::milli> timer(&Application::GetInstance().GetTimings().buildTreeTimeMsecs);
-        barnesHutTree->Reset();
 
+        barnesHutTree->Reset();
         for (size_t i = 0; i < universe.GetParticlesCount(); ++i)
         {
             barnesHutTree->Insert(universe.position[i], universe.particles[i]->mass);

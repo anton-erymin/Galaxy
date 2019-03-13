@@ -8,6 +8,7 @@
 #include "float3.h"
 
 #define PI (static_cast<float>(3.14159265358979323846))
+#define EPS (0.00001f)
 
 inline float RAND()
 {

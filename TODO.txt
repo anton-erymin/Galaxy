@@ -1,0 +1,12 @@
+// TODOs:
+// Hot disk
+// Kuzmin model and more sphere models
+// Choose density model
+// Octree
+// OpenCL compute
+// Collision
+// Video
+
+Non recursive tree build and compute force
+
+Bug with flat compute force

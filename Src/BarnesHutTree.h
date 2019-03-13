@@ -12,7 +12,7 @@ public:
     void Insert(const float3 &position, float bodyMass, uint32_t level = 0);
     float3 ComputeAcceleration(const float3 &position, float soft) const;
     float3 ComputeAccelerationFlat(const float3 &position, float soft) const;
-    void Reset();
+    inline void Reset();
 
     const float3& GetPoint() const { return point; }
     float GetLength() const { return length; }
@@ -20,8 +20,11 @@ public:
 
     const BarnesHutTree& operator[](size_t i) const { return *children[i]; }
 
+    size_t GetNodesCount() const;
+
 private:
-    bool inline Contains(const float3 &position) const;
+    inline bool Contains(const float3 &position) const;
+    inline void ResetChildren();
 
     float3 point;
     float3 oppositePoint;
@@ -33,5 +36,7 @@ private:
 
     std::unique_ptr<BarnesHutTree> children[4];
     
+    size_t id = 0;
+
     friend void DrawBarnesHutTree(const BarnesHutTree& node);
 };

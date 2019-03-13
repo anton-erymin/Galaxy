@@ -17,7 +17,7 @@ public:
 	// z-компонента вектора
 	float m_z;
 
-	float m_pad;
+	float padding;
 
 
 	float3();
