@@ -93,6 +93,92 @@ void BarnesHutTree::Insert(const float3 &position, float bodyMass, uint32_t leve
     }
 }
 
+void BarnesHutTree::InsertFlat(const float3& position, float bodyMass)
+{
+    BarnesHutTree* stack[cNodesStackSize];
+    size_t count = 1;
+
+    stack[0] = this;
+
+    float3 insertedPosition[2] = { position };
+    float insertedMass[2] = { bodyMass };
+    int8_t current = 0;
+    
+    while (count)
+    {
+        BarnesHutTree& node = *stack[--count];
+
+        if (!node.Contains(insertedPosition[current]))
+        {
+            continue;
+        }
+
+        if (node.isLeaf)
+        {
+            if (!node.isBusy)
+            {
+                node.center = insertedPosition[current];
+                node.mass = insertedMass[current];
+                node.isBusy = true;
+                if (--current < 0)
+                {
+                    break;
+                }
+            }
+            else
+            {
+                node.isLeaf = false;
+                node.ResetChildren();
+
+                for (int i = 0; i < 4; i++)
+                {
+                    if (node.children[i] && node.children[i]->Contains(position))
+                    {
+                        stack[count++] = node.children[i].get();
+                        break;
+                    }
+                }
+
+                for (int i = 0; i < 4; i++)
+                {
+                    if (node.children[i] && node.children[i]->Contains(node.center))
+                    {
+                        ++current;
+                        assert(current < 2);
+                        insertedPosition[current] = node.center;
+                        insertedMass[current] = node.mass;
+                        stack[count++] = node.children[i].get();
+                        break;
+                    }
+                }
+
+                float totalMass = bodyMass + node.mass;
+                node.center.scale(node.mass);
+                node.center.addScaled(position, bodyMass);
+                node.center *= (1.0f / totalMass);
+                node.mass = totalMass;
+            }
+        }
+        else
+        {
+            float totalMass = bodyMass + node.mass;
+            node.center.scale(node.mass);
+            node.center.addScaled(position, bodyMass);
+            node.center *= (1.0f / totalMass);
+            node.mass = totalMass;
+
+            for (int i = 0; i < 4; i++)
+            {
+                if (node.children[i] && node.children[i]->Contains(position))
+                {
+                    stack[count++] = node.children[i].get();
+                    break;
+                }
+            }
+        }
+    }
+}
+
 inline bool BarnesHutTree::Contains(const float3 &position) const
 {
     if (position.m_x >= point.m_x && position.m_x <= oppositePoint.m_x &&
@@ -133,10 +219,10 @@ size_t BarnesHutTree::GetNodesCount() const
 {
     size_t nodesCount = 0;
 
-    const size_t stackSize = 1000;
-    size_t count = 0;
-    const BarnesHutTree* stack[stackSize];
-    stack[count++] = this;
+    const BarnesHutTree* stack[cNodesStackSize];
+    size_t count = 1;
+
+    stack[0] = this;
 
     while (count)
     {
@@ -149,7 +235,7 @@ size_t BarnesHutTree::GetNodesCount() const
             auto child = node.children[i].get();
             if (child)
             {
-                assert(count < stackSize);
+                assert(count < cNodesStackSize);
                 stack[count++] = child;
             }
         }
@@ -198,9 +284,10 @@ float3 BarnesHutTree::ComputeAccelerationFlat(const float3& position, float soft
 {
     float3 acceleration = {};
 
-    size_t count = 0;
     const BarnesHutTree* stack[cNodesStackSize];
-    stack[count++] = this;
+    size_t count = 1;
+
+    stack[0] = this;
 
     while (count)
     {

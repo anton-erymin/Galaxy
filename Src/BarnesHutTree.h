@@ -10,6 +10,7 @@ public:
     BarnesHutTree(const float3 &point, float length);
 
     void Insert(const float3 &position, float bodyMass, uint32_t level = 0);
+    void InsertFlat(const float3 &position, float bodyMass);
     float3 ComputeAcceleration(const float3 &position, float soft) const;
     float3 ComputeAccelerationFlat(const float3 &position, float soft) const;
     inline void Reset();

@@ -7,6 +7,9 @@
 // Collision
 // Video
 
-Non recursive tree build and compute force
+Expose dark matter halo params
+
+Non recursive tree build
 
 Bug with flat compute force
+Bug with reset model (OpenCL fails desctruction)
