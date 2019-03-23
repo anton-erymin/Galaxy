@@ -148,7 +148,6 @@ void Application::Reset()
         started = false;
         solverThread.join();
     }
-    started = true;
 
     universe = std::make_unique<Universe>(GLX_UNIVERSE_SIZE);
     universe->CreateGalaxy({}, model);
@@ -164,6 +163,7 @@ void Application::Reset()
     universe->SetRadialVelocitiesFromForce();
     currentSolver->Prepare();
 
+    started = true;
     solverThread = std::thread([this]() 
     {     
         while (started)

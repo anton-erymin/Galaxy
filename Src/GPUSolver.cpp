@@ -9,6 +9,8 @@
 
 #include <cassert>
 
+std::unique_ptr<cl::OpenCL> BarnesHutGPUSolver::cl;
+
 static inline void ComputeForce(const float3& position, float3& acceleration, float3& force, const Galaxy& galaxy, const BarnesHutTree& tree)
 {
     acceleration.clear();
@@ -28,6 +30,10 @@ static inline void ComputeForce(const float3& position, float3& acceleration, fl
 BarnesHutGPUSolver::BarnesHutGPUSolver(Universe& universe)
     : Solver(universe)
 {
+    if (!cl)
+    {
+        cl = std::make_unique <cl::OpenCL>();
+    }
 }
 
 void BarnesHutGPUSolver::Solve(float time)
@@ -58,15 +64,15 @@ void BarnesHutGPUSolver::Solve(float time)
     }, static_cast<uint32_t>(universe.GetParticlesCount()), 
         static_cast<uint32_t>(universe.GetParticlesCount() / ThreadPool::GetThreadCount()));
 
-    cl.EnqueueWriteBuffer(acceleration, 0, acceleration->GetSize(), universe.acceleration.data(), false);
-    cl.EnqueueWriteBuffer(force, 0, force->GetSize(), universe.force.data(), false);
-    cl.EnqueueBarrier();
+    cl->EnqueueWriteBuffer(acceleration, 0, acceleration->GetSize(), universe.acceleration.data(), false);
+    cl->EnqueueWriteBuffer(force, 0, force->GetSize(), universe.force.data(), false);
+    cl->EnqueueBarrier();
 
     kernelIntegrate->SetArg(time, 0);
-    cl.EnqueueKernel(kernelIntegrate, 1, universe.GetParticlesCount(), 0, 0, 256, 0, 0);
-    cl.EnqueueBarrier();
+    cl->EnqueueKernel(kernelIntegrate, 1, universe.GetParticlesCount(), 0, 0, 16, 0, 0);
+    cl->EnqueueBarrier();
 
-    cl.EnqueueReadBuffer(position, 0, position->GetSize(), universe.position.data());
+    cl->EnqueueReadBuffer(position, 0, position->GetSize(), universe.position.data());
 }
 
 void BarnesHutGPUSolver::SolveForces()
@@ -120,16 +126,16 @@ void BarnesHutGPUSolver::Inititalize(float time)
 void BarnesHutGPUSolver::Prepare()
 {
     // Load programs
-    programIntegrate = cl.CreateProgram(ReadFile("Kernels/Integrate.cl"));
+    programIntegrate = cl->CreateProgram(ReadFile("Kernels/Integrate.cl"));
     kernelIntegrate = programIntegrate->GetKernel("Integrate");
 
     size_t count = universe.GetParticlesCount();
 
-    position = cl.CreateBuffer(count * sizeof(float3));
-    velocity = cl.CreateBuffer(count * sizeof(float3));
-    acceleration = cl.CreateBuffer(count * sizeof(float3));
-    force = cl.CreateBuffer(count * sizeof(float3));
-    inverseMass = cl.CreateBuffer(count * sizeof(float3));
+    position = cl->CreateBuffer(count * sizeof(float3));
+    velocity = cl->CreateBuffer(count * sizeof(float3));
+    acceleration = cl->CreateBuffer(count * sizeof(float3));
+    force = cl->CreateBuffer(count * sizeof(float3));
+    inverseMass = cl->CreateBuffer(count * sizeof(float));
 
     kernelIntegrate->SetArg(&*position, 1);
     kernelIntegrate->SetArg(&*velocity, 2);
@@ -137,9 +143,9 @@ void BarnesHutGPUSolver::Prepare()
     kernelIntegrate->SetArg(&*force, 4);
     kernelIntegrate->SetArg(&*inverseMass, 5);
 
-    cl.EnqueueWriteBuffer(position, 0, position->GetSize(), universe.position.data());
-    cl.EnqueueWriteBuffer(velocity, 0, velocity->GetSize(), universe.velocity.data());
-    cl.EnqueueWriteBuffer(inverseMass, 0, inverseMass->GetSize(), universe.inverseMass.data());
+    cl->EnqueueWriteBuffer(position, 0, position->GetSize(), universe.position.data());
+    cl->EnqueueWriteBuffer(velocity, 0, velocity->GetSize(), universe.velocity.data());
+    cl->EnqueueWriteBuffer(inverseMass, 0, inverseMass->GetSize(), universe.inverseMass.data());
 }
 
 void BarnesHutGPUSolver::BuildTree()

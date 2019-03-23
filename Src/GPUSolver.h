@@ -26,7 +26,6 @@ private:
     std::unique_ptr<BarnesHutTree> barnesHutTree;
     std::mutex mu;
 
-    cl::OpenCL cl;
 
     cl::ProgramPtr programIntegrate;
     cl::KernelPtr kernelIntegrate;
@@ -36,4 +35,6 @@ private:
     cl::BufferPtr acceleration;
     cl::BufferPtr force;
     cl::BufferPtr inverseMass;
+
+    static std::unique_ptr<cl::OpenCL> cl;
 };
