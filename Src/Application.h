@@ -48,6 +48,7 @@ public:
     struct SimulationParameters
     {
         bool darkMatter = false;
+        float softFactor = cSoftFactor;
     };
 
     const SimulationParameters& GetSimulationParamaters() const { return simulationParams; }
@@ -61,6 +62,7 @@ public:
     Timings& GetTimings() { return timings; }
 
     void Reset();
+    void ReloadKernels();
 
 private:    
     uint32_t width = 0;

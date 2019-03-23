@@ -8,6 +8,7 @@
 #include "Application.h"
 
 #include <cassert>
+#include <iostream>
 
 std::unique_ptr<cl::OpenCL> BarnesHutGPUSolver::cl;
 
@@ -16,9 +17,11 @@ static inline void ComputeForce(const float3& position, float3& acceleration, fl
     acceleration.clear();
     force.clear();
 
-    acceleration = tree.ComputeAccelerationFlat(position, cSoftFactor);
+    const Application::SimulationParameters& simulationParameters = Application::GetInstance().GetSimulationParamaters();
 
-    if (Application::GetInstance().GetSimulationParamaters().darkMatter)
+    acceleration = tree.ComputeAccelerationFlat(position, simulationParameters.softFactor);
+
+    if (simulationParameters.darkMatter)
     {    
         float darkMatterForce = galaxy.GetHalo().GetForce(position.norm());
         float3 forceDir = position;
@@ -63,6 +66,8 @@ void BarnesHutGPUSolver::Solve(float time)
 
     }, static_cast<uint32_t>(universe.GetParticlesCount()), 
         static_cast<uint32_t>(universe.GetParticlesCount() / ThreadPool::GetThreadCount()));
+
+    std::lock_guard<std::mutex> lock(clMu);
 
     cl->EnqueueWriteBuffer(acceleration, 0, acceleration->GetSize(), universe.acceleration.data(), false);
     cl->EnqueueWriteBuffer(force, 0, force->GetSize(), universe.force.data(), false);
@@ -125,10 +130,6 @@ void BarnesHutGPUSolver::Inititalize(float time)
 
 void BarnesHutGPUSolver::Prepare()
 {
-    // Load programs
-    programIntegrate = cl->CreateProgram(ReadFile("Kernels/Integrate.cl"));
-    kernelIntegrate = programIntegrate->GetKernel("Integrate");
-
     size_t count = universe.GetParticlesCount();
 
     position = cl->CreateBuffer(count * sizeof(float3));
@@ -137,20 +138,50 @@ void BarnesHutGPUSolver::Prepare()
     force = cl->CreateBuffer(count * sizeof(float3));
     inverseMass = cl->CreateBuffer(count * sizeof(float));
 
-    kernelIntegrate->SetArg(&*position, 1);
-    kernelIntegrate->SetArg(&*velocity, 2);
-    kernelIntegrate->SetArg(&*acceleration, 3);
-    kernelIntegrate->SetArg(&*force, 4);
-    kernelIntegrate->SetArg(&*inverseMass, 5);
-
     cl->EnqueueWriteBuffer(position, 0, position->GetSize(), universe.position.data());
     cl->EnqueueWriteBuffer(velocity, 0, velocity->GetSize(), universe.velocity.data());
     cl->EnqueueWriteBuffer(inverseMass, 0, inverseMass->GetSize(), universe.inverseMass.data());
+
+    ReloadKernels();
+}
+
+void BarnesHutGPUSolver::ReloadKernels()
+{
+    std::lock_guard<std::mutex> lock(clMu);
+
+    // Load programs
+
+    try
+    {
+        cl::ProgramPtr pIntegrate = cl->CreateProgram(ReadFile("Kernels/Integrate.cl"));
+        cl::KernelPtr kIntegrate = pIntegrate->GetKernel("Integrate");
+
+        kernelIntegrate = nullptr;
+        programIntegrate = nullptr;
+
+        programIntegrate = pIntegrate;
+        kernelIntegrate = kIntegrate;
+
+        kernelIntegrate->SetArg(&*position, 1);
+        kernelIntegrate->SetArg(&*velocity, 2);
+        kernelIntegrate->SetArg(&*acceleration, 3);
+        kernelIntegrate->SetArg(&*force, 4);
+        kernelIntegrate->SetArg(&*inverseMass, 5);
+    }
+    catch (const std::exception ex)
+    {
+        std::cout << "Failed to reload kernels: " << ex.what() << std::endl;
+
+        if (!kernelIntegrate)
+        {
+            throw std::runtime_error("Failed to load kernels");
+        }
+    }
 }
 
 void BarnesHutGPUSolver::BuildTree()
 {
-    std::lock_guard<std::mutex> lock(mu);
+    std::lock_guard<std::mutex> lock(treeMu);
     {
         Timer<std::milli> timer(&Application::GetInstance().GetTimings().buildTreeTimeMsecs);
 

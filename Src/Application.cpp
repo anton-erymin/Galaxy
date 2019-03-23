@@ -98,6 +98,8 @@ int Application::Run(int argc, char **argv)
     ui.Checkbox("Plot potential", &renderParams.plotFunctions);
     ui.SliderFloat("Brightness", &renderParams.brightness, 0.05f, 10.0f, 0.01f);
     ui.SliderFloat("Particles size scale", &renderParams.particlesSizeScale, 0.01f, 10.0f, 0.01f);
+    ui.Checkbox("Dark matter", &simulationParams.darkMatter, "d");
+    ui.SliderFloat("Gravity softness distance", &simulationParams.softFactor, 0.00001f, 0.1f, 0.0005f);
 
     ui.Button("Fullscreen toggle", [](void*) 
     { 
@@ -123,7 +125,6 @@ int Application::Run(int argc, char **argv)
     ui.SliderFloat("Halo radius", &model.haloRadius, 0.01f, 10000.0f, 0.01f);
     ui.SliderFloat("Disk thickness", &model.diskThickness, 0.0f, 100.0f, 0.01f);
     ui.SliderFloat("Black hole mass", &model.blackHoleMass, 1.0f, 10000.0f, 10.0f);
-    ui.Checkbox("Dark matter", &simulationParams.darkMatter, "d");
 
     ui.Button("Apply", [](void*) 
     {
@@ -133,6 +134,11 @@ int Application::Run(int argc, char **argv)
     {
         Application::GetInstance().Reset();
     }, "F5");
+
+    ui.Button("Reload kernels", [](void*)
+    {
+        Application::GetInstance().ReloadKernels();
+    }, "F6");
 
     Reset();
 
@@ -173,6 +179,11 @@ void Application::Reset()
             ++numSteps;
         }
     });
+}
+
+void Application::ReloadKernels()
+{
+    solverBarneshutGPU->ReloadKernels();
 }
 
 static void DrawBarnesHutTree(const BarnesHutTree& node)
@@ -401,6 +412,11 @@ void Application::OnKeyboardUp(unsigned char key, int x, int y)
     if (inputMappings.count(key))
     {
         *inputMappings[key] = false;
+    }
+
+    if (key == 27)
+    {
+        glutExit();
     }
 }
 

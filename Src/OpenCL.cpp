@@ -252,6 +252,7 @@ Program::Program(OpenCL& cl, const std::string& source)
 
 Program::~Program()
 {
+    kernels.clear();
     clReleaseProgram(program);
 }
 

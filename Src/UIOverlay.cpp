@@ -3,7 +3,6 @@
 #include "AntTweakBar.h"
 #include "GL\freeglut.h"
 
-
 struct UIOverlayImpl
 {
     TwBar* bar;

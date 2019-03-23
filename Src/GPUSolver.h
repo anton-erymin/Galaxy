@@ -15,17 +15,18 @@ public:
     void SolveForces() override;
 
     const BarnesHutTree& GetBarnesHutTree() const { return *barnesHutTree; }
-    std::mutex& GetTreeMutex() { return mu; }
+    std::mutex& GetTreeMutex() { return treeMu; }
 
     void Inititalize(float time) override;
     void Prepare() override;
+
+    void ReloadKernels();
 
 private:
     void BuildTree();
 
     std::unique_ptr<BarnesHutTree> barnesHutTree;
-    std::mutex mu;
-
+    std::mutex treeMu;
 
     cl::ProgramPtr programIntegrate;
     cl::KernelPtr kernelIntegrate;
@@ -35,6 +36,8 @@ private:
     cl::BufferPtr acceleration;
     cl::BufferPtr force;
     cl::BufferPtr inverseMass;
+
+    std::mutex clMu;
 
     static std::unique_ptr<cl::OpenCL> cl;
 };

@@ -92,9 +92,11 @@ static inline void ComputeForce(const float3& position, float3& acceleration, fl
     acceleration.clear();
     force.clear();
 
-    acceleration = tree.ComputeAccelerationFlat(position, cSoftFactor);
+    const Application::SimulationParameters& simulationParameters = Application::GetInstance().GetSimulationParamaters();
 
-    if (Application::GetInstance().GetSimulationParamaters().darkMatter)
+    acceleration = tree.ComputeAccelerationFlat(position, simulationParameters.softFactor);
+
+    if (simulationParameters.darkMatter)
     {    
         float darkMatterForce = galaxy.GetHalo().GetForce(position.norm());
         float3 forceDir = position;
