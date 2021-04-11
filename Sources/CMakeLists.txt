@@ -14,4 +14,7 @@ set(GALAXY_SOURCES
 
 add_executable(Galaxy ${GALAXY_SOURCES})
 
-target_link_libraries(Galaxy Nucleus)
+add_subdirectory(Core)
+
+target_include_directories(Galaxy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(Galaxy Nucleus Core)
