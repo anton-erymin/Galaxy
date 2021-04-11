@@ -71,7 +71,7 @@ int Application::Run(int argc, char **argv)
     glutSpecialFunc([](int key, int x, int y) { Application::GetInstance().OnKeyboardSpecialFunc(key, x, y); });
     glutPassiveMotionFunc([](int x, int y) { Application::GetInstance().OnMousePassiveMove(x, y); });
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glBlendFunc(GL_ONE, GL_ONE);
 
     GetImageLoader().GenTextureIds();
@@ -162,7 +162,7 @@ void Application::Reset()
     solverBruteforce = std::make_unique<BruteforceSolver>(*universe);
     solverBarneshut = std::make_unique<BarnesHutCPUSolver>(*universe);
     solverBarneshutGPU = std::make_unique<BarnesHutGPUSolver>(*universe);
-    currentSolver = &*solverBarneshutGPU;
+    currentSolver = &*solverBarneshut;
 
     currentSolver->Inititalize(deltaTime);
     currentSolver->SolveForces();
@@ -233,6 +233,7 @@ void Application::OnDraw()
     if (renderParams.renderPoints)
     {
         glBegin(GL_POINTS);
+        glColor3f(0.0f, 0.0f, 0.0f);
         for (size_t i = 0; i < universe->GetParticlesCount(); i++)
         {
             const auto* particle = particles[i];
@@ -240,7 +241,7 @@ void Application::OnDraw()
             {
                 continue;
             }
-            glColor3f(particle->color.m_x, particle->color.m_y, particle->color.m_z);
+            //glColor3f(particle->color.m_x, particle->color.m_y, particle->color.m_z);
             float3 pos = universe->position[i];
             glVertex3f(pos.m_x, pos.m_y, pos.m_z);
         }

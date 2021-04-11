@@ -1,7 +1,0 @@
-# Galaxy Model Description File Version 1.1 Copyright (c) Laxe Studio 2014
-
-[GALAXY]
-# Начальные координаты центра
-GLX_CENTER = 0, 0, 0
-
-[GALAXY]
