@@ -39,4 +39,4 @@ constexpr float cFrameTime = 1.0f / cRenderFps;
 #define			GLX_UNIVERSE_SIZE	    50.0f						// Размеры пространства симуляции
 
 #define			GLX_BULGE_NUM			3000						// Количесто частиц в балдже
-#define			GLX_DISK_NUM			5000000						// Количесто частиц в диске
+#define			GLX_DISK_NUM			500000						// Количесто частиц в диске

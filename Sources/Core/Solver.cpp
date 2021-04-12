@@ -1,7 +1,6 @@
 ﻿#include "Solver.h"
 #include "GalaxyEngine.h"
 #include "Galaxy.h"
-//#include "Math.h"
 #include "Threading.h"
 #include "BarnesHutTree.h"
 #include "Constants.h"

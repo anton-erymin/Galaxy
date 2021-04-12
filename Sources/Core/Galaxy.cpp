@@ -106,7 +106,8 @@ void Galaxy::Create()
         float3 spherical = RandomUniformSpherical(0.0f, parameters.bulgeRadius);
         float r = SampleDistribution(0.0f, 1.0f, plummer.GetDensity(0.0f), [&plummer](float x) { return plummer.GetDensity(x); }) / 1.0f;
         spherical.x = r * parameters.bulgeRadius;
-        particle.position = position + SphericalToCartesian(spherical);
+        vw::spherical_to_cartesian(spherical, particle.position);
+        particle.position += position;
         particle.galaxy = this;
         particles.push_back(particle);
     }
@@ -121,6 +122,7 @@ void Galaxy::Create()
         float r = SampleDistribution(0.0f, 1.0f, plummer.GetDensity(0.0f), [&plummer](float x) { return plummer.GetDensity(x); }) / 1.0f;
         cylindrical.x = r * parameters.diskRadius;
         float3 relativePos = CylindricalToCartesian(cylindrical);
+        std::swap(relativePos.y, relativePos.z);
         particle.position = position + relativePos;
         particle.galaxy = this;
         particles.push_back(particle);
@@ -233,9 +235,9 @@ void Universe::SetRadialVelocitiesFromForce()
     for (size_t i = 0; i < particles.size(); ++i)
     {
         float3 relativePos = float3(position[i]) - particles[i]->galaxy->GetPosition();
-        float3 v = {relativePos.y, -relativePos.x, 0.0f};
+        float3 v = { relativePos.z, 0.0f, -relativePos.x };
         v.normalize();
-        
+
         //float radialFromHalo = RadialVelocity(halo.GetForce(relativePos.norm()), particles[i].mass, relativePos.norm());
         float radial = RadialVelocity(force[i].length(), particles[i]->mass, relativePos.length());
         v *= radial;// + radialFromHalo;

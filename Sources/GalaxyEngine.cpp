@@ -3,11 +3,28 @@
 #include "Core/Solver.h"
 #include "Core/Threading.h"
 #include "Core/BarnesHutTree.h"
+#include "RenderUtils.h"
 
 GalaxyEngine* g_instance = nullptr;
 
 extern GL::ImagePtr g_shaded_image;
-GL::PipelinePtr* g_particles_pipeline;
+GL::GraphicsPipelinePtr* g_particles_pipeline;
+
+int3 CalcNumGroups(int size, uint group_size)
+{
+    return int3((size + group_size - 1) / group_size, 1, 1);
+}
+
+int3 CalcNumGroups(int2 size, uint group_size)
+{
+    return int3((size.x + group_size - 1) / group_size, (size.y + group_size - 1) / group_size, 1);
+}
+
+int3 CalcNumGroups(int3 size, uint group_size)
+{
+    return int3((size.x + group_size - 1) / group_size, (size.y + group_size - 1) / group_size,
+        (size.z + group_size - 1) / group_size);
+}
 
 GalaxyEngine::GalaxyEngine(std::uint32_t width, std::uint32_t height, void* window_handle,
     const char* shaders_path)
@@ -29,19 +46,22 @@ GalaxyEngine::GalaxyEngine(std::uint32_t width, std::uint32_t height, void* wind
         std::sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG)));
     cMillionYearsPerTimeUnit = cSecondsPerTimeUnit / 3600.0f / 24.0f / 365.0f / 1e+6f;
 
-    deltaTime = 0.001f;
+    deltaTime = 0.00001f;
     deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6f;
 
     saveToFiles = false;
 
     Reset();
 
-    particles_mesh_data_ = MeshData::Create();
-    particles_vertex_buffer_ = GetNextEntity();
-    GetRenderer().CreateDeviceBuffer("Particles mesh", particles_vertex_buffer_,
-        20000000 * 4 * sizeof(float), GL::BufferType::kVertex, GL_DYNAMIC_DRAW);
+    particles_buffer_ = GetNextEntity();
+    GetRenderer().CreateDeviceBuffer("Particles", particles_buffer_,
+        20000000 * 4 * sizeof(float), GL::BufferType::kStorage, GL_DYNAMIC_DRAW);
 
-    g_particles_pipeline = &particles_pipeline_;
+    g_particles_pipeline = &particles_render_pipeline_;
+
+    camera_components[GetActiveCamera()]->z_far = 100000.0f;
+
+    ui_ = std::make_unique<UI::GalaxyUI>(*this);
 }
 
 GalaxyEngine& GalaxyEngine::GetInstance()
@@ -82,6 +102,7 @@ void GalaxyEngine::Update(float time)
 
 void GalaxyEngine::BuildUI()
 {
+    ui_->Build();
 }
 
 static void DrawBarnesHutTree(const BarnesHutTree& node)
@@ -114,10 +135,14 @@ void CreateParticlesPipelines(Renderer& r)
     state.SetColorAttachment(0, g_shaded_image);
     state.SetRootConstantsSize(sizeof(Device::ShadeSingleColorRootConstants));
     Device::ShadeSingleColorRootConstants root_constants = {};
-    root_constants.color = float4(0.03f);
-    *g_particles_pipeline = r.GetRenderDevice().CreatePipeline(
-        "ShadeSingleColor", state, ShaderTools::Defines());
+    root_constants.color = float4(1.03f);
+    root_constants.transform = matrix();
+    *g_particles_pipeline = r.GetRenderDevice().CreateGraphicsPipeline(
+        "Particles.geom", "ShadeSingleColor.vert", "ShadeSingleColor.frag",
+        state, ShaderTools::Defines());
     (*g_particles_pipeline)->SetRootConstants(&root_constants);
+   
+    RenderUtils::BindSceneData(r, *g_particles_pipeline);
 }
 
 void GalaxyEngine::PostRender()
@@ -129,33 +154,67 @@ void GalaxyEngine::PostRender()
         {
             const auto count = universe->position.size();
 
-            if (!particles_pipeline_ && 
+            if (!particles_render_pipeline_ && 
                 g_shaded_image)
             {
                 CreateParticlesPipelines(GetRenderer());
             }
 
+            if (!particles_update_pipeline_)
+            {
+                GL::PipelineState state = {};
+                state.SetRootConstantsSize(sizeof(Device::ParticlesUpdateRootConstants));
+                particles_update_pipeline_ = GetRenderer().GetRenderDevice().
+                    CreateComputePipeline("ParticlesUpdate.comp", state);
+
+                particles_update_pipeline_->SetBuffer(GetRenderer().GetDeviceBuffer(particles_buffer_),
+                    "ParticlesData");
+
+                UpdateDeltaTime();
+            }
+
             if (!write_flag_ && count > 0)
             {
-                GetRenderer().GetDeviceBuffer(particles_vertex_buffer_)->
-                    Write(0, count * sizeof(float4), universe->position.data());
+                std::vector<Device::Particle> device_particles(count);
+
+                for (auto i = 0u; i < count; ++i)
+                {
+                    device_particles[i].position = universe->position[i];
+                    device_particles[i].position.w = universe->inverseMass[i];
+                    device_particles[i].velocity = universe->velocity[i];
+                    device_particles[i].acceleration = universe->acceleration[i];
+                    device_particles[i].force = universe->force[i];
+                }
+
+                GetRenderer().GetDeviceBuffer(particles_buffer_)->
+                    Write(0, count * sizeof(Device::Particle), device_particles.data());
                 write_flag_ = true;
             }
 
-            if (particles_pipeline_)
+            {
+                particles_update_pipeline_->Dispatch(CalcNumGroups(count, 256));
+                GL_CALL(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
+            }
+
+            if (particles_render_pipeline_)
             {
                 DEBUG_TIMING_BLOCK_GPU("Render particles");
 
-                GL_CALL(glEnable(GL_BLEND));
+                //GL_CALL(glEnable(GL_BLEND));
                 GL_CALL(glBlendFunc(GL_ONE, GL_ONE));
 
-                particles_pipeline_->BeginGraphics(
-                    GetRenderer().GetDeviceBuffer(particles_vertex_buffer_),
-                    4 * sizeof(float));
+                Device::ShadeSingleColorRootConstants root_constants = {};
+                //root_constants.color = float4(300000.0f / count);
+                root_constants.color = float4(1.0f);
+                root_constants.transform = matrix();
+                particles_render_pipeline_->SetRootConstants(&root_constants);
 
-                particles_pipeline_->Draw(0, count, GL_POINTS);
+                particles_render_pipeline_->SetBuffer(GetRenderer().GetDeviceBuffer(particles_buffer_), 
+                    "ParticlesData");
 
-                particles_pipeline_->EndGraphics();
+                particles_render_pipeline_->BeginGraphics();
+                particles_render_pipeline_->Draw(0, count, GL_POINTS);
+                particles_render_pipeline_->EndGraphics();
 
                 GL_CALL(glDisable(GL_BLEND));
             }
@@ -282,8 +341,8 @@ void GalaxyEngine::Reset()
     currentSolver = &*solverBarneshut;
 
     currentSolver->Inititalize(deltaTime);
-    //currentSolver->SolveForces();
-    //universe->SetRadialVelocitiesFromForce();
+    currentSolver->SolveForces();
+    universe->SetRadialVelocitiesFromForce();
     currentSolver->Prepare();
 
     started = false;
@@ -296,4 +355,11 @@ void GalaxyEngine::Reset()
                 ++numSteps;
             }
         });
+}
+
+void GalaxyEngine::UpdateDeltaTime()
+{
+    Device::ParticlesUpdateRootConstants consts = {};
+    consts.time = deltaTime;
+    particles_update_pipeline_->SetRootConstants(&consts);
 }

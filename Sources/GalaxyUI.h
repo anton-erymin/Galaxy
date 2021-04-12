@@ -1,6 +1,6 @@
 #pragma once
 
-class GalaxyApplication;
+class GalaxyEngine;
 
 namespace UI
 {
@@ -8,15 +8,15 @@ namespace UI
 class GalaxyUI
 {
 public:
-	GalaxyUI(GalaxyApplication& app)
-		: app_(app)
+	GalaxyUI(GalaxyEngine& engine)
+		: engine_(engine)
 	{
 	}
 
 	void Build();
 
 private:
-	GalaxyApplication& app_;
+	GalaxyEngine& engine_;
 };
 
 }

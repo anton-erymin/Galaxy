@@ -2,6 +2,7 @@
 
 #include "Engine.h"
 #include "Core/Galaxy.h"
+#include "GalaxyUI.h"
 
 class Universe;
 class BruteforceSolver;
@@ -49,6 +50,8 @@ private:
 
     void Reset();
 
+    void UpdateDeltaTime();
+
     SimulationParameters simulation_params_;
     Timings timings_;
 
@@ -91,8 +94,12 @@ private:
     SimulationParameters simulationParams;
     GalaxyParameters model;
 
-    MeshData::Ptr particles_mesh_data_;
-    Entity particles_vertex_buffer_ = kInvalidEntity;
-    GL::PipelinePtr particles_pipeline_;
+    GL::GraphicsPipelinePtr particles_render_pipeline_;
+    GL::ComputePipelinePtr particles_update_pipeline_;
+    Entity particles_buffer_ = kInvalidEntity;
     bool write_flag_ = false;
+
+    std::unique_ptr<UI::GalaxyUI> ui_;
+
+    friend class UI::GalaxyUI;
 };
