@@ -88,7 +88,7 @@ void Galaxy::Create()
 {
     particles.reserve(parameters.bulgeParticlesCount + parameters.diskParticlesCount);
 
-    assert(parameters.diskMassRatio > 0.0f && parameters.diskMassRatio < 1.0f);
+    assert(parameters.diskMassRatio > 0.0f && parameters.diskMassRatio <= 1.0f);
 
     const float bulgeParticleMass = (1.0f - parameters.diskMassRatio) * parameters.mass / parameters.bulgeParticlesCount;
     const float diskParticleMass = parameters.diskMassRatio * parameters.mass / parameters.diskParticlesCount;
@@ -130,7 +130,7 @@ void Galaxy::Create()
 
     particles[0].position = position;
     particles[0].movable = false;
-    particles[0].SetMass(particles[0].mass * parameters.blackHoleMass);
+    particles[0].SetMass(parameters.blackHoleMass);
 
     LOG("Galaxy created");
 }

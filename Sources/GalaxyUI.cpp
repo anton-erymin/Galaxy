@@ -8,9 +8,13 @@ void GalaxyUI::Build()
 {
     if (ImGui::CollapsingHeader("Galaxy"))
     {
-        if (ImGui::SliderFloat("Timestep", &engine_.deltaTime, -0.1f, 0.1f, "%.3f", 100.0f))
+        const float kCoeff = 10000.0f;
+
+        float dt = engine_.deltaTime * kCoeff;
+
+        if (ImGui::SliderFloat("Timestep", &dt, -1.0f, 1.0f, "%.3f", 1.0f))
         {
-            engine_.UpdateDeltaTime();
+            engine_.UpdateDeltaTime(dt / kCoeff);
         }
     }
 }

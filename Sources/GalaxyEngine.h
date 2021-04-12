@@ -50,7 +50,8 @@ private:
 
     void Reset();
 
-    void UpdateDeltaTime();
+    void UpdateDeltaTime(float new_time);
+    void RebuildTimeDependentPipelines();
 
     SimulationParameters simulation_params_;
     Timings timings_;
@@ -96,8 +97,15 @@ private:
 
     GL::GraphicsPipelinePtr particles_render_pipeline_;
     GL::ComputePipelinePtr particles_update_pipeline_;
+    GL::ComputePipelinePtr particles_clear_forces_pipeline_;
+    GL::ComputePipelinePtr particles_barnes_hut_pipeline_;
+    GL::ComputePipelinePtr particles_solve_pipeline_;
     Entity particles_buffer_ = kInvalidEntity;
     bool write_flag_ = false;
+
+    bool is_simulated_ = false;
+
+    Entity controller_ = kInvalidEntity;
 
     std::unique_ptr<UI::GalaxyUI> ui_;
 
