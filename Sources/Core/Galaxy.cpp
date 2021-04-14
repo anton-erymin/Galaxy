@@ -123,6 +123,13 @@ void Galaxy::Create()
         cylindrical.x = r * parameters.diskRadius;
         float3 relativePos = CylindricalToCartesian(cylindrical);
         std::swap(relativePos.y, relativePos.z);
+#if 0
+        relativePos = float3(
+            RAND_RANGE(-parameters.diskRadius, parameters.diskRadius),
+            RAND_RANGE(-parameters.diskRadius, parameters.diskRadius),
+            RAND_RANGE(-parameters.diskRadius, parameters.diskRadius));
+#endif // 0
+
         particle.position = position + relativePos;
         particle.galaxy = this;
         particles.push_back(particle);
@@ -240,7 +247,7 @@ void Universe::SetRadialVelocitiesFromForce()
 
         //float radialFromHalo = RadialVelocity(halo.GetForce(relativePos.norm()), particles[i].mass, relativePos.norm());
         float radial = RadialVelocity(force[i].length(), particles[i]->mass, relativePos.length());
-        v *= radial;// + radialFromHalo;
+        v *= radial * cRadialVelocityFactor;// + radialFromHalo;
                     //float d = 0.1 * v.norm();
                     //v += lpVec3(d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f));
 

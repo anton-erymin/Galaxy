@@ -1,8 +1,5 @@
 #pragma once
 
-constexpr uint32_t cWindowWidth = 1400;
-constexpr uint32_t cWindowHeight = 800;
-
 constexpr char* cWindowCaption = "Galaxy Model 0.1";
 
 /* 
@@ -19,19 +16,16 @@ constexpr double cKiloParsec = 1000 * cParsec;    // m
 constexpr double cSolarMass = 1.9885e+30;         // kg
 constexpr double cMassUnit = 1e+10 * cSolarMass;  // kg
 
-constexpr float cSoftFactor = 0.01f;
+constexpr float cSoftFactor = 0.003f;
 
-constexpr float cRenderFps = 30;
-constexpr float cFrameTime = 1.0f / cRenderFps;
+constexpr float cRadialVelocityFactor = 0.7f;
 
-// Параметры по умолчанию для стандартной модели
-
-#define         GLX_TOTAL_MASS          0.000000001f
+#define         GLX_TOTAL_MASS          20000.0f
 
 #define			GLX_DISK_RADIUS			0.1f//5.0f				    // Радиус галактики
 #define			GLX_BULGE_RADIUS		0.01f						// Радиус ядра галактики
 #define			GLX_HALO_RADIUS			5.0f						// Радиус гало из темной материи
-#define			GLX_DISK_THICKNESS		0.01f						// Толщина диска галактики
+#define			GLX_DISK_THICKNESS		0.0001f						// Толщина диска галактики
 #define         GLX_DISK_MASS_RATIO     1.0f
 
 #define			GLX_HALO_MASS			20.0f						// Масса гало
@@ -39,6 +33,6 @@ constexpr float cFrameTime = 1.0f / cRenderFps;
 #define			GLX_UNIVERSE_SIZE	    50.0f						// Размеры пространства симуляции
 
 #define			GLX_BULGE_NUM			000						// Количесто частиц в балдже
-#define			GLX_DISK_NUM			10000						// Количесто частиц в диске
+#define			GLX_DISK_NUM			20000						// Количесто частиц в диске
 
 #define         GLX_BLACK_HOLE_MASS     0.0f

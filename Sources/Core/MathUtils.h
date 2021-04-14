@@ -41,11 +41,13 @@ inline float3 RandomUniformCylindrical(float rmin, float rmax, float height)
     return { RAND_RANGE(rmin, rmax), 2.0f * PI * RAND_NORM, RAND_RANGE(-0.5f * height, 0.5f * height) };
 }
 
-inline float3 GravityAcceleration(const float3& point, float mass, float soft, float length = -1.0f)
+inline float3 GravityAcceleration(const float3& l, float mass, float soft, float length = -1.0f)
 {
-    float3 acceleration = point;
-    float distance = length > 0.0f ? (length + soft) : vw::length(acceleration) + soft;
-    acceleration = acceleration * (mass / (distance * distance * distance));
+    float3 acceleration = l;
+    float distance_sq = length > 0.0f ? (length * length) : vw::dot(l, l);
+    float r = std::sqrtf(distance_sq + soft * soft);
+    float denom = r * r * r;
+    acceleration *= mass / denom;
     return acceleration;
 }
 

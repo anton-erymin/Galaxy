@@ -74,8 +74,12 @@ GalaxyEngine::GalaxyEngine(std::uint32_t width, std::uint32_t height, void* wind
     }
 
     {
-        ShaderTools::Defines defines = { 
-            { "SOLVE_BRUTEFORCE", "" }, { "N", std::to_string(universe->GetParticlesCount()) } };
+        ShaderTools::Defines defines = 
+        { 
+            { "SOLVE_BRUTEFORCE", "" }, 
+            { "N", std::to_string(universe->GetParticlesCount()) },
+            { "SOFT_EPS", std::to_string(cSoftFactor) }
+        };
         
 
         particles_solve_pipeline_ = GetRenderer().GetRenderDevice().
@@ -121,18 +125,6 @@ void GalaxyEngine::Update(float time)
 
     frameTimer += time2;
     fpsTimer += time2;
-
-    if (frameTimer > cFrameTime)
-    {
-        frameTimer -= cFrameTime;
-    }
-
-    if (fpsTimer >= 1.0f)
-    {
-        lastFps = frameCounter * (1.0f / fpsTimer);
-        frameCounter = 0;
-        fpsTimer = 0.0f;
-    }
 
     simulationTimeMillionYears = simulationTime * cMillionYearsPerTimeUnit;
 }
@@ -219,8 +211,8 @@ void GalaxyEngine::PostRender()
             if (is_simulated_)
             {
                 {
-                    particles_clear_forces_pipeline_->Dispatch(CalcNumGroups(count, kGroupSize1D));
-                    GL_CALL(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
+                    /*particles_clear_forces_pipeline_->Dispatch(CalcNumGroups(count, kGroupSize1D));
+                    GL_CALL(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));*/
                 }
 
                 {
@@ -243,12 +235,12 @@ void GalaxyEngine::PostRender()
             {
                 DEBUG_TIMING_BLOCK_GPU("Render particles");
 
-                GL_CALL(glEnable(GL_BLEND));
+                //GL_CALL(glEnable(GL_BLEND));
                 GL_CALL(glBlendFunc(GL_ONE, GL_ONE));
 
                 Device::ShadeSingleColorRootConstants root_constants = {};
-                root_constants.color = float4(50000.0f / count);
-                //root_constants.color = float4(1.0f);
+                //root_constants.color = float4(50000.0f / count);
+                root_constants.color = float4(1.0f);
                 root_constants.transform = matrix();
                 particles_render_pipeline_->SetRootConstants(&root_constants);
 
