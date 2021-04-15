@@ -16,21 +16,21 @@ constexpr double cKiloParsec = 1000 * cParsec;    // m
 constexpr double cSolarMass = 1.9885e+30;         // kg
 constexpr double cMassUnit = 1e+10 * cSolarMass;  // kg
 
-constexpr float cSoftFactor = 0.003f;
+constexpr float cSoftFactor = 0.001f;
 
 constexpr float cRadialVelocityFactor = 0.7f;
 
-#define         GLX_TOTAL_MASS          20000.0f
+#define         GLX_TOTAL_MASS          1.0f
 
 #define			GLX_DISK_RADIUS			0.1f//5.0f				    // Радиус галактики
 #define			GLX_BULGE_RADIUS		0.01f						// Радиус ядра галактики
 #define			GLX_HALO_RADIUS			5.0f						// Радиус гало из темной материи
-#define			GLX_DISK_THICKNESS		0.0001f						// Толщина диска галактики
+#define			GLX_DISK_THICKNESS		0.0f						// Толщина диска галактики
 #define         GLX_DISK_MASS_RATIO     1.0f
 
 #define			GLX_HALO_MASS			20.0f						// Масса гало
 
-#define			GLX_UNIVERSE_SIZE	    50.0f						// Размеры пространства симуляции
+#define			GLX_UNIVERSE_SIZE	    1.0f						// Размеры пространства симуляции
 
 #define			GLX_BULGE_NUM			000						// Количесто частиц в балдже
 #define			GLX_DISK_NUM			20000						// Количесто частиц в диске

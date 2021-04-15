@@ -51,7 +51,8 @@ private:
     void Reset();
 
     void UpdateDeltaTime(float new_time);
-    void RebuildTimeDependentPipelines();
+
+    void Bind(GL::Pipeline* pipeline);
 
     SimulationParameters simulation_params_;
     Timings timings_;
@@ -84,7 +85,7 @@ private:
 
     struct RenderParameters
     {
-        bool renderTree = false;
+        bool renderTree = true;
         bool renderPoints = true;
         bool plotFunctions = false;
         float brightness = 1.0f;
@@ -96,11 +97,13 @@ private:
     GalaxyParameters model;
 
     GL::GraphicsPipelinePtr particles_render_pipeline_;
+    GL::GraphicsPipelinePtr tree_draw_pipeline_;
     GL::ComputePipelinePtr particles_update_pipeline_;
     GL::ComputePipelinePtr particles_clear_forces_pipeline_;
     GL::ComputePipelinePtr particles_barnes_hut_pipeline_;
     GL::ComputePipelinePtr particles_solve_pipeline_;
     Entity particles_buffer_ = kInvalidEntity;
+    Entity nodes_buffer_ = kInvalidEntity;
     bool write_flag_ = false;
 
     bool is_simulated_ = false;
