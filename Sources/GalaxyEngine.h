@@ -46,7 +46,9 @@ private:
     void Update(float time) override;
     void BuildUI() override;
 
-    void PostRender() override;    
+    void CreateParticlesRenderPipelines();
+
+    void PostRender() override;
 
     void Reset();
 
@@ -104,6 +106,7 @@ private:
     GL::ComputePipelinePtr particles_solve_pipeline_;
     Entity particles_buffer_ = kInvalidEntity;
     Entity nodes_buffer_ = kInvalidEntity;
+    GL::BufferPtr nodes_counter;
     bool write_flag_ = false;
 
     bool is_simulated_ = false;
@@ -113,4 +116,6 @@ private:
     std::unique_ptr<UI::GalaxyUI> ui_;
 
     friend class UI::GalaxyUI;
+
+    friend void CreateParticlesRenderPipelines(Renderer& r);
 };

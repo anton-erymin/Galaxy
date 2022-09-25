@@ -16,7 +16,7 @@ constexpr double cKiloParsec = 1000 * cParsec;    // m
 constexpr double cSolarMass = 1.9885e+30;         // kg
 constexpr double cMassUnit = 1e+10 * cSolarMass;  // kg
 
-constexpr float cSoftFactor = 0.001f;
+constexpr float cSoftFactor = 0.002f;
 
 constexpr float cRadialVelocityFactor = 0.7f;
 
@@ -33,6 +33,6 @@ constexpr float cRadialVelocityFactor = 0.7f;
 #define			GLX_UNIVERSE_SIZE	    1.0f						// Размеры пространства симуляции
 
 #define			GLX_BULGE_NUM			000						// Количесто частиц в балдже
-#define			GLX_DISK_NUM			20000						// Количесто частиц в диске
+#define			GLX_DISK_NUM			1000						// Количесто частиц в диске
 
 #define         GLX_BLACK_HOLE_MASS     0.0f

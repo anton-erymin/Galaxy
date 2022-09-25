@@ -139,6 +139,9 @@ void Galaxy::Create()
     particles[0].movable = false;
     particles[0].SetMass(parameters.blackHoleMass);
 
+    //particles[0].position = float3(-0.45f, 0.0f, -0.45f);
+    //particles[1].position = float3(-0.3f, 0.0f, -0.3f);
+
     LOG("Galaxy created");
 }
 
