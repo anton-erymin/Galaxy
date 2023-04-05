@@ -33,6 +33,6 @@ constexpr float cRadialVelocityFactor = 0.7f;
 #define			GLX_UNIVERSE_SIZE	    1.0f						// Размеры пространства симуляции
 
 #define			GLX_BULGE_NUM			000						// Количесто частиц в балдже
-#define			GLX_DISK_NUM			1000						// Количесто частиц в диске
+#define			GLX_DISK_NUM			50						// Количесто частиц в диске
 
 #define         GLX_BLACK_HOLE_MASS     0.0f
