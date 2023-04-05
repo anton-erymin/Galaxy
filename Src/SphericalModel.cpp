@@ -134,7 +134,7 @@ static float DensityDistribution(float r)
 	return 10000.0f;
 	return 3.0f * 100.0f / (4.0f * PI * 30.0f * 30.0f * 30.0f);
 	float a = 16.0f;
-	return 3.0f * 1000.0f/(4.0f * PI * a * a * a) / sqrtf( pow(1.0f + pow(r / a, 2), 5) );
+	return 3.0f * 1000.0f/(4.0f * PI * a * a * a) / sqrtf( pow(1.0f + pow(r / a, 2.0f), 5.0f) );
 
 }
 
