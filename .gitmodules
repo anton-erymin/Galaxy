@@ -1,3 +1,6 @@
 [submodule "Libs/Nucleus"]
 	path = Libs/Nucleus
 	url = c:/Workspace/NET/BilliardsGit
+[submodule "Libs/Nucleus2"]
+	path = Libs/Nucleus2
+	url = D:\\NET\\Billiards2
