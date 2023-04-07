@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Engine.h"
+#include <EngineMinimal.h>
 #include "Core/Galaxy.h"
 #include "GalaxyUI.h"
 
@@ -10,13 +10,12 @@ class BarnesHutCPUSolver;
 class BarnesHutGPUSolver;
 class Solver;
 
-class GalaxyEngine : public Engine
+class GalaxyEngine final : public Engine
 {
 public:
-    GalaxyEngine(std::uint32_t width, std::uint32_t height, void* window_handle,
-        const char* shaders_path);
+    GalaxyEngine();
 
-    virtual ~GalaxyEngine() = default;
+    virtual void OnPostInitialize() override;
 
     struct SimulationParameters
     {
@@ -30,31 +29,19 @@ public:
         float solvingTimeMsecs = 0.0f;
     };
 
-    const SimulationParameters& GetSimulationParamaters() const
-    {
-        return simulation_params_;
-    }
-
-    Timings& GetTimings()
-    {
-        return timings_;
-    }
+    const SimulationParameters& GetSimulationParamaters() const { return simulation_params_; }
+    Timings& GetTimings() { return timings_; }
 
     static GalaxyEngine& GetInstance();
 
 private:
-    void Update(float time) override;
-    void BuildUI() override;
-
     void CreateParticlesRenderPipelines();
-
-    void PostRender() override;
 
     void Reset();
 
     void UpdateDeltaTime(float new_time);
 
-    void Bind(GL::Pipeline* pipeline);
+    void Bind(GAL::PipelinePtr& pipeline);
 
     SimulationParameters simulation_params_;
     Timings timings_;
@@ -98,15 +85,18 @@ private:
     SimulationParameters simulationParams;
     GalaxyParameters model;
 
-    GL::GraphicsPipelinePtr particles_render_pipeline_;
-    GL::GraphicsPipelinePtr tree_draw_pipeline_;
-    GL::ComputePipelinePtr particles_update_pipeline_;
-    GL::ComputePipelinePtr particles_clear_forces_pipeline_;
-    GL::ComputePipelinePtr particles_barnes_hut_pipeline_;
-    GL::ComputePipelinePtr particles_solve_pipeline_;
+#if 0
+    GAL::GraphicsPipelinePtr particles_render_pipeline_;
+    GAL::GraphicsPipelinePtr tree_draw_pipeline_;
+    GAL::ComputePipelinePtr particles_update_pipeline_;
+    GAL::ComputePipelinePtr particles_clear_forces_pipeline_;
+    GAL::ComputePipelinePtr particles_barnes_hut_pipeline_;
+    GAL::ComputePipelinePtr particles_solve_pipeline_;
+#endif // 0
+
     Entity particles_buffer_ = kInvalidEntity;
     Entity nodes_buffer_ = kInvalidEntity;
-    GL::BufferPtr nodes_counter;
+    GAL::BufferPtr nodes_counter;
     bool write_flag_ = false;
 
     bool is_simulated_ = false;

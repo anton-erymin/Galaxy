@@ -1,6 +1,6 @@
 #include "SphericalModel.h"
 
-#include <algorithm>
+#include <Math/Math.h>
 
 static constexpr uint32_t N = 1000;
 
@@ -103,7 +103,7 @@ float SphericalModel::GetForce(float r) const
 		float g1 = field[index    ];
 		float g2 = field[index + 1];
 		float alpha = (r - rvec[index]) / h;
-        force = lerp(g1, g2, alpha);
+        force = Math::Lerp(g1, g2, alpha);
 	}
 	
 	return force;
@@ -154,19 +154,22 @@ static void Plot(const std::vector<float> x, const std::vector<float> y, float x
         maxValue = std::max(value, maxValue);
     }
 
-    glDisable(GL_BLEND);
-    glDisable(GL_TEXTURE_2D);
-    glBegin(GL_LINE_STRIP);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    for (size_t i = 0; i < x.size(); ++i)
-    {
-        float color = (y[i] - minValue) / (maxValue - minValue);
-        color = 0.2f * (1.0f - color) + color;
-        glColor3f(color, color, color);
-        glVertex3f(x[i] * xscale, y[i] * yscale, 0.0f);
-    }
+#if 0
+	glDisable(GL_BLEND);
+	glDisable(GL_TEXTURE_2D);
+	glBegin(GL_LINE_STRIP);
+	glColor3f(1.0f, 1.0f, 1.0f);
+	for (size_t i = 0; i < x.size(); ++i)
+	{
+		float color = (y[i] - minValue) / (maxValue - minValue);
+		color = 0.2f * (1.0f - color) + color;
+		glColor3f(color, color, color);
+		glVertex3f(x[i] * xscale, y[i] * yscale, 0.0f);
+	}
 
-    glEnd();
+	glEnd();
+#endif // 0
+
 }
 
 void SphericalModel::PlotPotential() const

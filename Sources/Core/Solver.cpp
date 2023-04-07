@@ -1,10 +1,10 @@
 ﻿#include "Solver.h"
-#include "GalaxyEngine.h"
+#include "../GalaxyEngine.h"
 #include "Galaxy.h"
 #include "Threading.h"
 #include "BarnesHutTree.h"
 #include "Constants.h"
-#include "Utils.h"
+//#include "Utils.h"
 
 static void IntegrateMotionEquationSIMD(Particle& particle, float time)
 {
@@ -111,7 +111,7 @@ void BarnesHutCPUSolver::Solve(float time)
 {
     BuildTree();
 
-    TimeUtils::Timer timer(&GalaxyEngine::GetInstance().GetTimings().solvingTimeMsecs);
+    //TimeUtils::Timer timer(&GalaxyEngine::GetInstance().GetTimings().solvingTimeMsecs);
 
     ThreadPool().Dispatch([&](uint32_t i) 
     { 
@@ -160,7 +160,7 @@ void BarnesHutCPUSolver::Inititalize(float time)
     barnesHutTree = std::make_unique<BarnesHutTree>(float3(-universe.GetSize() * 0.5f), universe.GetSize());
 
     BuildTree();
-    LOG("BarnesHutCPUSolver::Inititalize: Tree built");
+    NLOG("BarnesHutCPUSolver::Inititalize: Tree built");
 
     float half = 0.5f * time;
 
@@ -188,14 +188,14 @@ void BarnesHutCPUSolver::Inititalize(float time)
 #endif // 0
 
 
-    LOG("BarnesHutCPUSolver::Inititalize: End");
+    NLOG("BarnesHutCPUSolver::Inititalize: End");
 }
 
 void BarnesHutCPUSolver::BuildTree()
 {
     std::lock_guard<std::mutex> lock(mu);
     {
-        TimeUtils::Timer timer(&GalaxyEngine::GetInstance().GetTimings().buildTreeTimeMsecs);
+        //TimeUtils::Timer timer(&GalaxyEngine::GetInstance().GetTimings().buildTreeTimeMsecs);
         barnesHutTree->Reset();
 
         for (size_t i = 0; i < universe.GetParticlesCount(); ++i)

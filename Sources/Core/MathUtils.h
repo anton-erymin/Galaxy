@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Math/Math.h"
+
 float integrate_rect(float a, float b, int n, float(*f)(float));
 float integrate_trap(float a, float b, int n, float(*f)(float));
 
@@ -44,7 +46,7 @@ inline float3 RandomUniformCylindrical(float rmin, float rmax, float height)
 inline float3 GravityAcceleration(const float3& l, float mass, float soft, float length = -1.0f)
 {
     float3 acceleration = l;
-    float distance_sq = length > 0.0f ? (length * length) : vw::dot(l, l);
+    float distance_sq = length > 0.0f ? (length * length) : dot(l, l);
     float r = std::sqrtf(distance_sq + soft * soft);
     float denom = r * r * r;
     acceleration *= mass / denom;

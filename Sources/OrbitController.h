@@ -1,3 +1,4 @@
+#if 0
 #pragma once
 
 #include "Components.h"
@@ -13,3 +14,5 @@ private:
     void Activated_Impl(Engine& game, ObjectControllContext& context);
     void Deactivated_Impl(Engine& game, ObjectControllContext& context);
 };
+
+#endif // 0

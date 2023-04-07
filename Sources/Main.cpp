@@ -1,13 +1,10 @@
-#include "GalaxyApplication.h"
-#include "WinApplication.h"
+#include "GalaxyEngine.h"
 
-constexpr auto kApplicationWidth = 1540u;
-constexpr auto kApplicationHeight = 870u;
-
-int main(int argc, char** argv)
-{
-    GalaxyApplication* obj = new GalaxyApplication();
-    
-    WinApplication application(*obj, kApplicationWidth, kApplicationHeight);
-    return application.Run(argc, argv);
+#define NUCLEUS_DEFINE_ENTRY_POINT(engine)\
+int main()\
+{\
+    cout << #engine;\
+    return 0;\
 }
+
+NUCLEUS_DEFINE_ENTRY_POINT(GalaxyEngine)

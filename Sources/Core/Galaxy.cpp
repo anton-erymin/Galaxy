@@ -1,8 +1,6 @@
 ﻿#include "Galaxy.h"
-
-#include "Application.h"
 #include "Constants.h"
-#include "math_utils.h"
+#include "Math/Math.h"
 
 int curLayer = 0;
 
@@ -106,7 +104,7 @@ void Galaxy::Create()
         float3 spherical = RandomUniformSpherical(0.0f, parameters.bulgeRadius);
         float r = SampleDistribution(0.0f, 1.0f, plummer.GetDensity(0.0f), [&plummer](float x) { return plummer.GetDensity(x); }) / 1.0f;
         spherical.x = r * parameters.bulgeRadius;
-        vw::spherical_to_cartesian(spherical, particle.position);
+        Math::SphericalToCartesian(spherical, particle.position);
         particle.position += position;
         particle.galaxy = this;
         particles.push_back(particle);
@@ -142,7 +140,7 @@ void Galaxy::Create()
     //particles[0].position = float3(-0.45f, 0.0f, -0.45f);
     //particles[1].position = float3(-0.3f, 0.0f, -0.3f);
 
-    LOG("Galaxy created");
+    NLOG("Galaxy created");
 }
 
 void Galaxy::Update(float dt)
@@ -237,7 +235,7 @@ void Universe::AddGalaxy(std::unique_ptr<Galaxy>& galaxy)
 
     galaxies.push_back(std::move(galaxy));
 
-    LOG("Galaxy added");
+    NLOG("Galaxy added");
 }
 
 void Universe::SetRadialVelocitiesFromForce()

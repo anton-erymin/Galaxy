@@ -6,6 +6,7 @@ namespace UI
 
 void GalaxyUI::Build()
 {
+#if 0
     if (ImGui::CollapsingHeader("Galaxy"))
     {
         const float kCoeff = 10000.0f;
@@ -17,6 +18,8 @@ void GalaxyUI::Build()
             engine_.UpdateDeltaTime(dt / kCoeff);
         }
     }
+#endif // 0
+
 }
 
 }

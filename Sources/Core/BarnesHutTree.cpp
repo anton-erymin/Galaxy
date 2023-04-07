@@ -250,7 +250,7 @@ float3 BarnesHutTree::ComputeAcceleration(const float3& position, float soft) co
 
     if (isLeaf)
     {
-        if (isBusy && !vw::equal_eps(position, center, EPS))
+        if (isBusy && !equal_eps(position, center, EPS))
         {
             acceleration = GravityAcceleration(center - position, mass, soft);
         }
@@ -258,7 +258,7 @@ float3 BarnesHutTree::ComputeAcceleration(const float3& position, float soft) co
     else
     {
         float3 vec = center - position;
-        float r = vw::length(vec);
+        float r = Math::length(vec);
         float theta = length / r;
 
         if (theta < cOpeningAngle)
@@ -295,7 +295,7 @@ float3 BarnesHutTree::ComputeAccelerationFlat(const float3& position, float soft
 
         if (node.isLeaf)
         {
-            if (node.isBusy && !vw::equal_eps(position, node.center, EPS))
+            if (node.isBusy && !equal_eps(position, node.center, EPS))
             {
                 acceleration += GravityAcceleration(node.center - position, node.mass, soft);
             }
@@ -303,7 +303,7 @@ float3 BarnesHutTree::ComputeAccelerationFlat(const float3& position, float soft
         else
         {
             float3 vec = node.center - position;
-            float r = vw::length(vec);
+            float r = Math::length(vec);
             float theta = node.length / r;
 
             if (theta < cOpeningAngle)

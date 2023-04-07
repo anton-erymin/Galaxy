@@ -13,7 +13,5 @@ set(CORE_SOURCES
    MathUtils.cpp
    MathUtils.h)
 
-add_library(Core STATIC ${CORE_SOURCES})
-
-target_include_directories(Core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
-target_link_libraries(Core PRIVATE Nucleus)
+add_library(Galaxy.Core STATIC ${CORE_SOURCES})
+target_link_libraries(Galaxy.Core PRIVATE Nucleus.Core Nucleus.Engine)

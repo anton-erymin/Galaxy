@@ -1,22 +1,20 @@
 #include "MathUtils.h"
 
-#include "math_utils.h"
-
 float integrate_rect(float a, float b, int n, float(*f)(float))
 {
-float res, h, hh;
+    float res, h, hh;
 
-h = (b - a) / n;
-hh = 0.5f * h;
+    h = (b - a) / n;
+    hh = 0.5f * h;
 
-res = 0.0f;
-for (int i = 0; i < n; i++)
-{
-    res += f(a + i * h + hh);
-}
-res *= h;
+    res = 0.0f;
+    for (int i = 0; i < n; i++)
+    {
+        res += f(a + i * h + hh);
+    }
+    res *= h;
 
-return res;
+    return res;
 }
 
 float integrate_trap(float a, float b, int n, float(*f)(float))
