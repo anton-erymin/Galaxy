@@ -12,6 +12,12 @@ set(BILLIARDS_BUILD_GAME OFF)
 set(NUCLEUS_INCLUDE_FORMAT OFF)
 add_subdirectory(${NUCLEUS_DIR})
 
+set(CMAKE_MODULE_PATH ${NUCLEUS_DIR}/cmake)
+include(SetupBuildOptions)
+SetupBuildOptions()
+
+add_compile_options(/MD)
+
 # For ImGui
 include_directories(${NUCLEUS_DIR}/Libs/imgui/Include)
 # For Protobuf

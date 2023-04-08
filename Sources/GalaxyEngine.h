@@ -14,6 +14,7 @@ class GalaxyEngine final : public Engine
 {
 public:
     GalaxyEngine();
+    ~GalaxyEngine();
 
     virtual void OnPostInitialize() override;
 

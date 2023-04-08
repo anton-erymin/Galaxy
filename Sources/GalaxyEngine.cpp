@@ -33,18 +33,16 @@ GalaxyEngine::GalaxyEngine()
 {
 }
 
+GalaxyEngine::~GalaxyEngine()
+{
+}
+
 void GalaxyEngine::OnPostInitialize()
 {
     NLOG("Galaxy Model 0.5\nCopyright (c) LAXE LLC 2012-2021");
-
     g_instance = this;
 
-    ThreadPool::Create(std::thread::hardware_concurrency());
-
-    //Config.draw_world_grid = true;
-    //Config.draw_world_axes = true;
-    //Config.draw_timing_plots = true;
-    //Config.draw_debug_information = true;
+    //ThreadPool::Create(std::thread::hardware_concurrency());
 
     // Old initialization
     cSecondsPerTimeUnit = static_cast<float>(
@@ -56,9 +54,9 @@ void GalaxyEngine::OnPostInitialize()
 
     saveToFiles = false;
 
-    Reset();
+    //Reset();
 
-    const auto count = universe->GetParticlesCount();
+    //const auto count = universe->GetParticlesCount();
 
     //particles_buffer_ = g_engine_core->CreateEntity();
 
@@ -139,6 +137,11 @@ void GalaxyEngine::OnPostInitialize()
 
         })->is_active = true;
 #endif // 0
+
+    SetActiveScene(CreateScene());
+    AddBox();
+    AddPointLight(float3(1.0f, 2.0f, 0.0f));
+    Play();
 }
 
 GalaxyEngine& GalaxyEngine::GetInstance()
@@ -416,6 +419,7 @@ void GalaxyEngine::Reset()
     currentSolver->Prepare();
 
     started = false;
+#if 0
     solverThread = std::thread([this]()
         {
             while (started)
@@ -425,6 +429,8 @@ void GalaxyEngine::Reset()
                 ++numSteps;
             }
         });
+#endif // 0
+
 }
 
 void GalaxyEngine::UpdateDeltaTime(float new_time)
