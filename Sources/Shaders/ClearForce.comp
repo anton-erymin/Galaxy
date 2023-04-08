@@ -1,0 +1,17 @@
+#include "CommonConstants.h"
+#include "SceneData.h"
+
+layout(std140) buffer ParticlesData
+{
+	Particle g_particles[];
+};
+
+layout(local_size_x = kGroupSize1D) in;
+
+void main()
+{
+    uint gidx = gl_GlobalInvocationID.x;
+    
+    g_particles[gidx].force.xyz = vec3(0.0);
+    g_particles[gidx].acceleration.xyz = vec3(0.0);
+}

@@ -1,0 +1,38 @@
+#include "SceneData.h"
+#include "CommonData.h"
+#include "Utils.h"
+#include "CommonConstants.h"
+
+ROOT_CONSTANTS
+{
+    ParticlesUpdateRootConstants g_constants;
+};
+
+layout(std140) buffer ParticlesData
+{
+	Particle g_particles[];
+};
+
+layout(local_size_x = kGroupSize1D) in;
+
+void main()
+{
+    uint gidx = gl_GlobalInvocationID.x;
+    
+    if (gidx >= PARTICLES_COUNT)
+    {
+        return;
+    }
+    
+    Particle p = g_particles[gidx];
+    
+    const float inv_mass = p.velocity.w;
+    
+    const float dt = 0.00001;
+    
+    //p.acceleration.xyz += inv_mass * p.force.xyz;
+    p.velocity.xyz += dt * p.acceleration.xyz;
+    p.position.xyz += dt * p.velocity.xyz;
+    
+    g_particles[gidx] = p;
+}

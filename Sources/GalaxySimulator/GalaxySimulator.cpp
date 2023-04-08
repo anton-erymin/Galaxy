@@ -76,9 +76,12 @@ GalaxySimulator::GalaxySimulator()
 {
     NLOG("Galaxy Model 0.5\nCopyright (c) LAXE LLC 2012-2021");
 
+#if 0
     engine->SetActiveScene(engine->CreateScene());
     engine->AddBox();
     engine->AddPointLight(float3(1.0f, 2.0f, 0.0f));
+#endif // 0
+
     engine->Play();
 
     // Old initialization

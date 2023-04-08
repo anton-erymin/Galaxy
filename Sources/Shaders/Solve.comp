@@ -1,0 +1,88 @@
+#include "CommonConstants.h"
+#include "SceneData.h"
+
+#define SOFT_EPS_SQ (SOFT_EPS * SOFT_EPS)
+
+layout(std140) buffer ParticlesData
+{
+	Particle g_particles[];
+};
+
+layout(local_size_x = kGroupSize1D) in;
+
+void main()
+{
+    uint gidx = gl_GlobalInvocationID.x;
+    
+    if (gidx >= PARTICLES_COUNT)
+    {
+        return;
+    }
+    
+#ifdef SOLVE_BRUTEFORCE
+    Particle p = g_particles[gidx];
+    vec3 acceleration = vec3(0.0);
+
+    g_particles[gidx].acceleration.xyz = vec3(0.0);
+    
+    memoryBarrier();
+    
+    if (gidx % 2u  == 0u)
+    {
+        for (uint i = gidx + 1u; i < PARTICLES_COUNT; ++i)
+        {
+            Particle p_oth = g_particles[i];
+            
+            vec3 l = p_oth.position.xyz - p.position.xyz;
+            
+            float distance_sq = dot(l, l);
+            if (distance_sq > 0)
+            {
+                float r = sqrt(distance_sq + SOFT_EPS_SQ);
+                float denom = r * r * r;
+                l *= 1.0 / denom;
+                
+                acceleration += p_oth.position.w * l;
+                
+                vec3 a_oth = -p.position.w * l;
+                            
+                atomicAdd(g_particles[i].acceleration.x, a_oth.x);
+                atomicAdd(g_particles[i].acceleration.y, a_oth.y);
+                atomicAdd(g_particles[i].acceleration.z, a_oth.z);
+            }
+        }
+    }
+#if 1
+    else
+    {
+        for (uint i = PARTICLES_COUNT - 1; i >= gidx + 1u; --i)
+        {
+            Particle p_oth = g_particles[i];
+            
+            vec3 l = p_oth.position.xyz - p.position.xyz;
+            
+            float distance_sq = dot(l, l);
+            if (distance_sq > 0)
+            {
+                float r = sqrt(distance_sq + SOFT_EPS_SQ);
+                float denom = r * r * r;
+                l *= 1.0 / denom;
+                
+                acceleration += p_oth.position.w * l;
+                
+                vec3 a_oth = -p.position.w * l;
+                            
+                atomicAdd(g_particles[i].acceleration.x, a_oth.x);
+                atomicAdd(g_particles[i].acceleration.y, a_oth.y);
+                atomicAdd(g_particles[i].acceleration.z, a_oth.z);
+            }
+        }
+    }
+#endif
+
+    barrier();
+    
+    g_particles[gidx].acceleration.xyz += acceleration;
+    
+#endif
+}
