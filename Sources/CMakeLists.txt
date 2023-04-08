@@ -1,3 +1,5 @@
+add_subdirectory(Core)
+
 set(GALAXY_SOURCES
    GalaxyEngine.cpp
    GalaxyEngine.h
@@ -9,7 +11,6 @@ set(GALAXY_SOURCES
    Main.cpp)
 
 add_executable(Galaxy ${GALAXY_SOURCES})
-
-add_subdirectory(Core)
-
-target_link_libraries(Galaxy PRIVATE Galaxy.Core Nucleus.Engine)
+ConfigureGalaxyModule(Galaxy "${GALAXY_SOURCES}")
+target_link_options(Galaxy PRIVATE /SUBSYSTEM:WINDOWS)
+target_link_libraries(Galaxy PRIVATE Galaxy.Core Nucleus.Launch)

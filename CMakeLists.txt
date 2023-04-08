@@ -17,9 +17,13 @@ include_directories(${NUCLEUS_DIR}/Libs/imgui/Include)
 # For Protobuf
 include_directories(${NUCLEUS_DIR}/Libs/Protobuf/src)
 
-add_subdirectory(Sources)
-
-# Set precompiled header from Nucleus
 set(BUNDLE_PATH ${NUCLEUS_DIR}/Sources/Nucleus/Engine/Core/Bundle.h)
-target_precompile_headers(Galaxy.Core PUBLIC ${BUNDLE_PATH})
-target_precompile_headers(Galaxy PUBLIC ${BUNDLE_PATH})
+
+function(ConfigureGalaxyModule name sources)
+	target_compile_definitions(${name} PRIVATE NUCLEUS_BUILD_SHARED)
+    target_precompile_headers(${name} PUBLIC ${BUNDLE_PATH})
+    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "Source Files" FILES ${sources})
+    set_target_properties(${name} PROPERTIES FOLDER "Galaxy")
+endfunction()
+
+add_subdirectory(Sources)

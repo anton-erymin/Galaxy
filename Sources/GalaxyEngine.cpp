@@ -28,7 +28,12 @@ int3 CalcNumGroups(int3 size, uint group_size)
         (size.z + group_size - 1) / group_size);
 }
 
-GalaxyEngine::GalaxyEngine() : Engine()
+GalaxyEngine::GalaxyEngine()
+    : Engine()
+{
+}
+
+void GalaxyEngine::OnPostInitialize()
 {
     NLOG("Galaxy Model 0.5\nCopyright (c) LAXE LLC 2012-2021");
 
@@ -56,7 +61,7 @@ GalaxyEngine::GalaxyEngine() : Engine()
     const auto count = universe->GetParticlesCount();
 
     //particles_buffer_ = g_engine_core->CreateEntity();
-    
+
 #if 0
     GetRenderer().CreateDeviceBuffer("Particles", particles_buffer_,
         count * sizeof(Device::Particle), GAL::BufferType::kStorage, GL_DYNAMIC_DRAW);
@@ -134,11 +139,6 @@ GalaxyEngine::GalaxyEngine() : Engine()
 
         })->is_active = true;
 #endif // 0
-
-}
-
-void GalaxyEngine::OnPostInitialize()
-{
 }
 
 GalaxyEngine& GalaxyEngine::GetInstance()

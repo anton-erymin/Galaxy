@@ -14,4 +14,5 @@ set(CORE_SOURCES
    MathUtils.h)
 
 add_library(Galaxy.Core STATIC ${CORE_SOURCES})
+ConfigureGalaxyModule(Galaxy.Core "${CORE_SOURCES}")
 target_link_libraries(Galaxy.Core PRIVATE Nucleus.Core Nucleus.Engine)
