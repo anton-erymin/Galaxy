@@ -9,10 +9,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Bin)
 # Setup Nucleus
 set(NUCLEUS_DIR ${CMAKE_SOURCE_DIR}/Libs/Nucleus2)
 set(BILLIARDS_BUILD_GAME OFF)
+set(BILLIARDS_BUILD_SHARED ON)
 set(NUCLEUS_INCLUDE_FORMAT OFF)
 add_subdirectory(${NUCLEUS_DIR})
 
 set(CMAKE_MODULE_PATH ${NUCLEUS_DIR}/cmake)
+
 include(SetupBuildOptions)
 SetupBuildOptions()
 
@@ -35,9 +37,9 @@ endfunction()
 
 # Add modules
 #add_subdirectory(Sources/Controllers)
-add_subdirectory(Sources/GalaxySimulator)
+#add_subdirectory(Sources/GalaxySimulator)
 add_subdirectory(Sources/Launcher)
-add_subdirectory(Sources/Model)
-add_subdirectory(Sources/Render)
-add_subdirectory(Sources/Simulation)
-add_subdirectory(Sources/Utils)
+#add_subdirectory(Sources/Model)
+#add_subdirectory(Sources/Render)
+#add_subdirectory(Sources/Simulation)
+#add_subdirectory(Sources/Utils)

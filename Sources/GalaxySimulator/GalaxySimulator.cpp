@@ -79,7 +79,7 @@ GalaxySimulator::GalaxySimulator()
 #if 1
     engine->SetActiveScene(engine->CreateScene());
     engine->AddBox();
-    engine->AddPointLight(float3(1.0f, 2.0f, 0.0f));
+    engine->AddPointLight(float3(1.0f, 2.0f, 0.0f), float3(50.0f));
 #endif // 0
 
     engine->Play();
