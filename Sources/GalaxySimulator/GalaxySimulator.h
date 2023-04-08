@@ -47,7 +47,7 @@ private:
 
     void UpdateDeltaTime(float new_time);
 
-    void Bind(GAL::PipelinePtr& pipeline);
+    void Bind(GAL::GraphicsPipelinePtr& pipeline);
 
     SimulationParameters simulation_params_;
     Timings timings_;
