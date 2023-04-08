@@ -1,39 +1,44 @@
 #pragma once
 
-#include <EngineMinimal.h>
-#include "Core/Galaxy.h"
-#include "GalaxyUI.h"
+#include "Constants.h"
+#include "Galaxy.h"
+
+#include <GALFwd.h>
+#include <Entity.h>
 
 class Universe;
-class BruteforceSolver;
-class BarnesHutCPUSolver;
-class BarnesHutGPUSolver;
-class Solver;
+class ISolver;
 
-class GalaxyEngine final : public Engine
+struct SimulationParameters
+{
+	bool darkMatter = false;
+	float softFactor = cSoftFactor;
+};
+
+struct Timings
+{
+	float buildTreeTimeMsecs = 0.0f;
+	float solvingTimeMsecs = 0.0f;
+};
+
+struct RenderParameters
+{
+    bool renderTree = true;
+    bool renderPoints = true;
+    bool plotFunctions = false;
+    float brightness = 1.0f;
+    float particlesSizeScale = 1.0f;
+};
+
+class GalaxySimulator
 {
 public:
-    GalaxyEngine();
-    ~GalaxyEngine();
+    GalaxySimulator();
+    ~GalaxySimulator();
 
-    virtual void OnPostInitialize() override;
+	const SimulationParameters& GetSimulationParameters() const { return simulation_params_; }
 
-    struct SimulationParameters
-    {
-        bool darkMatter = false;
-        float softFactor = cSoftFactor;
-    };
-
-    struct Timings
-    {
-        float buildTreeTimeMsecs = 0.0f;
-        float solvingTimeMsecs = 0.0f;
-    };
-
-    const SimulationParameters& GetSimulationParamaters() const { return simulation_params_; }
-    Timings& GetTimings() { return timings_; }
-
-    static GalaxyEngine& GetInstance();
+	Timings& GetTimings() { return timings_; }
 
 private:
     void CreateParticlesRenderPipelines();
@@ -65,24 +70,15 @@ private:
     bool saveToFiles = false;
 
     std::unique_ptr<Universe> universe;
-    std::unique_ptr<BruteforceSolver> solverBruteforce;
-    std::unique_ptr<BarnesHutCPUSolver> solverBarneshut;
+    //std::unique_ptr<BruteforceSolver> solverBruteforce;
+    //std::unique_ptr<BarnesHutCPUSolver> solverBarneshut;
     //std::unique_ptr<BarnesHutGPUSolver> solverBarneshutGPU;
 
-    Solver* currentSolver = nullptr;
+    //unique_ptr<ISolver> currentSolver;
 
     std::thread solverThread;
 
-    struct RenderParameters
-    {
-        bool renderTree = true;
-        bool renderPoints = true;
-        bool plotFunctions = false;
-        float brightness = 1.0f;
-        float particlesSizeScale = 1.0f;
-
-    } renderParams;
-
+    RenderParameters renderParams;
     SimulationParameters simulationParams;
     GalaxyParameters model;
 
@@ -104,9 +100,6 @@ private:
 
     Entity controller_ = kInvalidEntity;
 
-    std::unique_ptr<UI::GalaxyUI> ui_;
+    //friend void CreateParticlesRenderPipelines(Renderer& r);
 
-    friend class UI::GalaxyUI;
-
-    friend void CreateParticlesRenderPipelines(Renderer& r);
 };

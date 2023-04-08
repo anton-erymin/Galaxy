@@ -1,7 +1,6 @@
-#include "BarnesHutTree.h"
+#include "BarnesHutCPUTree.h"
 #include "MathUtils.h"
-
-#include <cassert>
+#include "Math/Math.h"
 
 static constexpr uint32_t cMaxTreeLevel = 64;
 static constexpr uint32_t cNodesStackSize = 512;

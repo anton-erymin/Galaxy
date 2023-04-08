@@ -1,17 +1,14 @@
-#include "GalaxyEngine.h"
-#include "Core/Solver.h"
-#include "Core/Threading.h"
-#include "Core/BarnesHutTree.h"
-//#include "RenderUtils.h"
+#include "GalaxySimulator.h"
+#include "Universe.h"
 
-GalaxyEngine* g_instance = nullptr;
+#include <Engine.h>
 
-extern GAL::ImagePtr g_shaded_image;
+//extern GAL::ImagePtr g_shaded_image;
 //GAL::GraphicsPipelinePtr* g_particles_render_pipeline;
 //GAL::GraphicsPipelinePtr* g_tree_draw_pipeline;
 
 //ShaderTools::Defines g_defines;
-    
+
 int3 CalcNumGroups(int size, uint group_size)
 {
     return int3((size + group_size - 1) / group_size, 1, 1);
@@ -28,21 +25,61 @@ int3 CalcNumGroups(int3 size, uint group_size)
         (size.z + group_size - 1) / group_size);
 }
 
-GalaxyEngine::GalaxyEngine()
-    : Engine()
+#if 0
+void GalaxySimulator::Update(float time)
 {
+    ++frameCounter;
+
+    static auto lastTime = std::chrono::high_resolution_clock::now();
+    static float fpsTimer = 0.0f;
+    static float frameTimer = 0.0f;
+
+    auto now = std::chrono::high_resolution_clock::now();
+    float time2 = std::chrono::duration<float>(now - lastTime).count();
+    lastTime = now;
+
+    frameTimer += time2;
+    fpsTimer += time2;
+
+    simulationTimeMillionYears = simulationTime * cMillionYearsPerTimeUnit;
 }
 
-GalaxyEngine::~GalaxyEngine()
-{
-}
+#endif // 0
 
-void GalaxyEngine::OnPostInitialize()
+#if 0
+static void DrawBarnesHutTree(const BarnesHutTree& node)
+{
+    float3 p = node.point;
+    float l = node.length;
+
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glBegin(GL_LINE_STRIP);
+
+    glVertex3f(p.x, p.y, 0.0f);
+    glVertex3f(p.x + l, p.y, 0.0f);
+    glVertex3f(p.x + l, p.y + l, 0.0f);
+    glVertex3f(p.x, p.y + l, 0.0f);
+    glVertex3f(p.x, p.y, 0.0f);
+    glEnd();
+
+    if (!node.isLeaf)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            DrawBarnesHutTree(*node.children[i]);
+        }
+    }
+}
+#endif // 0
+
+GalaxySimulator::GalaxySimulator()
 {
     NLOG("Galaxy Model 0.5\nCopyright (c) LAXE LLC 2012-2021");
-    g_instance = this;
 
-    //ThreadPool::Create(std::thread::hardware_concurrency());
+    engine->SetActiveScene(engine->CreateScene());
+    engine->AddBox();
+    engine->AddPointLight(float3(1.0f, 2.0f, 0.0f));
+    engine->Play();
 
     // Old initialization
     cSecondsPerTimeUnit = static_cast<float>(
@@ -74,7 +111,7 @@ void GalaxyEngine::OnPostInitialize()
         device_particles[i].velocity = universe->velocity[i];
         device_particles[i].acceleration = universe->acceleration[i];
         device_particles[i].force = universe->force[i];
-    }
+}
 
     GetRenderer().GetDeviceBuffer(particles_buffer_)->
         Write(0, count * sizeof(Device::Particle), device_particles.data());
@@ -137,73 +174,13 @@ void GalaxyEngine::OnPostInitialize()
 
         })->is_active = true;
 #endif // 0
-
-    SetActiveScene(CreateScene());
-    AddBox();
-    AddPointLight(float3(1.0f, 2.0f, 0.0f));
-    Play();
 }
 
-GalaxyEngine& GalaxyEngine::GetInstance()
+GalaxySimulator::~GalaxySimulator()
 {
-    assert(g_instance);
-    return *g_instance;
 }
 
-#if 0
-void GalaxyEngine::Update(float time)
-{
-    ++frameCounter;
-
-    static auto lastTime = std::chrono::high_resolution_clock::now();
-    static float fpsTimer = 0.0f;
-    static float frameTimer = 0.0f;
-
-    auto now = std::chrono::high_resolution_clock::now();
-    float time2 = std::chrono::duration<float>(now - lastTime).count();
-    lastTime = now;
-
-    frameTimer += time2;
-    fpsTimer += time2;
-
-    simulationTimeMillionYears = simulationTime * cMillionYearsPerTimeUnit;
-}
-
-#endif // 0
-
-#if 0
-static void DrawBarnesHutTree(const BarnesHutTree& node)
-{
-    float3 p = node.point;
-    float l = node.length;
-
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glBegin(GL_LINE_STRIP);
-
-    glVertex3f(p.x, p.y, 0.0f);
-    glVertex3f(p.x + l, p.y, 0.0f);
-    glVertex3f(p.x + l, p.y + l, 0.0f);
-    glVertex3f(p.x, p.y + l, 0.0f);
-    glVertex3f(p.x, p.y, 0.0f);
-    glEnd();
-
-    if (!node.isLeaf)
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            DrawBarnesHutTree(*node.children[i]);
-        }
-    }
-}
-#endif // 0
-
-
-void CreateParticlesRenderPipelines(Renderer& r)
-{
-    g_instance->CreateParticlesRenderPipelines();
-}
-
-void GalaxyEngine::CreateParticlesRenderPipelines()
+void GalaxySimulator::CreateParticlesRenderPipelines()
 {
 #if 0
     GAL::PipelineState state = {};
@@ -230,7 +207,7 @@ void GalaxyEngine::CreateParticlesRenderPipelines()
 }
 
 #if 0
-void GalaxyEngine::PostRender()
+void GalaxySimulator::PostRender()
 {
     const auto& particles = universe->GetParticles();
     const auto count = universe->GetParticlesCount();
@@ -395,9 +372,9 @@ void GalaxyEngine::PostRender()
 }
 #endif // 0
 
-
-void GalaxyEngine::Reset()
+void GalaxySimulator::Reset()
 {
+#if 0
     if (started)
     {
         started = false;
@@ -417,6 +394,8 @@ void GalaxyEngine::Reset()
     currentSolver->SolveForces();
     universe->SetRadialVelocitiesFromForce();
     currentSolver->Prepare();
+#endif // 0
+
 
     started = false;
 #if 0
@@ -433,7 +412,7 @@ void GalaxyEngine::Reset()
 
 }
 
-void GalaxyEngine::UpdateDeltaTime(float new_time)
+void GalaxySimulator::UpdateDeltaTime(float new_time)
 {
     deltaTime = new_time;
 
@@ -445,7 +424,7 @@ void GalaxyEngine::UpdateDeltaTime(float new_time)
 
 }
 
-void GalaxyEngine::Bind(GAL::PipelinePtr& pipeline)
+void GalaxySimulator::Bind(GAL::PipelinePtr& pipeline)
 {
 #if 0
     pipeline->SetBuffer(GetRenderer().GetDeviceBuffer(particles_buffer_), "ParticlesData");
