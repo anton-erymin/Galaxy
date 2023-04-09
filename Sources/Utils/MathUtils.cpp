@@ -34,7 +34,7 @@ float integrate_trap(float a, float b, int n, float(*f)(float))
     return res;
 }
 
-void Poisson1(uint32_t numIter, float min, float max, int n, float *data, const std::vector<float>& rightPart)
+void Poisson1(uint32_t numIter, float min, float max, int n, float *data, const vector<float>& rightPart)
 {
     assert(numIter > 0);
     assert(min < max);

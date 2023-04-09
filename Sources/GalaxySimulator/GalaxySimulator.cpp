@@ -30,12 +30,12 @@ void GalaxySimulator::Update(float time)
 {
     ++frameCounter;
 
-    static auto lastTime = std::chrono::high_resolution_clock::now();
+    static auto lastTime = chrono::high_resolution_clock::now();
     static float fpsTimer = 0.0f;
     static float frameTimer = 0.0f;
 
-    auto now = std::chrono::high_resolution_clock::now();
-    float time2 = std::chrono::duration<float>(now - lastTime).count();
+    auto now = chrono::high_resolution_clock::now();
+    float time2 = chrono::duration<float>(now - lastTime).count();
     lastTime = now;
 
     frameTimer += time2;
@@ -86,11 +86,13 @@ GalaxySimulator::GalaxySimulator()
 
     // Old initialization
     cSecondsPerTimeUnit = static_cast<float>(
-        std::sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG)));
+        sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG)));
     cMillionYearsPerTimeUnit = cSecondsPerTimeUnit / 3600.0f / 24.0f / 365.0f / 1e+6f;
 
     deltaTime = 0.0000001f;
     deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6f;
+
+    CreateUniverse();
 
     saveToFiles = false;
 
@@ -104,12 +106,12 @@ GalaxySimulator::GalaxySimulator()
     GetRenderer().CreateDeviceBuffer("Particles", particles_buffer_,
         count * sizeof(Device::Particle), GAL::BufferType::kStorage, GL_DYNAMIC_DRAW);
 
-    std::vector<Device::Particle> device_particles(count);
+    vector<Device::Particle> device_particles(count);
 
     for (auto i = 0u; i < count; ++i)
     {
-        device_particles[i].position = universe->position[i];
-        device_particles[i].position.w = universe->particles[i]->mass;
+        device_particles[i].position_ = universe->position_[i];
+        device_particles[i].position_.w = universe->particles_[i]->mass;
         device_particles[i].velocity.w = universe->inverseMass[i];
         device_particles[i].velocity = universe->velocity[i];
         device_particles[i].acceleration = universe->acceleration[i];
@@ -134,16 +136,16 @@ GalaxySimulator::GalaxySimulator()
 
     camera_components[GetActiveCamera()]->z_far = 100000.0f;
 
-    ui_ = std::make_unique<UI::GalaxyUI>(*this);
+    ui_ = make_unique<UI::GalaxyUI>(*this);
 
     {
         g_defines =
         {
             { "SOLVE_BRUTEFORCE", "" },
-            { "PARTICLES_COUNT", std::to_string(count) },
-            { "NODES_MAX_COUNT", std::to_string(nodes_count) },
-            { "ROOT_RADIUS", std::to_string(GLX_UNIVERSE_SIZE * 0.5f) },
-            { "SOFT_EPS", std::to_string(cSoftFactor) }
+            { "PARTICLES_COUNT", to_string(count) },
+            { "NODES_MAX_COUNT", to_string(nodes_count) },
+            { "ROOT_RADIUS", to_string(GLX_UNIVERSE_SIZE * 0.5f) },
+            { "SOFT_EPS", to_string(cSoftFactor) }
         };
 
         particles_solve_pipeline_ = GetRenderer().GetRenderDevice().
@@ -183,6 +185,12 @@ GalaxySimulator::~GalaxySimulator()
 {
 }
 
+void GalaxySimulator::CreateUniverse()
+{
+    universe = make_unique<Universe>(GLX_UNIVERSE_SIZE);
+    universe->CreateGalaxy(float3(), GalaxyParameters());
+}
+
 void GalaxySimulator::CreateParticlesRenderPipelines()
 {
 #if 0
@@ -212,7 +220,7 @@ void GalaxySimulator::CreateParticlesRenderPipelines()
 #if 0
 void GalaxySimulator::PostRender()
 {
-    const auto& particles = universe->GetParticles();
+    const auto& particles_ = universe->GetParticles();
     const auto count = universe->GetParticlesCount();
     auto nodes_count = 5 * universe->GetParticlesCount();
 
@@ -228,11 +236,11 @@ void GalaxySimulator::PostRender()
             GL_CALL(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
 
 #if 0
-            static std::vector<Device::Node> node_data(nodes_count);
+            static vector<Device::Node> node_data(nodes_count);
             auto buf = renderer_->GetDeviceBuffer(nodes_buffer_);
             buf->Bind();
             void* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-            std::memcpy(node_data.data(), p, buf->GetSize());
+            memcpy(node_data.data(), p, buf->GetSize());
             GL_CALL(glUnmapBuffer(GL_SHADER_STORAGE_BUFFER));
 #endif // 0
 
@@ -241,7 +249,7 @@ void GalaxySimulator::PostRender()
                 int result = -1;
                 nodes_counter->Bind();
                 void* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-                std::memcpy(&result, p, sizeof(result));
+                memcpy(&result, p, sizeof(result));
                 GL_CALL(glUnmapBuffer(GL_SHADER_STORAGE_BUFFER));
                 int a = 1;
                 //is_simulated_ = false;
@@ -306,15 +314,15 @@ void GalaxySimulator::PostRender()
         for (const auto i : particlesByImage.second)
         {
             assert(i < universe->GetParticlesCount());
-            const Particle& particle = *particles[i];
+            const Particle& particle = *particles_[i];
             if (!particle.active)
             {
                 continue;
             }
 
-            float s = 0.5f * particle.size * renderParams.particlesSizeScale;
+            float s = 0.5f * particle.size_ * renderParams.particlesSizeScale;
 
-            float3 pos = universe->position[i];
+            float3 pos = universe->position_[i];
 
             float3 p1 = pos - v1 * s - v2 * s;
             float3 p2 = pos - v1 * s + v2 * s;
@@ -384,13 +392,11 @@ void GalaxySimulator::Reset()
         solverThread.join();
     }
 
-    universe = std::make_unique<Universe>(GLX_UNIVERSE_SIZE);
-    universe->CreateGalaxy({}, model);
-    totalParticlesCount = static_cast<int32_t>(universe->GetParticlesCount());
+    
 
-    solverBruteforce = std::make_unique<BruteforceSolver>(*universe);
-    solverBarneshut = std::make_unique<BarnesHutCPUSolver>(*universe);
-    //solverBarneshutGPU = std::make_unique<BarnesHutGPUSolver>(*universe);
+    solverBruteforce = make_unique<BruteforceSolver>(*universe);
+    solverBarneshut = make_unique<BarnesHutCPUSolver>(*universe);
+    //solverBarneshutGPU = make_unique<BarnesHutGPUSolver>(*universe);
     currentSolver = &*solverBarneshut;
 
     currentSolver->Inititalize(deltaTime);
@@ -402,7 +408,7 @@ void GalaxySimulator::Reset()
 
     started = false;
 #if 0
-    solverThread = std::thread([this]()
+    solverThread = thread([this]()
         {
             while (started)
             {
@@ -427,11 +433,11 @@ void GalaxySimulator::UpdateDeltaTime(float new_time)
 
 }
 
+#if 0
 void GalaxySimulator::Bind(GAL::GraphicsPipelinePtr& pipeline)
 {
-#if 0
     pipeline->SetBuffer(GetRenderer().GetDeviceBuffer(particles_buffer_), "ParticlesData");
     pipeline->SetBuffer(GetRenderer().GetDeviceBuffer(nodes_buffer_), "NodesData");
     pipeline->SetBuffer(nodes_counter, "NodesCounter");
-#endif // 0
 }
+#endif // 0

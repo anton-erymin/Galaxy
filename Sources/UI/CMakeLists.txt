@@ -6,4 +6,6 @@ set(LAUNCHER_SOURCES
 add_executable(Galaxy ${LAUNCHER_SOURCES})
 ConfigureGalaxyModule(Galaxy "${LAUNCHER_SOURCES}")
 target_link_options(Galaxy PRIVATE /SUBSYSTEM:WINDOWS)
-target_link_libraries(Galaxy PRIVATE Nucleus.Launch Galaxy.GalaxySimulator)
+target_link_libraries(Galaxy PRIVATE
+	Nucleus.Launch
+	Galaxy.GalaxySimulator)

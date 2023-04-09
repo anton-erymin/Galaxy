@@ -33,7 +33,7 @@ private:
     bool   isLeaf = true;
     bool   isBusy = false;
 
-    std::unique_ptr<BarnesHutTree> children[4];
+    unique_ptr<BarnesHutTree> children[4];
     
     size_t id = 0;
 

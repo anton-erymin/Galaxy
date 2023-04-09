@@ -199,10 +199,10 @@ inline void BarnesHutGPUTree::ResetChildren()
         float3 np2(x, y, 0.0f);
         float3 np3(point.x, y, 0.0f);
 
-        children[0] = std::make_unique<BarnesHutGPUTree>(point, nl);
-        children[1] = std::make_unique<BarnesHutGPUTree>(np1, nl);
-        children[2] = std::make_unique<BarnesHutGPUTree>(np2, nl);
-        children[3] = std::make_unique<BarnesHutGPUTree>(np3, nl);
+        children[0] = make_unique<BarnesHutGPUTree>(point, nl);
+        children[1] = make_unique<BarnesHutGPUTree>(np1, nl);
+        children[2] = make_unique<BarnesHutGPUTree>(np2, nl);
+        children[3] = make_unique<BarnesHutGPUTree>(np3, nl);
     }
     else
     {

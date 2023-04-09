@@ -2,7 +2,7 @@
 
 #include <Engine.h>
 
-//class GalaxySimulator;
+class GalaxySimulator;
 
 class GalaxyEngine final : public Engine
 {
@@ -13,5 +13,5 @@ public:
     virtual void OnPostInitialize() override;
 
 private:
-    //unique_ptr<GalaxySimulator> simulator_;
+    unique_ptr<GalaxySimulator> simulator_;
 };

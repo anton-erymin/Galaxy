@@ -1,10 +1,5 @@
 #pragma once
 
-#include "MathUtils.h"
-
-#include <vector>
-#include <cassert>
-
 class SphericalDistribution
 {
 public:
@@ -25,8 +20,8 @@ class PlummerModel : public SphericalDistribution
 {
 public:
     PlummerModel(float mass = 1.0f, float radius = 1.0f) : SphericalDistribution(mass, radius) { }
-    float GetDensity(float r) const override { return PlummerDensity(r, mass, radius); }
-    float GetPotential(float r) const override { return PlummerPotential(r, mass, radius); }
+    float GetDensity(float r) const override;
+    float GetPotential(float r) const override;
 };
 
 // Dark matter halo spherical model
@@ -39,14 +34,15 @@ public:
 
 	float     radius;
 
-    std::vector<float> rvec;
-    std::vector<float> rho;
-    std::vector<float> rightPartPoisson;
-	std::vector<float> potential;
-    std::vector<float> field;
+    vector<float> rvec;
+    vector<float> rho;
+    vector<float> rightPartPoisson;
+	vector<float> potential;
+    vector<float> field;
 
 	float	  vc;
 
+    SphericalModel() = default;
 	SphericalModel(float gridXMin, float gridXMax, float radius);
 
 	// Расчет гравитационного потенциала
@@ -59,4 +55,3 @@ public:
 
 	void PlotPotential() const;
 };
-

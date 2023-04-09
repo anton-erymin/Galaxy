@@ -9,35 +9,34 @@ class Universe
 public:
     Universe(float size);
 
-    Galaxy& CreateGalaxy();
-    Galaxy& CreateGalaxy(const float3& position, const GalaxyParameters& parameters);
+    void CreateGalaxy();
+    void CreateGalaxy(const float3& position, const GalaxyParameters& parameters);
 
     void SetRadialVelocitiesFromForce();
 
-    float GetSize() const { return size; }
-    std::vector<std::unique_ptr<Galaxy>>& GetGalaxies() { return galaxies; }
-    const std::vector<const Particle*>& GetParticles() const { return particles; }
+    float GetSize() const { return size_; }
+    vector<Galaxy>& GetGalaxies() { return galaxies_; }
+    const vector<const Particle*>& GetParticles() const { return all_particles_; }
+    size_t GetParticlesCount() const { return all_particles_.size(); }
 
-    //const std::unordered_map<const Image*, std::vector<size_t>>& GetParticlesByImage() const { return imageToParticles; }
-
-    size_t GetParticlesCount() const { return particles.size(); }
-
-private:
-    void AddGalaxy(std::unique_ptr<Galaxy>& galaxy);
-
-    float size;
-
-    std::vector<std::unique_ptr<Galaxy>> galaxies;
-
+    //const unordered_map<const Image*, vector<size_t>>& GetParticlesByImage() const { return imageToParticles; }
 public:
-    std::vector<float4> position;
-    std::vector<float3> velocity;
-    std::vector<float3> acceleration;
-    std::vector<float3> force;
-    std::vector<float> inverseMass;
+    vector<float4> positions_;
+    vector<float3> velocities_;
+    vector<float3> accelerations_;
+    vector<float3> forces_;
+    vector<float> inverse_masses_;
 
-    std::vector<const Particle*> particles;
+    vector<const Particle*> all_particles_;
+
+private:
+    void AddGalaxy(Galaxy& galaxy);
+
+private:
+    float size_;
+    vector<Galaxy> galaxies_;
+
 private:
 
-    //std::unordered_map<const Image*, std::vector<size_t>> imageToParticles;
+    //unordered_map<const Image*, vector<size_t>> imageToParticles;
 };

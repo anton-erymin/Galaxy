@@ -41,13 +41,13 @@ public:
 	Timings& GetTimings() { return timings_; }
 
 private:
+    void CreateUniverse();
+
     void CreateParticlesRenderPipelines();
 
     void Reset();
 
     void UpdateDeltaTime(float new_time);
-
-    void Bind(GAL::GraphicsPipelinePtr& pipeline);
 
     SimulationParameters simulation_params_;
     Timings timings_;
@@ -69,18 +69,17 @@ private:
     bool started = false;
     bool saveToFiles = false;
 
-    std::unique_ptr<Universe> universe;
-    //std::unique_ptr<BruteforceSolver> solverBruteforce;
-    //std::unique_ptr<BarnesHutCPUSolver> solverBarneshut;
-    //std::unique_ptr<BarnesHutGPUSolver> solverBarneshutGPU;
+    unique_ptr<Universe> universe;
+    //unique_ptr<BruteforceSolver> solverBruteforce;
+    //unique_ptr<BarnesHutCPUSolver> solverBarneshut;
+    //unique_ptr<BarnesHutGPUSolver> solverBarneshutGPU;
 
     //unique_ptr<ISolver> currentSolver;
 
-    std::thread solverThread;
+    thread solverThread;
 
     RenderParameters renderParams;
     SimulationParameters simulationParams;
-    GalaxyParameters model;
 
 #if 0
     GAL::GraphicsPipelinePtr particles_render_pipeline_;
@@ -101,5 +100,4 @@ private:
     Entity controller_ = kInvalidEntity;
 
     //friend void CreateParticlesRenderPipelines(Renderer& r);
-
 };

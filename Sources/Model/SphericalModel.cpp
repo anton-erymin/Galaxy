@@ -1,6 +1,6 @@
 #include "SphericalModel.h"
-
 #include <Math/Math.h>
+#include "MathUtils.h"
 
 static constexpr uint32_t N = 1000;
 
@@ -141,17 +141,17 @@ static float RightPartPoisson(float r)
 	return 4.0f * PI * DensityDistribution(r);
 }
 
-static void Plot(const std::vector<float> x, const std::vector<float> y, float xscale, float yscale)
+static void Plot(const vector<float> x, const vector<float> y, float xscale, float yscale)
 {
     assert(x.size() == y.size());
 
-    float minValue = std::numeric_limits<float>::max();
-    float maxValue = std::numeric_limits<float>::min();
+    float minValue = numeric_limits<float>::max();
+    float maxValue = numeric_limits<float>::min();
 
     for (const auto& value : y)
     {
-        minValue = std::min(value, minValue);
-        maxValue = std::max(value, maxValue);
+        minValue = min(value, minValue);
+        maxValue = max(value, maxValue);
     }
 
 #if 0
@@ -159,7 +159,7 @@ static void Plot(const std::vector<float> x, const std::vector<float> y, float x
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_LINE_STRIP);
 	glColor3f(1.0f, 1.0f, 1.0f);
-	for (size_t i = 0; i < x.size(); ++i)
+	for (size_t i = 0; i < x.size_(); ++i)
 	{
 		float color = (y[i] - minValue) / (maxValue - minValue);
 		color = 0.2f * (1.0f - color) + color;
@@ -195,4 +195,14 @@ void SphericalModel::PlotPotential() const
 		glVertex3f(x + i * h, -ps, 0.0f);
 	}
 	glEnd();*/
+}
+
+float PlummerModel::GetDensity(float r) const
+{
+	return PlummerDensity(r, mass, radius);
+}
+
+float PlummerModel::GetPotential(float r) const
+{
+	return PlummerPotential(r, mass, radius);
 }

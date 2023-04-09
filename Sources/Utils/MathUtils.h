@@ -5,7 +5,7 @@
 float integrate_rect(float a, float b, int n, float(*f)(float));
 float integrate_trap(float a, float b, int n, float(*f)(float));
 
-void Poisson1(uint32_t numIter, float min, float max, int n, float *data, const std::vector<float>& rightPart);
+void Poisson1(uint32_t numIter, float min, float max, int n, float *data, const vector<float>& rightPart);
 
 bool poisson1d(int numIter, float min, float max, int n, float   *data, float(*f)(float));
 bool poisson2d(int numIter, float min, float max, int n, float  **data, float(*f)(float, float));
@@ -15,7 +15,7 @@ float RandomStandardDistribution();
 
 inline float3 SphericalToCartesian(float r, float phi, float theta)
 {
-    return { r * std::sinf(theta) * std::cosf(phi), r * std::sinf(theta) * std::sinf(phi), r * std::cosf(theta) };
+    return { r * sinf(theta) * cosf(phi), r * sinf(theta) * sinf(phi), r * cosf(theta) };
 }
 
 inline float3 SphericalToCartesian(const float3& spherical)
@@ -25,7 +25,7 @@ inline float3 SphericalToCartesian(const float3& spherical)
 
 inline float3 CylindricalToCartesian(float r, float phi, float z)
 {
-    return { r * std::cosf(phi), r * std::sinf(phi), z };
+    return { r * cosf(phi), r * sinf(phi), z };
 }
 
 inline float3 CylindricalToCartesian(const float3& cylindrical)
@@ -47,7 +47,7 @@ inline float3 GravityAcceleration(const float3& l, float mass, float soft, float
 {
     float3 acceleration = l;
     float distance_sq = length > 0.0f ? (length * length) : dot(l, l);
-    float r = std::sqrtf(distance_sq + soft * soft);
+    float r = sqrtf(distance_sq + soft * soft);
     float denom = r * r * r;
     acceleration *= mass / denom;
     return acceleration;
@@ -56,13 +56,13 @@ inline float3 GravityAcceleration(const float3& l, float mass, float soft, float
 /** Radial velocity about body with certain mass at distance r. */
 inline float RadialVelocity(float mass, float r)
 {
-    return std::sqrtf(mass / r);
+    return sqrtf(mass / r);
 }
 
 /** Radial velocity of body with mass in force field at distance r. */
 inline float RadialVelocity(float force, float mass, float r)
 {
-    return std::sqrtf(force * r / mass);
+    return sqrtf(force * r / mass);
 }
 
 inline float PseudoIsothermal(float r, float rho0, float radius)
@@ -73,12 +73,12 @@ inline float PseudoIsothermal(float r, float rho0, float radius)
 inline float PlummerDensity(float r, float mass, float radius)
 {
     return (3.0f * mass / (4.0f * PI * radius * radius * radius)) *
-        (1.0f / std::sqrtf(std::pow((1.0f + (r * r) / (radius * radius)), 5.0f)));
+        (1.0f / sqrtf(pow((1.0f + (r * r) / (radius * radius)), 5.0f)));
 }
 
 inline float PlummerPotential(float r, float mass, float radius)
 {
-    return -mass / (std::sqrtf(r * r + radius * radius));
+    return -mass / (sqrtf(r * r + radius * radius));
 }
 
 template <typename Distribution>
