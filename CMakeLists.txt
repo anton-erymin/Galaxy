@@ -21,8 +21,6 @@ include(SetupDefinitions)
 SetupBuildOptions()
 SetupDefinitions()
 
-#add_compile_options(/MD)
-
 # For ImGui
 include_directories(${NUCLEUS_DIR}/Libs/imgui/Include)
 # For Protobuf

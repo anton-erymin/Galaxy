@@ -1,13 +1,9 @@
 #include "GalaxySimulator.h"
 #include "Universe.h"
+#include "GalaxyRenderer.h"
 
 #include <Engine.h>
-
-//extern GAL::ImagePtr g_shaded_image;
-//GAL::GraphicsPipelinePtr* g_particles_render_pipeline;
-//GAL::GraphicsPipelinePtr* g_tree_draw_pipeline;
-
-//ShaderTools::Defines g_defines;
+#include <Renderer.h>
 
 int3 CalcNumGroups(int size, uint group_size)
 {
@@ -76,8 +72,8 @@ GalaxySimulator::GalaxySimulator()
 {
     NLOG("Galaxy Model 0.5\nCopyright (c) LAXE LLC 2012-2021");
 
-#if 1
     engine->SetActiveScene(engine->CreateScene());
+#if 0
     engine->AddBox();
     engine->AddPointLight(float3(1.0f, 2.0f, 0.0f), float3(50.0f));
 #endif // 0
@@ -93,33 +89,13 @@ GalaxySimulator::GalaxySimulator()
     deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6f;
 
     CreateUniverse();
+    CreateRenderer();
 
     saveToFiles = false;
 
     //Reset();
 
-    //const auto count = universe->GetParticlesCount();
-
-    //particles_buffer_ = g_engine_core->CreateEntity();
-
 #if 0
-    GetRenderer().CreateDeviceBuffer("Particles", particles_buffer_,
-        count * sizeof(Device::Particle), GAL::BufferType::kStorage, GL_DYNAMIC_DRAW);
-
-    vector<Device::Particle> device_particles(count);
-
-    for (auto i = 0u; i < count; ++i)
-    {
-        device_particles[i].position_ = universe->position_[i];
-        device_particles[i].position_.w = universe->particles_[i]->mass;
-        device_particles[i].velocity.w = universe->inverseMass[i];
-        device_particles[i].velocity = universe->velocity[i];
-        device_particles[i].acceleration = universe->acceleration[i];
-        device_particles[i].force = universe->force[i];
-}
-
-    GetRenderer().GetDeviceBuffer(particles_buffer_)->
-        Write(0, count * sizeof(Device::Particle), device_particles.data());
 
     auto nodes_count = 5 * universe->GetParticlesCount();
 
@@ -191,30 +167,10 @@ void GalaxySimulator::CreateUniverse()
     universe->CreateGalaxy(float3(), GalaxyParameters());
 }
 
-void GalaxySimulator::CreateParticlesRenderPipelines()
+void GalaxySimulator::CreateRenderer()
 {
-#if 0
-    GAL::PipelineState state = {};
-    state.SetColorAttachment(0, g_shaded_image);
-    state.SetRootConstantsSize(sizeof(Device::ShadeSingleColorRootConstants));
-    Device::ShadeSingleColorRootConstants root_constants = {};
-
-    *g_particles_render_pipeline = GetRenderer().GetRenderDevice().CreateGraphicsPipeline(
-        "Particles.geom", "ShadeSingleColor.vert", "ShadeSingleColor.frag",
-        state, ShaderTools::Defines());
-
-    {
-        *g_tree_draw_pipeline = GetRenderer().GetRenderDevice().CreateGraphicsPipeline(
-            "DrawBarnesHut.geom", "ShadeSingleColor.vert", "ShadeSingleColor.frag",
-            state, g_defines);
-    }
-
-    RenderUtils::BindSceneData(GetRenderer(), *g_particles_render_pipeline);
-    RenderUtils::BindSceneData(GetRenderer(), *g_tree_draw_pipeline);
-    Bind(particles_render_pipeline_.get());
-    Bind(tree_draw_pipeline_.get());
-#endif // 0
-
+    renderer_ = make_unique<GalaxyRenderer>(*universe);
+    engine->GetRenderer().RegisterRendererPlugin(*renderer_);
 }
 
 #if 0
@@ -383,9 +339,9 @@ void GalaxySimulator::PostRender()
 }
 #endif // 0
 
+#if 0
 void GalaxySimulator::Reset()
 {
-#if 0
     if (started)
     {
         started = false;
@@ -403,11 +359,9 @@ void GalaxySimulator::Reset()
     currentSolver->SolveForces();
     universe->SetRadialVelocitiesFromForce();
     currentSolver->Prepare();
-#endif // 0
 
 
     started = false;
-#if 0
     solverThread = thread([this]()
         {
             while (started)
@@ -417,26 +371,25 @@ void GalaxySimulator::Reset()
                 ++numSteps;
             }
         });
+}
 #endif // 0
 
-}
-
+#if 0
 void GalaxySimulator::UpdateDeltaTime(float new_time)
 {
     deltaTime = new_time;
 
-#if 0
     Device::ParticlesUpdateRootConstants consts = {};
     consts.time = deltaTime;
     particles_update_pipeline_->SetRootConstants(&consts);
-#endif // 0
 
 }
+#endif // 0
 
 #if 0
 void GalaxySimulator::Bind(GAL::GraphicsPipelinePtr& pipeline)
 {
-    pipeline->SetBuffer(GetRenderer().GetDeviceBuffer(particles_buffer_), "ParticlesData");
+
     pipeline->SetBuffer(GetRenderer().GetDeviceBuffer(nodes_buffer_), "NodesData");
     pipeline->SetBuffer(nodes_counter, "NodesCounter");
 }

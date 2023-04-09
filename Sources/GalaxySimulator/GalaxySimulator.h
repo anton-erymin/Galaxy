@@ -3,11 +3,9 @@
 #include "Constants.h"
 #include "Galaxy.h"
 
-#include <GALFwd.h>
-#include <Entity.h>
-
 class Universe;
 class ISolver;
+class IRendererPlugin;
 
 struct SimulationParameters
 {
@@ -36,19 +34,13 @@ public:
     GalaxySimulator();
     ~GalaxySimulator();
 
-	const SimulationParameters& GetSimulationParameters() const { return simulation_params_; }
-
 	Timings& GetTimings() { return timings_; }
 
 private:
     void CreateUniverse();
+    void CreateRenderer();
 
-    void CreateParticlesRenderPipelines();
-
-    void Reset();
-
-    void UpdateDeltaTime(float new_time);
-
+private:
     SimulationParameters simulation_params_;
     Timings timings_;
 
@@ -70,11 +62,8 @@ private:
     bool saveToFiles = false;
 
     unique_ptr<Universe> universe;
-    //unique_ptr<BruteforceSolver> solverBruteforce;
-    //unique_ptr<BarnesHutCPUSolver> solverBarneshut;
-    //unique_ptr<BarnesHutGPUSolver> solverBarneshutGPU;
-
-    //unique_ptr<ISolver> currentSolver;
+    //unique_ptr<ISolver> solver_;
+    unique_ptr<IRendererPlugin> renderer_;
 
     thread solverThread;
 
@@ -82,22 +71,19 @@ private:
     SimulationParameters simulationParams;
 
 #if 0
-    GAL::GraphicsPipelinePtr particles_render_pipeline_;
-    GAL::GraphicsPipelinePtr tree_draw_pipeline_;
+    
     GAL::ComputePipelinePtr particles_update_pipeline_;
     GAL::ComputePipelinePtr particles_clear_forces_pipeline_;
     GAL::ComputePipelinePtr particles_barnes_hut_pipeline_;
     GAL::ComputePipelinePtr particles_solve_pipeline_;
 #endif // 0
 
-    Entity particles_buffer_ = kInvalidEntity;
-    Entity nodes_buffer_ = kInvalidEntity;
-    GAL::BufferPtr nodes_counter;
+    //
+    //Entity nodes_buffer_ = kInvalidEntity;
+    //GAL::BufferPtr nodes_counter;
     bool write_flag_ = false;
 
     bool is_simulated_ = false;
 
-    Entity controller_ = kInvalidEntity;
-
-    //friend void CreateParticlesRenderPipelines(Renderer& r);
+    //Entity controller_ = kInvalidEntity;
 };
