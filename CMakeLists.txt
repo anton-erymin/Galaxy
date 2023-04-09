@@ -16,9 +16,12 @@ add_subdirectory(${NUCLEUS_DIR})
 set(CMAKE_MODULE_PATH ${NUCLEUS_DIR}/cmake)
 
 include(SetupBuildOptions)
-SetupBuildOptions()
+include(SetupDefinitions)
 
-add_compile_options(/MD)
+SetupBuildOptions()
+SetupDefinitions()
+
+#add_compile_options(/MD)
 
 # For ImGui
 include_directories(${NUCLEUS_DIR}/Libs/imgui/Include)
