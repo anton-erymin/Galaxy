@@ -28,16 +28,18 @@ void Universe::AddGalaxy(Galaxy& galaxy)
     accelerations_.reserve(accelerations_.size() + count);
     forces_.reserve(forces_.size() + count );
     inverse_masses_.reserve(inverse_masses_.size() + count);
+    masses_.reserve(masses_.size() + count);
 
     all_particles_.reserve(all_particles_.size() + count);
 
-    for (const Particle& particle : galaxy.GetParticles())
+    for (Particle& particle : galaxy.GetParticles())
     {
         positions_.push_back(particle.position);
-        velocities_.push_back(particle.linearVelocity);
+        velocities_.push_back(particle.velocity);
         accelerations_.push_back(particle.acceleration);
         forces_.push_back(particle.force);
-        inverse_masses_.push_back(particle.inverseMass);
+        masses_.push_back(particle.mass);
+        inverse_masses_.push_back(particle.inverse_mass);
 
         //assert(particle.image);
         //imageToParticles[particle.image].push_back(position.size() - 1);
@@ -45,7 +47,7 @@ void Universe::AddGalaxy(Galaxy& galaxy)
         all_particles_.push_back(&particle);
     }
 
-    galaxies_.emplace_back(move(galaxy));
+    //galaxies_.emplace_back(move(galaxy));
 
     NLOG("Galaxy added");
 }

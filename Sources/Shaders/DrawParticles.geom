@@ -11,8 +11,7 @@ layout(std140) buffer ParticlesData
 
 void main()
 {
-    gl_Position = g_camera.projection_view_transform * 
-        vec4(g_particles[gl_PrimitiveIDIn].position.xyz, 1.0);
+    gl_Position = g_camera.projection_view_transform * vec4(g_particles[gl_PrimitiveIDIn].position.xyz, 1.0);
     EmitVertex();
     EndPrimitive();
 }

@@ -15,4 +15,7 @@ set(SIMULATION_SOURCES
 	
 add_library(Galaxy.Simulation ${SIMULATION_SOURCES})
 ConfigureGalaxyModule(Galaxy.Simulation "${SIMULATION_SOURCES}")
-target_link_libraries(Galaxy.Simulation PRIVATE Galaxy.Utils Nucleus.Core)
+target_link_libraries(Galaxy.Simulation PRIVATE
+	Galaxy.Model
+	Galaxy.Utils
+	Nucleus.Core)

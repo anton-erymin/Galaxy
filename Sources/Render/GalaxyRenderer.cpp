@@ -79,6 +79,8 @@ vector<GAL::GraphicsPipelinePtr> GalaxyRenderer::GetPipelines()
 
 void GalaxyRenderer::Render()
 {
+    FillParticlesBuffer();
+
     Device::ShadeSingleColorRootConstants root_constants = {};
     root_constants.color = float4(1.0f);
     root_constants.transform = Matrix();
@@ -111,7 +113,7 @@ void GalaxyRenderer::FillParticlesBuffer()
     for (size_t i = 0u; i < count; ++i)
     {
         device_particles[i].position = universe_.positions_[i];
-        device_particles[i].position.w = universe_.all_particles_[i]->mass;
+        device_particles[i].position.w = universe_.masses_[i];
         device_particles[i].velocity.w = universe_.inverse_masses_[i];
         device_particles[i].velocity = universe_.velocities_[i];
         device_particles[i].acceleration = universe_.accelerations_[i];
@@ -119,6 +121,6 @@ void GalaxyRenderer::FillParticlesBuffer()
     }
 
     Systems::IDeviceBufferSystem* buffer_system = engine->GetRenderer().GetRendererCore().DeviceBufferSystem();
-
-    buffer_system->WriteDeviceBuffer(particles_buffer_, count * sizeof(Device::Particle), device_particles.data());
+    GAL::BufferPtr buffer = buffer_system->GetDeviceBuffer(particles_buffer_);
+    buffer->Write(0, count * sizeof(Device::Particle), device_particles.data());
 }

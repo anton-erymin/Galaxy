@@ -1,84 +1,44 @@
 #include "GalaxySimulator.h"
+#include "Constants.h"
+#include "Galaxy.h"
 #include "Universe.h"
+#include "Solvers/BruteforceCPUSolver.h"
 #include "GalaxyRenderer.h"
 
 #include <Engine.h>
+#include <EngineCore.h>
 #include <Renderer.h>
 
-int3 CalcNumGroups(int size, uint group_size)
+enum class SimulationAlgorithm
 {
-    return int3((size + group_size - 1) / group_size, 1, 1);
-}
-
-int3 CalcNumGroups(int2 size, uint group_size)
-{
-    return int3((size.x + group_size - 1) / group_size, (size.y + group_size - 1) / group_size, 1);
-}
-
-int3 CalcNumGroups(int3 size, uint group_size)
-{
-    return int3((size.x + group_size - 1) / group_size, (size.y + group_size - 1) / group_size,
-        (size.z + group_size - 1) / group_size);
-}
-
-#if 0
-void GalaxySimulator::Update(float time)
-{
-    ++frameCounter;
-
-    static auto lastTime = chrono::high_resolution_clock::now();
-    static float fpsTimer = 0.0f;
-    static float frameTimer = 0.0f;
-
-    auto now = chrono::high_resolution_clock::now();
-    float time2 = chrono::duration<float>(now - lastTime).count();
-    lastTime = now;
-
-    frameTimer += time2;
-    fpsTimer += time2;
-
-    simulationTimeMillionYears = simulationTime * cMillionYearsPerTimeUnit;
-}
-
-#endif // 0
-
-#if 0
-static void DrawBarnesHutTree(const BarnesHutTree& node)
-{
-    float3 p = node.point;
-    float l = node.length;
-
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glBegin(GL_LINE_STRIP);
-
-    glVertex3f(p.x, p.y, 0.0f);
-    glVertex3f(p.x + l, p.y, 0.0f);
-    glVertex3f(p.x + l, p.y + l, 0.0f);
-    glVertex3f(p.x, p.y + l, 0.0f);
-    glVertex3f(p.x, p.y, 0.0f);
-    glEnd();
-
-    if (!node.isLeaf)
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            DrawBarnesHutTree(*node.children[i]);
-        }
-    }
-}
-#endif // 0
+    BRUTEFORCE_CPU,
+    BRUTEFORCE_GPU,
+    BARNESHUT_CPU,
+    BARNESHUT_GPU
+};
 
 GalaxySimulator::GalaxySimulator()
 {
     NLOG("Galaxy Model 0.5\nCopyright (c) LAXE LLC 2012-2021");
 
     engine->SetActiveScene(engine->CreateScene());
+    engine->Play();
+    g_engine_core->camera_components[engine->GetActiveCamera()]->z_near = 0.000001f;
+    g_engine_core->camera_components[engine->GetActiveCamera()]->z_far = 100000000.0f;
+
+    CreateUniverse();
+    CreateRenderer();
+    CreateSolver();
+
 #if 0
-    engine->AddBox();
-    engine->AddPointLight(float3(1.0f, 2.0f, 0.0f), float3(50.0f));
+    engine->AddTimerAction(1.0f, false,
+        [](float) -> bool
+        {
+            engine->RequestExit();
+            return false;
+        });
 #endif // 0
 
-    engine->Play();
 
     // Old initialization
     cSecondsPerTimeUnit = static_cast<float>(
@@ -88,12 +48,7 @@ GalaxySimulator::GalaxySimulator()
     deltaTime = 0.0000001f;
     deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6f;
 
-    CreateUniverse();
-    CreateRenderer();
-
     saveToFiles = false;
-
-    //Reset();
 
 #if 0
 
@@ -163,13 +118,36 @@ GalaxySimulator::~GalaxySimulator()
 
 void GalaxySimulator::CreateUniverse()
 {
-    universe = make_unique<Universe>(GLX_UNIVERSE_SIZE);
-    universe->CreateGalaxy(float3(), GalaxyParameters());
+    universe_ = make_unique<Universe>(GLX_UNIVERSE_SIZE);
+
+    GalaxyParameters params = {};
+    params.disk_particles_count = 100;
+    universe_->CreateGalaxy(float3(), params);
+    universe_->CreateGalaxy(float3(0.3f, 0.0f, 0.0f), params);
+}
+
+void GalaxySimulator::CreateSolver()
+{
+    SimulationAlgorithm algorithm = SimulationAlgorithm::BRUTEFORCE_CPU;
+    switch (algorithm)
+    {
+    case SimulationAlgorithm::BRUTEFORCE_CPU:
+        solver_.reset(new BruteforceCPUSolver(*universe_));
+        break;
+    case SimulationAlgorithm::BRUTEFORCE_GPU:
+        break;
+    case SimulationAlgorithm::BARNESHUT_CPU:
+        break;
+    case SimulationAlgorithm::BARNESHUT_GPU:
+        break;
+    default:
+        break;
+    }
 }
 
 void GalaxySimulator::CreateRenderer()
 {
-    renderer_ = make_unique<GalaxyRenderer>(*universe);
+    renderer_ = make_unique<GalaxyRenderer>(*universe_);
     engine->GetRenderer().RegisterRendererPlugin(*renderer_);
 }
 
@@ -392,5 +370,70 @@ void GalaxySimulator::Bind(GAL::GraphicsPipelinePtr& pipeline)
 
     pipeline->SetBuffer(GetRenderer().GetDeviceBuffer(nodes_buffer_), "NodesData");
     pipeline->SetBuffer(nodes_counter, "NodesCounter");
+}
+#endif // 0
+
+#if 0
+int3 CalcNumGroups(int size, uint group_size)
+{
+    return int3((size + group_size - 1) / group_size, 1, 1);
+}
+
+int3 CalcNumGroups(int2 size, uint group_size)
+{
+    return int3((size.x + group_size - 1) / group_size, (size.y + group_size - 1) / group_size, 1);
+}
+
+int3 CalcNumGroups(int3 size, uint group_size)
+{
+    return int3((size.x + group_size - 1) / group_size, (size.y + group_size - 1) / group_size,
+        (size.z + group_size - 1) / group_size);
+}
+#endif // 0
+
+#if 0
+void GalaxySimulator::Update(float time)
+{
+    ++frameCounter;
+
+    static auto lastTime = chrono::high_resolution_clock::now();
+    static float fpsTimer = 0.0f;
+    static float frameTimer = 0.0f;
+
+    auto now = chrono::high_resolution_clock::now();
+    float time2 = chrono::duration<float>(now - lastTime).count();
+    lastTime = now;
+
+    frameTimer += time2;
+    fpsTimer += time2;
+
+    simulationTimeMillionYears = simulationTime * cMillionYearsPerTimeUnit;
+}
+
+#endif // 0
+
+#if 0
+static void DrawBarnesHutTree(const BarnesHutTree& node)
+{
+    float3 p = node.point;
+    float l = node.length;
+
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glBegin(GL_LINE_STRIP);
+
+    glVertex3f(p.x, p.y, 0.0f);
+    glVertex3f(p.x + l, p.y, 0.0f);
+    glVertex3f(p.x + l, p.y + l, 0.0f);
+    glVertex3f(p.x, p.y + l, 0.0f);
+    glVertex3f(p.x, p.y, 0.0f);
+    glEnd();
+
+    if (!node.isLeaf)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            DrawBarnesHutTree(*node.children[i]);
+        }
+    }
 }
 #endif // 0

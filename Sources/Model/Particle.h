@@ -9,12 +9,12 @@ struct Particle
     float timer = 0;
 
     float3 position = {};
-    float3 linearVelocity = {};
+    float3 velocity = {};
     float3 acceleration = {};
     float3 force = {};
 
     float mass = 1.0f;
-    float inverseMass = 1.0f;
+    float inverse_mass = 1.0f;
 
     bool movable = true;
 
@@ -24,7 +24,7 @@ struct Particle
     float magnitude = 1.0f;
     float size = 1.0f;
 
-    bool doubleDrawing = false;
+    bool double_drawing = false;
 
     int	userData = 0;
 

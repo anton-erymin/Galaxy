@@ -88,7 +88,7 @@ void Galaxy::Create()
     assert(parameters_.disk_mass_ratio > 0.0f && parameters_.disk_mass_ratio <= 1.0f);
 
     const float bulgeParticleMass = (1.0f - parameters_.disk_mass_ratio) * parameters_.total_mass / parameters_.bulge_particles_count;
-    const float diskParticleMass = parameters_.disk_mass_ratio * parameters_.total_mass / parameters_.disk_particles_count;
+    const float diskParticleMass = 0.0000000000000001f;// parameters_.disk_mass_ratio * parameters_.total_mass / parameters_.disk_particles_count;
 
     const float dustRatio = 0.1f;
 
@@ -133,8 +133,8 @@ void Galaxy::Create()
     }
 
     particles_[0].position = position_;
-    particles_[0].movable = false;
-    particles_[0].SetMass(parameters_.black_hole_mass);
+    //particles_[0].movable = false;
+    //particles_[0].SetMass(parameters_.black_hole_mass);
 
     //particles[0].position = float3(-0.45f, 0.0f, -0.45f);
     //particles[1].position = float3(-0.3f, 0.0f, -0.3f);

@@ -1,17 +1,17 @@
 #pragma once
 
-#include "Constants.h"
-#include "Galaxy.h"
-
 class Universe;
 class ISolver;
 class IRendererPlugin;
 
+#if 0
 struct SimulationParameters
 {
-	bool darkMatter = false;
-	float softFactor = cSoftFactor;
+    bool darkMatter = false;
+    float softFactor = cSoftFactor;
 };
+#endif // 0
+
 
 struct Timings
 {
@@ -38,10 +38,11 @@ public:
 
 private:
     void CreateUniverse();
+    void CreateSolver();
     void CreateRenderer();
 
 private:
-    SimulationParameters simulation_params_;
+    //SimulationParameters simulation_params_;
     Timings timings_;
 
     float cSecondsPerTimeUnit = 0;
@@ -61,14 +62,12 @@ private:
     bool started = false;
     bool saveToFiles = false;
 
-    unique_ptr<Universe> universe;
-    //unique_ptr<ISolver> solver_;
+    unique_ptr<Universe> universe_;
+    unique_ptr<ISolver> solver_;
     unique_ptr<IRendererPlugin> renderer_;
 
-    thread solverThread;
-
     RenderParameters renderParams;
-    SimulationParameters simulationParams;
+    //SimulationParameters simulationParams;
 
 #if 0
     
