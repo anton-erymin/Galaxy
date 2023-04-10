@@ -30,7 +30,7 @@ private:
     vector<Galaxy> galaxies_;
     vector<float3> positions_;
     vector<float3> velocities_;
-    vector<float3> accelerations_;
+    //vector<float3> accelerations_;
     vector<float3> forces_;
     vector<float> masses_;
     vector<float> inverse_masses_;

@@ -4,6 +4,14 @@
 #include "MathUtils.h"
 
 #include <Thread/Thread.h>
+#include <Thread/ThreadPool.h>
+
+#define USE_MULTITHREADING
+#ifdef USE_MULTITHREADING
+#define PARALLEL_FOR(count, kernel) ThreadPool::Dispatch(count, [&](size_t i) { kernel(i); });
+#else
+#define PARALLEL_FOR(count, kernel) for (size_t i = 0; i < count; i++) { kernel(i); }
+#endif
 
 BruteforceCPUSolver::BruteforceCPUSolver(Universe& universe)
     : ISolver(universe)
@@ -15,7 +23,7 @@ BruteforceCPUSolver::BruteforceCPUSolver(Universe& universe)
         {
             while (active_flag_)
             {
-                Solve(0.0000001f);
+                Solve(0.0005f);
             }
         }));
 }
@@ -31,8 +39,12 @@ void BruteforceCPUSolver::Solve(float time)
 
     size_t count = universe_.positions_.size();
 
-    for (size_t i = 0; i < count; i++)
+    vector<mutex> mus(count);
+
+    auto ComputeForceKernel = [&](size_t i)
     {
+        assert(i < count);
+
         for (size_t j = i + 1; j < count; j++)
         {
             float3 l = universe_.positions_[j] - universe_.positions_[i];
@@ -42,20 +54,30 @@ void BruteforceCPUSolver::Solve(float time)
             float3 force1 = GravityAcceleration(l, universe_.masses_[j], dist_cubic);
             float3 force2 = GravityAcceleration(-l, universe_.masses_[i], dist_cubic);
 
-            universe_.forces_[i] += force1;
-            universe_.forces_[j] += force2;
-        }
-    }
+            {
+                lock_guard<mutex> lock(mus[i]);
+                universe_.forces_[i] += force1;
+            }
 
-    for (size_t i = 0; i < count; i++)
+            {
+                lock_guard<mutex> lock(mus[j]);
+                universe_.forces_[j] += force2;
+            }
+        }
+    };
+
+    auto IntegrationKernel = [&](size_t i)
     {
+        assert(i < count);
         if (universe_.masses_[i] > 0.0f)
         {
-            IntegrateMotionEquation(time, universe_.positions_[i], universe_.velocities_[i], 
-                universe_.accelerations_[i], universe_.forces_[i], universe_.inverse_masses_[i]);
+            IntegrateMotionEquation(time, universe_.positions_[i], universe_.velocities_[i],
+                universe_.forces_[i], universe_.inverse_masses_[i]);
         }
-
         // Clear force accumulator
         universe_.forces_[i] = float3();
-    }
+    };
+
+    PARALLEL_FOR(count, ComputeForceKernel);
+    PARALLEL_FOR(count, IntegrationKernel);
 }

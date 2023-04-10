@@ -116,7 +116,7 @@ void GalaxyRenderer::FillParticlesBuffer()
         device_particles[i].position.w = universe_.masses_[i];
         device_particles[i].velocity.w = universe_.inverse_masses_[i];
         device_particles[i].velocity = universe_.velocities_[i];
-        device_particles[i].acceleration = universe_.accelerations_[i];
+        //device_particles[i].acceleration = universe_.accelerations_[i];
         device_particles[i].force = universe_.forces_[i];
     }
 

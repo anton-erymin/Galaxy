@@ -25,6 +25,11 @@ GalaxySimulator::GalaxySimulator()
     engine->Play();
     g_engine_core->camera_components[engine->GetActiveCamera()]->z_near = 0.000001f;
     g_engine_core->camera_components[engine->GetActiveCamera()]->z_far = 100000000.0f;
+    //g_engine_core->camera_components[engine->GetActiveCamera()]->eye = float3(0.119f, 0.264f, 0.085f);
+    //g_engine_core->camera_components[engine->GetActiveCamera()]->at = float3();
+    //g_engine_core->camera_components[engine->GetActiveCamera()]->is_changed = true;
+
+    srand(0);
 
     CreateUniverse();
     CreateRenderer();
@@ -121,9 +126,9 @@ void GalaxySimulator::CreateUniverse()
     universe_ = make_unique<Universe>(GLX_UNIVERSE_SIZE);
 
     GalaxyParameters params = {};
-    params.disk_particles_count = 100;
+    params.disk_particles_count = 2000;
     universe_->CreateGalaxy(float3(), params);
-    universe_->CreateGalaxy(float3(0.3f, 0.0f, 0.0f), params);
+    universe_->CreateGalaxy(float3(0.2f, 0.0f, 0.0f), params);
 }
 
 void GalaxySimulator::CreateSolver()

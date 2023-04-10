@@ -25,7 +25,7 @@ void Universe::AddGalaxy(Galaxy& galaxy)
 
     positions_.reserve(positions_.size() + count);
     velocities_.reserve(velocities_.size() + count);
-    accelerations_.reserve(accelerations_.size() + count);
+    //accelerations_.reserve(accelerations_.size() + count);
     forces_.reserve(forces_.size() + count );
     inverse_masses_.reserve(inverse_masses_.size() + count);
     masses_.reserve(masses_.size() + count);
@@ -36,7 +36,7 @@ void Universe::AddGalaxy(Galaxy& galaxy)
     {
         positions_.push_back(particle.position);
         velocities_.push_back(particle.velocity);
-        accelerations_.push_back(particle.acceleration);
+        //accelerations_.push_back(particle.acceleration);
         forces_.push_back(particle.force);
         masses_.push_back(particle.mass);
         inverse_masses_.push_back(particle.inverse_mass);

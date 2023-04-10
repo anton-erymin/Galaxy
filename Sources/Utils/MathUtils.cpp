@@ -217,9 +217,7 @@ float3 GravityAcceleration(const float3& l, float mass, float soft, float length
 
 float3 GravityAcceleration(const float3& l, float mass, float softened_dist_cubic)
 {
-    float3 acceleration = l;
-    acceleration *= mass / softened_dist_cubic;
-    return acceleration;
+    return l * mass / softened_dist_cubic;
 }
 
 /** Radial velocity about body with certain mass at distance r. */
@@ -251,13 +249,13 @@ float PlummerPotential(float r, float mass, float radius)
 }
 
 void IntegrateMotionEquation(float time, float3& position, float3& velocity, 
-    float3& acceleration, const float3& force, float inverse_mass)
+    const float3& force, float inverse_mass)
 {
     // Euler-Cromer
     /*float3 a = acceleration + force * inverseMass;
     velocity += acceleration * time;
     position += velocity * time;*/
-    acceleration = inverse_mass * force;
-    velocity += time * acceleration;
+    //float3 acceleration = inverse_mass * force;
+    velocity += time * force;
     position += time * velocity;
 }

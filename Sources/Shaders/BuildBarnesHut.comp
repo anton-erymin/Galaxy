@@ -130,6 +130,14 @@ void main()
 
     
 #if 0    
+uvec3 gl_NumWorkGroups;
+        uvec3 gl_WorkGroupSize;
+        uvec3 gl_WorkGroupID;
+        uvec3 gl_LocalInvocationID;
+        uvec3 gl_GlobalInvocationID;
+        uint  gl_LocalInvocationIndex;
+		
+		
     float current_radius = 0.0;
     int parent_idx = 0;
     int child_idx = 0;

@@ -42,7 +42,7 @@ float PlummerDensity(float r, float mass, float radius);
 float PlummerPotential(float r, float mass, float radius);
 
 void IntegrateMotionEquation(float time, float3& position, float3& velocity, 
-    float3& acceleration, const float3& force, float inverse_mass);
+    const float3& force, float inverse_mass);
 
 template <typename Distribution>
 inline float SampleDistribution(float xmin, float xmax, float maxDistributionValue, Distribution distribution)

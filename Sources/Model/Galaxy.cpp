@@ -88,7 +88,7 @@ void Galaxy::Create()
     assert(parameters_.disk_mass_ratio > 0.0f && parameters_.disk_mass_ratio <= 1.0f);
 
     const float bulgeParticleMass = (1.0f - parameters_.disk_mass_ratio) * parameters_.total_mass / parameters_.bulge_particles_count;
-    const float diskParticleMass = 0.0000000000000001f;// parameters_.disk_mass_ratio * parameters_.total_mass / parameters_.disk_particles_count;
+    const float diskParticleMass = 0.0001f;// parameters_.disk_mass_ratio * parameters_.total_mass / parameters_.disk_particles_count;
 
     const float dustRatio = 0.1f;
 
