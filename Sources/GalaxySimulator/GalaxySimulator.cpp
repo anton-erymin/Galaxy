@@ -32,8 +32,10 @@ GalaxySimulator::GalaxySimulator()
     srand(0);
 
     CreateUniverse();
-    CreateRenderer();
     CreateSolver();
+    CreateRenderer();
+    solver_->SetPositionsUpdateCompletedFlag(((GalaxyRenderer&)*renderer_).GetBufferUpdateRequestedFlag());
+    solver_->Start();
 
 #if 0
     engine->AddTimerAction(1.0f, false,
@@ -119,6 +121,7 @@ GalaxySimulator::GalaxySimulator()
 
 GalaxySimulator::~GalaxySimulator()
 {
+    solver_.reset();
 }
 
 void GalaxySimulator::CreateUniverse()
@@ -126,7 +129,7 @@ void GalaxySimulator::CreateUniverse()
     universe_ = make_unique<Universe>(GLX_UNIVERSE_SIZE);
 
     GalaxyParameters params = {};
-    params.disk_particles_count = 10000;
+    params.disk_particles_count = 1000;
     universe_->CreateGalaxy(float3(), params);
     universe_->CreateGalaxy(float3(0.2f, 0.0f, 0.0f), params);
 }
@@ -152,7 +155,7 @@ void GalaxySimulator::CreateSolver()
 
 void GalaxySimulator::CreateRenderer()
 {
-    renderer_ = make_unique<GalaxyRenderer>(*universe_);
+    renderer_ = make_unique<GalaxyRenderer>(*universe_, solver_->GetSolverConditionVariable());
     engine->GetRenderer().RegisterRendererPlugin(*renderer_);
 }
 

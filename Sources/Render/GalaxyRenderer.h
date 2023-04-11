@@ -8,7 +8,7 @@ class Universe;
 class GalaxyRenderer : public IRendererPlugin
 {
 public:
-    GalaxyRenderer(Universe& universe);
+    GalaxyRenderer(Universe& universe, condition_variable* solver_cv = nullptr);
 
     virtual void CreatePipelines(RenderDevice& render_device) override;
     virtual void CreateSizeDependentResources(RenderDevice& render_device, const int2& output_size) override;
@@ -18,9 +18,11 @@ public:
     virtual vector<GAL::GraphicsPipelinePtr> GetPipelines() override;
     virtual void Render() override;
 
+    atomic_bool& GetBufferUpdateRequestedFlag() { return buffer_update_requested_flag_; }
+
 private:
     void CreateParticlesBuffer();
-    void FillParticlesBuffer();
+    void UpdateParticlesBuffer();
 
 private:
     Universe& universe_;
@@ -29,4 +31,7 @@ private:
 
     GAL::GraphicsPipelinePtr particles_render_pipeline_;
     GAL::GraphicsPipelinePtr tree_draw_pipeline_;
+
+    atomic_bool buffer_update_requested_flag_ = true;
+    condition_variable* solver_cv_ = nullptr;
 };

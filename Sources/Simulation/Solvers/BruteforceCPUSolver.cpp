@@ -15,6 +15,17 @@
 
 BruteforceCPUSolver::BruteforceCPUSolver(Universe& universe)
     : ISolver(universe)
+    , force_mutexes_(universe.GetParticlesCount())
+{
+}
+
+BruteforceCPUSolver::~BruteforceCPUSolver()
+{
+    active_flag_ = false;
+    solver_cv_.notify_one();
+}
+
+void BruteforceCPUSolver::Start()
 {
     active_flag_ = true;
 
@@ -28,18 +39,11 @@ BruteforceCPUSolver::BruteforceCPUSolver(Universe& universe)
         }));
 }
 
-BruteforceCPUSolver::~BruteforceCPUSolver()
-{
-    active_flag_ = false;
-}
-
 void BruteforceCPUSolver::Solve(float time)
 {
     // Bruteforce
 
     size_t count = universe_.positions_.size();
-
-    vector<mutex> mus(count);
 
     auto ComputeForceKernel = [&](size_t i)
     {
@@ -56,12 +60,12 @@ void BruteforceCPUSolver::Solve(float time)
             float3 force2 = GravityAcceleration(-l, universe_.masses_[i], dist_cubic);
 
             {
-                lock_guard<mutex> lock(mus[i]);
+                lock_guard<mutex> lock(force_mutexes_[i]);
                 universe_.forces_[i] += force1;
             }
 
             {
-                lock_guard<mutex> lock(mus[j]);
+                lock_guard<mutex> lock(force_mutexes_[j]);
                 universe_.forces_[j] += force2;
             }
         }
@@ -82,5 +86,18 @@ void BruteforceCPUSolver::Solve(float time)
     };
 
     PARALLEL_FOR(count, ComputeForceKernel);
+
+    // After computing force before integration phase wait for signal from renderer
+    // that it has finished copying new positions into device buffer
+    unique_lock<mutex> lock(solver_mu_);
+    solver_cv_.wait(lock, [this]() { return *positions_update_completed_flag_ == false; });
+
+    // Now we can start update positions
     PARALLEL_FOR(count, IntegrationKernel);
+
+    // After updating positions turn on flag signaling to renderer that it needs to update device buffer
+    if (positions_update_completed_flag_)
+    {
+        *positions_update_completed_flag_ = true;
+    }
 }

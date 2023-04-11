@@ -20,8 +20,9 @@ namespace Device
 #pragma pack(pop)
 }
 
-GalaxyRenderer::GalaxyRenderer(Universe& universe)
+GalaxyRenderer::GalaxyRenderer(Universe& universe, condition_variable* solver_cv)
     : universe_(universe)
+    , solver_cv_(solver_cv)
 {
     // Add additional shaders directory
     string shaders_path = Paths::BaseDir() + "/../../../Sources/Shaders";
@@ -86,7 +87,18 @@ vector<GAL::GraphicsPipelinePtr> GalaxyRenderer::GetPipelines()
 
 void GalaxyRenderer::Render()
 {
-    FillParticlesBuffer();
+    if (buffer_update_requested_flag_)
+    {
+        UpdateParticlesBuffer();
+        buffer_update_requested_flag_ = false;
+
+        // After update positions buffer signal to solver
+        // so that it will be able to update postions during integration phase
+        if (solver_cv_)
+        {
+            solver_cv_->notify_one();
+        }
+    }
 
     GAL_OpenGL::EnableBlendOneOne();
 
@@ -107,7 +119,7 @@ void GalaxyRenderer::CreateParticlesBuffer()
         count * sizeof(float4), GAL::BufferType::kStorage, GAL::BufferUsage::DynamicDraw);
 }
 
-void GalaxyRenderer::FillParticlesBuffer()
+void GalaxyRenderer::UpdateParticlesBuffer()
 {
     Systems::IDeviceBufferSystem* buffer_system = engine->GetRenderer().GetRendererCore().
         DeviceBufferSystem();
