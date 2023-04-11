@@ -25,7 +25,7 @@ private:
 private:
     Universe& universe_;
 
-    Entity particles_buffer_ = kInvalidEntity;
+    Entity particles_positions_ = kInvalidEntity;
 
     GAL::GraphicsPipelinePtr particles_render_pipeline_;
     GAL::GraphicsPipelinePtr tree_draw_pipeline_;

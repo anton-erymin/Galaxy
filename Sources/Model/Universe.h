@@ -28,7 +28,7 @@ private:
     float size_;
 
     vector<Galaxy> galaxies_;
-    vector<float3> positions_;
+    vector<float4> positions_;
     vector<float3> velocities_;
     //vector<float3> accelerations_;
     vector<float3> forces_;

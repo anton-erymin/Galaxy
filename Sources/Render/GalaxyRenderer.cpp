@@ -7,7 +7,7 @@
 #include <RendererCore.h>
 #include <Private/RenderDevice.h>
 #include <GAL.h>
-#include "OpenGL/GraphicsOpenGL.h"
+#include <OpenGL/GraphicsOpenGL.h>
 #include <Interfaces/IDeviceBufferSystem.h>
 #include <Data/DeviceData.h>
 #include <Misc/Paths.h>
@@ -23,13 +23,14 @@ namespace Device
 GalaxyRenderer::GalaxyRenderer(Universe& universe)
     : universe_(universe)
 {
+    // Add additional shaders directory
     string shaders_path = Paths::BaseDir() + "/../../../Sources/Shaders";
-    engine->GetRenderer().GetRendererCore().GetRenderDevice().GetShaderManager().AddShadersPath(shaders_path);
+    engine->GetRenderer().GetRendererCore().GetRenderDevice().GetShaderManager().
+        AddShadersPath(shaders_path);
 
     CreateParticlesBuffer();
-    FillParticlesBuffer();
 
-    GAL_OpenGL::SetPointSize(5.0f);
+    GAL_OpenGL::SetPointSize(3.0f);
 }
 
 void GalaxyRenderer::CreatePipelines(RenderDevice& render_device)
@@ -38,7 +39,6 @@ void GalaxyRenderer::CreatePipelines(RenderDevice& render_device)
         "DrawParticles.geom", 
         "ShadeSingleColor.vert", 
         "ShadeSingleColor.frag");
-
 #if 0
     {
         *g_tree_draw_pipeline = GetRenderer().GetRenderDevice().CreateGraphicsPipeline(
@@ -46,7 +46,6 @@ void GalaxyRenderer::CreatePipelines(RenderDevice& render_device)
             state, g_defines);
     }
 #endif // 0
-
 }
 
 void GalaxyRenderer::CreateSizeDependentResources(RenderDevice& render_device, const int2& output_size)
@@ -72,9 +71,12 @@ void GalaxyRenderer::UpdatePipelines(GAL::ImagePtr& output_image)
 
 void GalaxyRenderer::BindSceneDataBuffers()
 {
-    Systems::IDeviceBufferSystem* buffer_system = engine->GetRenderer().GetRendererCore().DeviceBufferSystem();
+    Systems::IDeviceBufferSystem* buffer_system = engine->GetRenderer().GetRendererCore().
+        DeviceBufferSystem();
 
-    particles_render_pipeline_->SetBuffer(buffer_system->GetDeviceBuffer(particles_buffer_), "ParticlesData");
+    GAL::BufferPtr positions_buffer = buffer_system->GetDeviceBuffer(particles_positions_);
+
+    particles_render_pipeline_->SetBuffer(positions_buffer, "ParticlesPositions");
 }
 
 vector<GAL::GraphicsPipelinePtr> GalaxyRenderer::GetPipelines()
@@ -98,18 +100,23 @@ void GalaxyRenderer::Render()
 void GalaxyRenderer::CreateParticlesBuffer()
 {
     size_t count = universe_.GetParticlesCount();
-    Systems::IDeviceBufferSystem* buffer_system = engine->GetRenderer().GetRendererCore().DeviceBufferSystem();
+    Systems::IDeviceBufferSystem* buffer_system = engine->GetRenderer().GetRendererCore().
+        DeviceBufferSystem();
 
-    buffer_system->CreateDeviceBuffer("ParticlesBuffer", particles_buffer_,
-        count * sizeof(Device::Particle), GAL::BufferType::kStorage, GAL::BufferUsage::DynamicDraw);
+    buffer_system->CreateDeviceBuffer("ParticlesPositionsBuffer", particles_positions_,
+        count * sizeof(float4), GAL::BufferType::kStorage, GAL::BufferUsage::DynamicDraw);
 }
 
 void GalaxyRenderer::FillParticlesBuffer()
 {
+    Systems::IDeviceBufferSystem* buffer_system = engine->GetRenderer().GetRendererCore().
+        DeviceBufferSystem();
+
     size_t count = universe_.GetParticlesCount();
 
-    vector<Device::Particle> device_particles(count);
+    //vector<Device::Particle> device_particles(count);
 
+#if 0
     for (size_t i = 0u; i < count; ++i)
     {
         device_particles[i].position = universe_.positions_[i];
@@ -119,8 +126,8 @@ void GalaxyRenderer::FillParticlesBuffer()
         //device_particles[i].acceleration = universe_.accelerations_[i];
         device_particles[i].force = universe_.forces_[i];
     }
+#endif // 0
 
-    Systems::IDeviceBufferSystem* buffer_system = engine->GetRenderer().GetRendererCore().DeviceBufferSystem();
-    GAL::BufferPtr buffer = buffer_system->GetDeviceBuffer(particles_buffer_);
-    buffer->Write(0, count * sizeof(Device::Particle), device_particles.data());
+    GAL::BufferPtr buffer = buffer_system->GetDeviceBuffer(particles_positions_);
+    buffer->Write(0, count * sizeof(float4), universe_.positions_.data());
 }

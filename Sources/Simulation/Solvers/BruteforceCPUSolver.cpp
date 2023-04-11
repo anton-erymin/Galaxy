@@ -47,7 +47,8 @@ void BruteforceCPUSolver::Solve(float time)
 
         for (size_t j = i + 1; j < count; j++)
         {
-            float3 l = universe_.positions_[j] - universe_.positions_[i];
+            float3 l = float3(universe_.positions_[j]) - float3(universe_.positions_[i]);
+            // TODO: Softended distance right?
             float dist = SoftenedDistance(l.length_sq(), cSoftFactor);
             float dist_cubic = dist * dist * dist;
 
@@ -71,8 +72,10 @@ void BruteforceCPUSolver::Solve(float time)
         assert(i < count);
         if (universe_.masses_[i] > 0.0f)
         {
-            IntegrateMotionEquation(time, universe_.positions_[i], universe_.velocities_[i],
+            float3 pos = float3(universe_.positions_[i]);
+            IntegrateMotionEquation(time, pos, universe_.velocities_[i],
                 universe_.forces_[i], universe_.inverse_masses_[i]);
+            universe_.positions_[i] = pos;
         }
         // Clear force accumulator
         universe_.forces_[i] = float3();
