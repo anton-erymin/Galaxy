@@ -4,10 +4,12 @@
 #include "Universe.h"
 #include "Solvers/BruteforceCPUSolver.h"
 #include "GalaxyRenderer.h"
+#include "MainWindow.h"
 
 #include <Engine.h>
 #include <EngineCore.h>
 #include <Renderer.h>
+#include <UIOverlay.h>
 
 enum class SimulationAlgorithm
 {
@@ -20,6 +22,8 @@ enum class SimulationAlgorithm
 GalaxySimulator::GalaxySimulator()
 {
     NLOG("Galaxy Model 0.5\nCopyright (c) LAXE LLC 2012-2021");
+
+    UI_ACTIVATE_CONTEXT();
 
     engine->SetActiveScene(engine->CreateScene());
     engine->Play();
@@ -37,6 +41,8 @@ GalaxySimulator::GalaxySimulator()
     solver_->SetPositionsUpdateCompletedFlag(((GalaxyRenderer&)*renderer_).GetBufferUpdateRequestedFlag());
     solver_->Start();
 
+    main_window_ = make_unique<MainWindow>();
+
 #if 0
     engine->AddTimerAction(1.0f, false,
         [](float) -> bool
@@ -52,8 +58,8 @@ GalaxySimulator::GalaxySimulator()
         sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG)));
     cMillionYearsPerTimeUnit = cSecondsPerTimeUnit / 3600.0f / 24.0f / 365.0f / 1e+6f;
 
-    deltaTime = 0.0000001f;
-    deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6f;
+    //deltaTime = 0.0000001f;
+    //deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6f;
 
     saveToFiles = false;
 
@@ -121,7 +127,6 @@ GalaxySimulator::GalaxySimulator()
 
 GalaxySimulator::~GalaxySimulator()
 {
-    solver_.reset();
 }
 
 void GalaxySimulator::CreateUniverse()
@@ -129,7 +134,7 @@ void GalaxySimulator::CreateUniverse()
     universe_ = make_unique<Universe>(GLX_UNIVERSE_SIZE);
 
     GalaxyParameters params = {};
-    params.disk_particles_count = 1000;
+    params.disk_particles_count = 2;
     universe_->CreateGalaxy(float3(), params);
     universe_->CreateGalaxy(float3(0.2f, 0.0f, 0.0f), params);
 }

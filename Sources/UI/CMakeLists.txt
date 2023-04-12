@@ -1,11 +1,7 @@
-set(LAUNCHER_SOURCES
-	GalaxyEngine.cpp
-	GalaxyEngine.h
-	Main.cpp)
+set(UI_SOURCES
+	MainWindow.cpp
+	MainWindow.h)
 	
-add_executable(Galaxy ${LAUNCHER_SOURCES})
-ConfigureGalaxyModule(Galaxy "${LAUNCHER_SOURCES}")
-target_link_options(Galaxy PRIVATE /SUBSYSTEM:WINDOWS)
-target_link_libraries(Galaxy PRIVATE
-	Nucleus.Launch
-	Galaxy.GalaxySimulator)
+add_library(Galaxy.UI STATIC ${UI_SOURCES})
+ConfigureGalaxyModule(Galaxy.UI "${UI_SOURCES}")
+target_link_libraries(Galaxy.UI PRIVATE Nucleus.Engine)

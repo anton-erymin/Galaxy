@@ -6,33 +6,9 @@
 class Universe;
 class BarnesHutTree;
 
-class Solver {
-public:
-    Solver(Universe& universe) 
-        : universe(universe)
-    {
-    }
 
-    virtual ~Solver() = default;
 
-    virtual void Solve(float time) = 0;
-    virtual void SolveForces() { }
-    virtual void Inititalize(float time) { }
-    virtual void Prepare() { }
 
-protected:
-    Universe& universe;
-};
-
-class BruteforceSolver : public Solver {
-public:
-    BruteforceSolver(Universe& universe) 
-        : Solver(universe)
-    {
-    }
-
-    void Solve(float time) override;
-};
 
 class BarnesHutCPUSolver : public Solver
 {
