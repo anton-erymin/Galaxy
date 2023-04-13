@@ -127,7 +127,6 @@ GalaxySimulator::GalaxySimulator()
 
 GalaxySimulator::~GalaxySimulator()
 {
-    solver_.reset();
 }
 
 void GalaxySimulator::CreateUniverse()
