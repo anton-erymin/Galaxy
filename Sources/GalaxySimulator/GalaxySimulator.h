@@ -32,8 +32,8 @@ private:
     bool saveToFiles = false;
 
     unique_ptr<Universe> universe_;
-    unique_ptr<ISolver> solver_;
     unique_ptr<IRendererPlugin> renderer_;
+    unique_ptr<ISolver> solver_;
     unique_ptr<MainWindow> main_window_;
 
     //RenderParameters renderParams;

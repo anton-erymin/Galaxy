@@ -127,6 +127,7 @@ GalaxySimulator::GalaxySimulator()
 
 GalaxySimulator::~GalaxySimulator()
 {
+    solver_.reset();
 }
 
 void GalaxySimulator::CreateUniverse()
@@ -134,7 +135,7 @@ void GalaxySimulator::CreateUniverse()
     universe_ = make_unique<Universe>(GLX_UNIVERSE_SIZE);
 
     GalaxyParameters params = {};
-    params.disk_particles_count = 2;
+    params.disk_particles_count = 200;
     universe_->CreateGalaxy(float3(), params);
     universe_->CreateGalaxy(float3(0.2f, 0.0f, 0.0f), params);
 }

@@ -23,6 +23,7 @@ BruteforceCPUSolver::~BruteforceCPUSolver()
 {
     active_flag_ = false;
     solver_cv_.notify_one();
+    thread_.reset();
 }
 
 void BruteforceCPUSolver::Start()
@@ -90,7 +91,7 @@ void BruteforceCPUSolver::Solve(float time)
     // After computing force before integration phase wait for signal from renderer
     // that it has finished copying new positions into device buffer
     unique_lock<mutex> lock(solver_mu_);
-    solver_cv_.wait(lock, [this]() { return *positions_update_completed_flag_ == false; });
+    solver_cv_.wait(lock, [this]() { return *positions_update_completed_flag_ == false || !active_flag_; });
 
     // Now we can start update positions
     PARALLEL_FOR(count, IntegrationKernel);
