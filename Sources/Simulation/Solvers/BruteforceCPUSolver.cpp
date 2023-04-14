@@ -6,13 +6,6 @@
 #include <Thread/Thread.h>
 #include <Thread/ThreadPool.h>
 
-#define USE_MULTITHREADING
-#ifdef USE_MULTITHREADING
-#define PARALLEL_FOR(count, kernel) ThreadPool::Dispatch(count, [&](size_t i) { kernel(i); });
-#else
-#define PARALLEL_FOR(count, kernel) for (size_t i = 0; i < count; i++) { kernel(i); }
-#endif
-
 BruteforceCPUSolver::BruteforceCPUSolver(Universe& universe)
     : ISolver(universe)
     , force_mutexes_(universe.GetParticlesCount())
@@ -30,7 +23,7 @@ void BruteforceCPUSolver::Start()
 {
     active_flag_ = true;
 
-    thread_.reset(new Thread("BruteforceCPUSolver Thread",
+    thread_.reset(new Thread("BarnesHutCPUSolver Thread",
         [this]()
         {
             while (active_flag_)

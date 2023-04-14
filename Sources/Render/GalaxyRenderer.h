@@ -22,12 +22,17 @@ public:
 
 private:
     void CreateParticlesBuffer();
+    void CreateNodesBuffers(size_t nodes_count);
     void UpdateParticlesBuffer();
+    void UpdateNodesBuffers();
+    void BindNodesBuffers();
 
 private:
     Universe& universe_;
 
-    Entity particles_positions_ = kInvalidEntity;
+    Entity particles_positions_buffer_;
+    Entity nodes_positions_;
+    Entity nodes_sizes_;
 
     GAL::GraphicsPipelinePtr particles_render_pipeline_;
     GAL::GraphicsPipelinePtr tree_draw_pipeline_;

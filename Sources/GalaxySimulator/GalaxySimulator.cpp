@@ -3,6 +3,9 @@
 #include "Galaxy.h"
 #include "Universe.h"
 #include "Solvers/BruteforceCPUSolver.h"
+#include "Solvers/BruteforceGPUSolver.h"
+#include "Solvers/BarnesHutCPUSolver.h"
+#include "Solvers/BarnesHutGPUSolver.h"
 #include "GalaxyRenderer.h"
 #include "MainWindow.h"
 
@@ -33,7 +36,7 @@ GalaxySimulator::GalaxySimulator()
     //g_engine_core->camera_components[engine->GetActiveCamera()]->at = float3();
     //g_engine_core->camera_components[engine->GetActiveCamera()]->is_changed = true;
 
-    srand(0);
+    //srand(0);
 
     CreateUniverse();
     CreateSolver();
@@ -134,14 +137,14 @@ void GalaxySimulator::CreateUniverse()
     universe_ = make_unique<Universe>(GLX_UNIVERSE_SIZE);
 
     GalaxyParameters params = {};
-    params.disk_particles_count = 200;
+    params.disk_particles_count = 4;
     universe_->CreateGalaxy(float3(), params);
-    universe_->CreateGalaxy(float3(0.2f, 0.0f, 0.0f), params);
+    //universe_->CreateGalaxy(float3(0.2f, 0.0f, 0.0f), params);
 }
 
 void GalaxySimulator::CreateSolver()
 {
-    SimulationAlgorithm algorithm = SimulationAlgorithm::BRUTEFORCE_CPU;
+    SimulationAlgorithm algorithm = SimulationAlgorithm::BARNESHUT_CPU;
     switch (algorithm)
     {
     case SimulationAlgorithm::BRUTEFORCE_CPU:
@@ -150,6 +153,7 @@ void GalaxySimulator::CreateSolver()
     case SimulationAlgorithm::BRUTEFORCE_GPU:
         break;
     case SimulationAlgorithm::BARNESHUT_CPU:
+        solver_.reset(new BarnesHutCPUSolver(*universe_));
         break;
     case SimulationAlgorithm::BARNESHUT_GPU:
         break;

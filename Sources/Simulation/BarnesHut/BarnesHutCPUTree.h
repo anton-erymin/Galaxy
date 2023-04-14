@@ -1,41 +1,44 @@
 #pragma once
 
-#include <memory>
+namespace Math { class BoundingBox; }
 
-class BarnesHutTree
+class BarnesHutCPUTree
 {
 public:
-    BarnesHutTree(const float3 &point, float length);
+    BarnesHutCPUTree(const float2 &point, float length);
 
-    void Insert(const float3 &position, float bodyMass, uint32_t level = 0);
-    void InsertFlat(const float3 &position, float bodyMass);
-    float3 ComputeAcceleration(const float3 &position, float soft) const;
-    float3 ComputeAccelerationFlat(const float3 &position, float soft) const;
+    void Insert(const float2 &position, float bodyMass, uint32_t level = 0);
+    void InsertFlat(const float2 &position, float bodyMass);
+    float2 ComputeAcceleration(const float2 &position, float soft) const;
+    float2 ComputeAccelerationFlat(const float2 &position, float soft) const;
     void Reset();
 
-    const float3& GetPoint() const { return point; }
+    void SetBoundingBox(const BoundingBox& bbox);
+    void SetStartPointAndLength(const float2& point, float length);
+
+    const float2& GetPoint() const { return point; }
     float GetLength() const { return length; }
     bool IsLeaf() const { return isLeaf; }
 
-    const BarnesHutTree& operator[](size_t i) const { return *children[i]; }
+    const BarnesHutCPUTree& operator[](size_t i) const { return *children[i]; }
 
     size_t GetNodesCount() const;
 
 private:
-    inline bool Contains(const float3 &position) const;
+    inline bool Contains(const float2 &position) const;
     inline void ResetChildren();
 
-    float3 point;
-    float3 oppositePoint;
+    float2 point;
+    float2 oppositePoint;
     float  length;
     float  mass = 0.0f;
-    float3 center = {};
+    float2 center = {};
     bool   isLeaf = true;
     bool   isBusy = false;
 
-    unique_ptr<BarnesHutTree> children[4];
+    unique_ptr<BarnesHutCPUTree> children[4];
     
     size_t id = 0;
 
-    friend void DrawBarnesHutTree(const BarnesHutTree& node);
+    friend class BarnesHutCPUSolver;
 };

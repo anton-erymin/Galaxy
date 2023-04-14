@@ -132,9 +132,12 @@ void Galaxy::Create()
         particles_.push_back(particle);
     }
 
-    particles_[0].position = position_;
-    //particles_[0].movable = false;
-    //particles_[0].SetMass(parameters_.black_hole_mass);
+    if (!particles_.empty())
+    {
+        particles_[0].position = position_;
+        //particles_[0].movable = false;
+        //particles_[0].SetMass(parameters_.black_hole_mass);
+    }
 
     //particles[0].position = float3(-0.45f, 0.0f, -0.45f);
     //particles[1].position = float3(-0.3f, 0.0f, -0.3f);

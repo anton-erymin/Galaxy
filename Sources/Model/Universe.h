@@ -36,7 +36,11 @@ private:
     vector<float> inverse_masses_;
     vector<Particle*> all_particles_;
 
+    vector<float4> node_positions_;
+    vector<float> node_sizes_;
+
     friend class BruteforceCPUSolver;
+    friend class BarnesHutCPUSolver;
     friend class GalaxyRenderer;
 
     //unordered_map<const Image*, vector<size_t>> imageToParticles;

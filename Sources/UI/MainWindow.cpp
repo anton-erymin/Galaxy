@@ -5,6 +5,7 @@ MainWindow::MainWindow()
 {
     window_ = engine->UISystem()->CreateUIWindow("Galaxy", true, int2(), int2(), [this](Entity e){ BuildUI(); })->entity;
     engine->UISystem()->ShowWindow(window_);
+    window_.Get<WindowUIComponent>()->color.w = 0.8f;
 }
 
 static void BuildTable(const char* name, function<void()>&& table_content)
@@ -35,6 +36,7 @@ static void BuildRow(const char* name, function<void()>&& value_func)
     ImGui::Text(name);
     ImGui::TableSetColumnIndex(1);
     ImGui::PushID(name);
+    ImGui::PushItemWidth(-FLT_MIN);
     value_func();
     ImGui::PopID();
 }
@@ -95,6 +97,11 @@ void MainWindow::BuildUI()
         [&]()
         {
             BuildRowValue("Render FPS", render_fps);
+
+            int cur_type = 0;
+            static const char* s_types[] = { "Bruteforce CPU", "Bruteforce GPU", "Barnes-Hut CPU", "Barnes-Hut GPU" };
+            BuildRow("Simulation type", [&](){ ImGui::Combo("", &cur_type, s_types, 4); });
+
             BuildRowValue("Simulation FPS", simulation_fps);
             BuildRowValue("Number of particles", 20);
             BuildRowValue("Timestep", timestep);
@@ -105,7 +112,6 @@ void MainWindow::BuildUI()
             BuildRowValue("Build tree time, ms", build_tree_time_msecs);
             BuildRowValue("Solving time, ms", solver_time_msecs);
             BuildRowValue("Total step time, ms", total_step_time_msecs);
-
             BuildRow("Dark matter", [&](){ ImGui::Checkbox("", &simulate_dark_matter); });
             BuildRow("Gravity softness distance", [&](){ ImGui::SliderFloat("", &gravity_softening_length, 0.00001f, 0.1f, nullptr, 1.0f); });
         });

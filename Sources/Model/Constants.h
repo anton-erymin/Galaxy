@@ -25,7 +25,7 @@ constexpr float cRadialVelocityFactor = 0.7f;
 #define			GLX_DISK_RADIUS			0.1f//5.0f				    // Радиус галактики
 #define			GLX_BULGE_RADIUS		0.01f						// Радиус ядра галактики
 #define			GLX_HALO_RADIUS			5.0f						// Радиус гало из темной материи
-#define			GLX_DISK_THICKNESS		0.01f						// Толщина диска галактики
+#define			GLX_DISK_THICKNESS		0.000f						// Толщина диска галактики
 #define         GLX_DISK_MASS_RATIO     1.0f
 
 #define			GLX_HALO_MASS			20.0f						// Масса гало
