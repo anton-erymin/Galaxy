@@ -5,7 +5,7 @@ namespace Math { class BoundingBox; }
 class BarnesHutCPUTree
 {
 public:
-    BarnesHutCPUTree(const float2 &point, float length);
+    BarnesHutCPUTree();
 
     void Insert(const float2 &position, float bodyMass, uint32_t level = 0);
     void InsertFlat(const float2 &position, float bodyMass);
@@ -30,9 +30,9 @@ private:
 
     float2 point;
     float2 oppositePoint;
-    float  length;
+    float  length = 0.0f;
     float  mass = 0.0f;
-    float2 center = {};
+    float2 center;
     bool   isLeaf = true;
     bool   isBusy = false;
 

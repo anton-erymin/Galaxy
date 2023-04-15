@@ -8,11 +8,8 @@ static constexpr float cOpeningAngle = 0.7f;
 
 static size_t lastId = 0;
 
-BarnesHutCPUTree::BarnesHutCPUTree(const float2 &point, float length)
-    : point(point),
-    length(length)
+BarnesHutCPUTree::BarnesHutCPUTree()
 {
-    oppositePoint = point + float2(length);
     id = lastId++;
 }
 
@@ -210,10 +207,10 @@ inline void BarnesHutCPUTree::ResetChildren()
 {
     if (!children[0])
     {
-        children[0] = make_unique<BarnesHutCPUTree>(float2(), 0);
-        children[1] = make_unique<BarnesHutCPUTree>(float2(), 0);
-        children[2] = make_unique<BarnesHutCPUTree>(float2(), 0);
-        children[3] = make_unique<BarnesHutCPUTree>(float2(), 0);
+        children[0] = make_unique<BarnesHutCPUTree>();
+        children[1] = make_unique<BarnesHutCPUTree>();
+        children[2] = make_unique<BarnesHutCPUTree>();
+        children[3] = make_unique<BarnesHutCPUTree>();
     }
 
     float nl = 0.5f * length;

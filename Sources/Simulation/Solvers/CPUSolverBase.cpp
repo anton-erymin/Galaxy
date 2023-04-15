@@ -37,7 +37,7 @@ void CPUSolverBase::SolverRun()
             continue;
         }
 
-        float time = context_.timestep;
+        float& time = context_.timestep;
 
         fps_counter.BeginFrame();
 

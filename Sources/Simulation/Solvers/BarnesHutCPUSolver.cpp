@@ -10,7 +10,7 @@
 BarnesHutCPUSolver::BarnesHutCPUSolver(Universe& universe, SimulationContext& context)
     : CPUSolverBase(universe, context)
 {
-    tree_ = make_unique<BarnesHutCPUTree>(float2(), 0);
+    tree_ = make_unique<BarnesHutCPUTree>();
 }
 
 BarnesHutCPUSolver::~BarnesHutCPUSolver()
@@ -36,28 +36,20 @@ void BarnesHutCPUSolver::TraverseTree(const BarnesHutCPUTree& node)
 void BarnesHutCPUSolver::Solve(float time)
 {
     size_t count = universe_.positions_.size();
-    size_t thread_count = ThreadPool::GetThreadCount();
-    size_t block_size = (count + thread_count - 1) / thread_count;
 
     // 1. Compute bounding box
 
-    vector<BoundingBox> boxes(thread_count);
-    auto BoundingBoxKernel = [&](size_t i)
+    vector<BoundingBox> boxes(ThreadPool::GetThreadCount());
+    auto BoundingBoxKernel = [&](size_t global_id, size_t local_id, size_t block_id, size_t thread_id)
     {
-        size_t begin = i * block_size;
-        size_t end = min((i + 1) * block_size, count - 1);
-
-        for (size_t index = begin; index <= end; ++index)
-        {
-            boxes[i].grow(float3(universe_.positions_[index]));
-        }
+        boxes[block_id].grow(float3(universe_.positions_[global_id]));
     };
 
-    PARALLEL_FOR(thread_count, BoundingBoxKernel);
+    PARALLEL_FOR(count, BoundingBoxKernel);
 
     // Compute final bounding box
     BoundingBox bbox;
-    for (size_t i = 0; i < thread_count; i++)
+    for (size_t i = 0; i < boxes.size(); i++)
     {
         bbox.grow(boxes[i]);
     }
@@ -81,23 +73,23 @@ void BarnesHutCPUSolver::Solve(float time)
 
     // 3. Compute force
 
-    auto ComputeForceKernel = [&](size_t i)
+    auto ComputeForceKernel = [&](size_t global_id, size_t local_id, size_t block_id, size_t thread_id)
     {
-        assert(i < count);
+        assert(global_id < count);
 
-        for (size_t j = i + 1; j < count; j++)
+        for (size_t j = global_id + 1; j < count; j++)
         {
-            float3 l = float3(universe_.positions_[j]) - float3(universe_.positions_[i]);
+            float3 l = float3(universe_.positions_[j]) - float3(universe_.positions_[global_id]);
             // TODO: Softended distance right?
-            float dist = SoftenedDistance(l.length_sq(), cSoftFactor);
+            float dist = SoftenedDistance(l.length_sq(), context_.gravity_softening_length);
             float dist_cubic = dist * dist * dist;
 
             float3 force1 = GravityAcceleration(l, universe_.masses_[j], dist_cubic);
-            float3 force2 = GravityAcceleration(-l, universe_.masses_[i], dist_cubic);
+            float3 force2 = GravityAcceleration(-l, universe_.masses_[global_id], dist_cubic);
 
             {
-                lock_guard<mutex> lock(force_mutexes_[i]);
-                universe_.forces_[i] += force1;
+                lock_guard<mutex> lock(force_mutexes_[global_id]);
+                universe_.forces_[global_id] += force1;
             }
 
             {
@@ -105,20 +97,6 @@ void BarnesHutCPUSolver::Solve(float time)
                 universe_.forces_[j] += force2;
             }
         }
-    };
-
-    auto IntegrationKernel = [&](size_t i)
-    {
-        assert(i < count);
-        if (universe_.masses_[i] > 0.0f)
-        {
-            float3 pos = float3(universe_.positions_[i]);
-            IntegrateMotionEquation(time, pos, universe_.velocities_[i],
-                universe_.forces_[i], universe_.inverse_masses_[i]);
-            universe_.positions_[i] = pos;
-        }
-        // Clear force accumulator
-        universe_.forces_[i] = float3();
     };
 
     PARALLEL_FOR(count, ComputeForceKernel);
@@ -132,8 +110,23 @@ void BarnesHutCPUSolver::Solve(float time)
         });
 
     // 4. Integrate
+    
+    auto IntegrationKernel = [&](size_t global_id, size_t local_id, size_t block_id, size_t thread_id)
+    {
+        assert(global_id < count);
+        if (universe_.masses_[global_id] > 0.0f)
+        {
+            float3 pos = float3(universe_.positions_[global_id]);
+            IntegrateMotionEquation(time, pos, universe_.velocities_[global_id],
+                universe_.forces_[global_id], universe_.inverse_masses_[global_id]);
+            universe_.positions_[global_id] = pos;
+        }
+        // Clear force accumulator
+        universe_.forces_[global_id] = float3();
+    };
 
     // Now we can start update positions
+
     PARALLEL_FOR(count, IntegrationKernel);
 
     // After updating positions turn on flag signaling to renderer that it needs to update device buffer

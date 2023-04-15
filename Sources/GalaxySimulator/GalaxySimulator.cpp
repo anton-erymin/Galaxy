@@ -33,7 +33,6 @@ GalaxySimulator::GalaxySimulator()
     sim_context_.cMillionYearsPerTimeUnit = sim_context_.cSecondsPerTimeUnit / 3600.0f / 24.0f / 365.0f / 1e+6f;
 
     sim_context_.timestep = 0.00005f;
-    sim_context_.timestep_yrs = sim_context_.timestep * sim_context_.cMillionYearsPerTimeUnit * 1e6f;
     sim_context_.gravity_softening_length = cSoftFactor;
 
     CreateUniverse();
