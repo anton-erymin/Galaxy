@@ -7,14 +7,13 @@ struct GalaxyParameters;
 class Universe
 {
 public:
-    Universe(float size);
+    Universe();
 
     void CreateGalaxy();
     void CreateGalaxy(const float3& position, const GalaxyParameters& parameters);
 
     void SetRadialVelocitiesFromForce();
 
-    float GetSize() const { return size_; }
     vector<Galaxy>& GetGalaxies() { return galaxies_; }
     const vector<Particle*>& GetParticles() const { return all_particles_; }
     size_t GetParticlesCount() const { return positions_.size(); }
@@ -25,8 +24,6 @@ private:
     void AddGalaxy(Galaxy& galaxy);
 
 private:
-    float size_;
-
     vector<Galaxy> galaxies_;
     vector<float4> positions_;
     vector<float3> velocities_;

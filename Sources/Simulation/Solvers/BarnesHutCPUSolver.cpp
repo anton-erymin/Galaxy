@@ -39,6 +39,8 @@ void BarnesHutCPUSolver::Solve(float time)
     size_t thread_count = ThreadPool::GetThreadCount();
     size_t block_size = (count + thread_count - 1) / thread_count;
 
+    // 1. Compute bounding box
+
     vector<BoundingBox> boxes(thread_count);
     auto BoundingBoxKernel = [&](size_t i)
     {
@@ -62,7 +64,7 @@ void BarnesHutCPUSolver::Solve(float time)
     
     tree_->SetBoundingBox(bbox);
 
-    // Build tree
+    // 2. Build tree
     tree_->Reset();
     for (size_t i = 0; i < count; i++)
     {
@@ -74,6 +76,10 @@ void BarnesHutCPUSolver::Solve(float time)
     universe_.node_positions_.clear();
     universe_.node_sizes_.clear();
     TraverseTree(*tree_);
+
+    context_.nodes_count = universe_.node_positions_.size();
+
+    // 3. Compute force
 
     auto ComputeForceKernel = [&](size_t i)
     {
@@ -124,6 +130,8 @@ void BarnesHutCPUSolver::Solve(float time)
         {
             return context_.positions_update_completed_flag == false || !active_flag_;
         });
+
+    // 4. Integrate
 
     // Now we can start update positions
     PARALLEL_FOR(count, IntegrationKernel);

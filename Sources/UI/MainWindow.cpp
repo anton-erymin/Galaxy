@@ -2,12 +2,14 @@
 #include "GalaxySimulator/GalaxyTypes.h"
 
 #include <EngineMinimal.h>
+#include <Renderer.h>
+#include <UIOverlay.h>
 
 MainWindow::MainWindow(SimulationContext& sim_context, RenderParameters& render_params)
     : sim_context_(sim_context)
     , render_params_(render_params)
 {
-    window_ = engine->UISystem()->CreateUIWindow("Galaxy", true, int2(), int2(), [this](Entity e){ BuildUI(); })->entity;
+    window_ = engine->UISystem()->CreateUIWindow("Galaxy Simulator", true, int2(), int2(), [this](Entity e){ BuildUI(); })->entity;
     engine->UISystem()->ShowWindow(window_);
     window_.Get<WindowUIComponent>()->color.w = 0.8f;
 }
@@ -78,6 +80,8 @@ static string TimeInYearsToStr(float time_years)
 
 void MainWindow::BuildUI()
 {
+    engine->GetRenderer().GetUIOverlay().PushFont(UI::UIOverlay::kRegularBold);
+
     float mass = 1.0f;
     float disk_mass_ratio = 1.0f;
     int disk_particles_count = 1;
@@ -110,6 +114,7 @@ void MainWindow::BuildUI()
             BuildRowValue("Total step time, ms", sim_context_.total_step_time_msecs);
             BuildRow("Dark matter", [&](){ ImGui::Checkbox("", &sim_context_.simulate_dark_matter); });
             BuildRow("Gravity softness distance", [&](){ ImGui::SliderFloat("", &sim_context_.gravity_softening_length, 0.00001f, 0.1f, nullptr, 1.0f); });
+            BuildRowValue("Tree nodes count", sim_context_.nodes_count);
         });
 
     BuildTable("Rendering",
@@ -121,7 +126,7 @@ void MainWindow::BuildUI()
             BuildRow("Render Barnes-Hut tree", [&](){ ImGui::Checkbox("", &render_params_.render_tree); });
             BuildRow("Plot potential", [&](){ ImGui::Checkbox("", &render_params_.plot_potential); });
             BuildRow("Brightness", [&](){ ImGui::SliderFloat("", &render_params_.brightness, 0.05f, 10.0f, nullptr, 1.0f); });
-            BuildRow("Particles size scale", [&](){ ImGui::SliderFloat("", &render_params_.particle_size_scale, 0.01f, 10.0f, nullptr, 1.0f); });
+            BuildRow("Particles size scale", [&](){ ImGui::SliderFloat("", &render_params_.particle_size_scale, 0.01f, 50.0f, nullptr, 1.0f); });
         });
 
     BuildTable("Model",
@@ -137,4 +142,6 @@ void MainWindow::BuildUI()
             BuildRow("Disk thickness", [&](){ ImGui::SliderFloat("", &disk_thickness, 0.0f, 100.0f, nullptr, 1.0f); });
             BuildRow("Black hole mass", [&](){ ImGui::SliderFloat("", &black_hole_mass, 1.0f, 10000.0f, nullptr, 1.0f); });
         });
+
+    ImGui::PopFont();
 }

@@ -55,11 +55,6 @@ void GalaxyRenderer::UpdatePipelines(GAL::ImagePtr& output_image)
         state.SetColorAttachment(0, output_image);
         state.SetRootConstantsSize(sizeof(Device::ShadeSingleColorRootConstants));
         particles_render_pipeline_->SetState(state);
-
-        Device::ShadeSingleColorRootConstants root_constants = {};
-        root_constants.color = float4(0.5f, 0.5f, 0.5f, 1.0f);
-        root_constants.transform = Matrix();
-        particles_render_pipeline_->SetRootConstants(&root_constants);
     }
 
     {
@@ -111,6 +106,11 @@ void GalaxyRenderer::Render()
     {
         GAL_OpenGL::EnableBlendOneOne();
         GAL_OpenGL::SetPointSize(render_params_.particle_size_scale);
+
+        Device::ShadeSingleColorRootConstants root_constants = {};
+        root_constants.color = float4(1.0f) * render_params_.brightness;
+        root_constants.transform = Matrix();
+        particles_render_pipeline_->SetRootConstants(&root_constants);
 
         particles_render_pipeline_->BeginGraphics();
         particles_render_pipeline_->Draw(0, universe_.GetParticlesCount(), GAL::PrimitiveType::Points);

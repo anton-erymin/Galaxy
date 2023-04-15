@@ -27,11 +27,13 @@ struct SimulationContext
     float simulation_time_million_yrs = 0.0f;
     size_t timesteps_count = 0;
 
-
     float build_tree_time_msecs = 0.0f;
     float solver_time_msecs = 0.0f;
     float total_step_time_msecs = 0.0f;
 
+    atomic<size_t> nodes_count = 0;
+
+    // Sync context
     atomic_bool positions_update_completed_flag = false;
     condition_variable solver_cv;
     mutex solver_mu;

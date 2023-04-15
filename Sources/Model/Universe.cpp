@@ -2,8 +2,7 @@
 #include "Galaxy.h"
 #include "MathUtils.h"
 
-Universe::Universe(float size)
-    : size_(size)
+Universe::Universe()
 {
 }
 

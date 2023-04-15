@@ -32,7 +32,7 @@ GalaxySimulator::GalaxySimulator()
     sim_context_.cSecondsPerTimeUnit = static_cast<float>(sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG)));
     sim_context_.cMillionYearsPerTimeUnit = sim_context_.cSecondsPerTimeUnit / 3600.0f / 24.0f / 365.0f / 1e+6f;
 
-    sim_context_.timestep = 0.0005f;
+    sim_context_.timestep = 0.00005f;
     sim_context_.timestep_yrs = sim_context_.timestep * sim_context_.cMillionYearsPerTimeUnit * 1e6f;
     sim_context_.gravity_softening_length = cSoftFactor;
 
@@ -42,76 +42,6 @@ GalaxySimulator::GalaxySimulator()
     solver_->Start();
 
     main_window_ = make_unique<MainWindow>(sim_context_, render_params_);
-
-#if 0
-    engine->AddTimerAction(1.0f, false,
-        [](float) -> bool
-        {
-            engine->RequestExit();
-            return false;
-        });
-#endif // 0
-
-#if 0
-
-    auto nodes_count = 5 * universe->GetParticlesCount();
-
-    nodes_buffer_ = GetNextEntity();
-    GetRenderer().CreateDeviceBuffer("Nodes", nodes_buffer_,
-        nodes_count * sizeof(Device::Node), GAL::BufferType::kStorage, GL_DYNAMIC_DRAW);
-
-    uint32_t counter = 0;
-    nodes_counter = GetRenderer().GetRenderDevice().CreateBuffer("Nodes counter",
-        GAL::BufferType::kStorage, sizeof(uint32_t), GL_DYNAMIC_DRAW | GL_DYNAMIC_READ, &counter);
-
-    g_particles_render_pipeline = &particles_render_pipeline_;
-    g_tree_draw_pipeline = &tree_draw_pipeline_;
-
-    camera_components[GetActiveCamera()]->z_far = 100000.0f;
-
-    ui_ = make_unique<UI::GalaxyUI>(*this);
-
-    {
-        g_defines =
-        {
-            { "SOLVE_BRUTEFORCE", "" },
-            { "PARTICLES_COUNT", to_string(count) },
-            { "NODES_MAX_COUNT", to_string(nodes_count) },
-            { "ROOT_RADIUS", to_string(GLX_UNIVERSE_SIZE * 0.5f) },
-            { "SOFT_EPS", to_string(cSoftFactor) }
-        };
-
-        particles_solve_pipeline_ = GetRenderer().GetRenderDevice().
-            CreateComputePipeline("ParticlesSolve.comp", {}, g_defines);
-
-        particles_barnes_hut_pipeline_ = GetRenderer().GetRenderDevice().
-            CreateComputePipeline("ParticlesBarnesHut.comp", {}, g_defines);
-
-        GAL::PipelineState state = {};
-        state.SetRootConstantsSize(sizeof(Device::ParticlesUpdateRootConstants));
-        particles_update_pipeline_ = GetRenderer().GetRenderDevice().
-            CreateComputePipeline("ParticlesUpdate.comp", state, g_defines);
-
-        Bind(particles_barnes_hut_pipeline_.get());
-        Bind(particles_solve_pipeline_.get());
-        Bind(particles_update_pipeline_.get());
-    }
-
-    controller_ = GetNextEntity();
-    CreateInputComponent(controller_,
-        [this](Engine&, const InputEvent& e, ObjectControllContext&) -> bool
-        {
-            if (e.type == InputEvent::Type::kKeyUp &&
-                e.key == 'Q')
-            {
-                is_simulated_ = !is_simulated_;
-                return true;
-            }
-
-            return false;
-
-        })->is_active = true;
-#endif // 0
 }
 
 GalaxySimulator::~GalaxySimulator()
@@ -120,7 +50,7 @@ GalaxySimulator::~GalaxySimulator()
 
 void GalaxySimulator::CreateUniverse()
 {
-    universe_ = make_unique<Universe>(GLX_UNIVERSE_SIZE);
+    universe_ = make_unique<Universe>();
 
     GalaxyParameters params = {};
     params.disk_particles_count = 1000;
@@ -400,4 +330,74 @@ void GalaxySimulator::Update(float time)
     simulationTimeMillionYears = simulationTime * cMillionYearsPerTimeUnit;
 }
 
+#endif // 0
+
+#if 0
+engine->AddTimerAction(1.0f, false,
+    [](float) -> bool
+    {
+        engine->RequestExit();
+        return false;
+    });
+#endif // 0
+
+#if 0
+
+auto nodes_count = 5 * universe->GetParticlesCount();
+
+nodes_buffer_ = GetNextEntity();
+GetRenderer().CreateDeviceBuffer("Nodes", nodes_buffer_,
+    nodes_count * sizeof(Device::Node), GAL::BufferType::kStorage, GL_DYNAMIC_DRAW);
+
+uint32_t counter = 0;
+nodes_counter = GetRenderer().GetRenderDevice().CreateBuffer("Nodes counter",
+    GAL::BufferType::kStorage, sizeof(uint32_t), GL_DYNAMIC_DRAW | GL_DYNAMIC_READ, &counter);
+
+g_particles_render_pipeline = &particles_render_pipeline_;
+g_tree_draw_pipeline = &tree_draw_pipeline_;
+
+camera_components[GetActiveCamera()]->z_far = 100000.0f;
+
+ui_ = make_unique<UI::GalaxyUI>(*this);
+
+{
+    g_defines =
+    {
+        { "SOLVE_BRUTEFORCE", "" },
+        { "PARTICLES_COUNT", to_string(count) },
+        { "NODES_MAX_COUNT", to_string(nodes_count) },
+        { "ROOT_RADIUS", to_string(GLX_UNIVERSE_SIZE * 0.5f) },
+        { "SOFT_EPS", to_string(cSoftFactor) }
+    };
+
+    particles_solve_pipeline_ = GetRenderer().GetRenderDevice().
+        CreateComputePipeline("ParticlesSolve.comp", {}, g_defines);
+
+    particles_barnes_hut_pipeline_ = GetRenderer().GetRenderDevice().
+        CreateComputePipeline("ParticlesBarnesHut.comp", {}, g_defines);
+
+    GAL::PipelineState state = {};
+    state.SetRootConstantsSize(sizeof(Device::ParticlesUpdateRootConstants));
+    particles_update_pipeline_ = GetRenderer().GetRenderDevice().
+        CreateComputePipeline("ParticlesUpdate.comp", state, g_defines);
+
+    Bind(particles_barnes_hut_pipeline_.get());
+    Bind(particles_solve_pipeline_.get());
+    Bind(particles_update_pipeline_.get());
+}
+
+controller_ = GetNextEntity();
+CreateInputComponent(controller_,
+    [this](Engine&, const InputEvent& e, ObjectControllContext&) -> bool
+    {
+        if (e.type == InputEvent::Type::kKeyUp &&
+            e.key == 'Q')
+        {
+            is_simulated_ = !is_simulated_;
+            return true;
+        }
+
+        return false;
+
+    })->is_active = true;
 #endif // 0
