@@ -27,13 +27,6 @@ private:
     unique_ptr<IRendererPlugin> renderer_;
     unique_ptr<MainWindow> main_window_;
 
-    float cSecondsPerTimeUnit = 0;
-    float cMillionYearsPerTimeUnit = 0;
-    int32_t totalParticlesCount = 0;
-    uint32_t frameCounter = 0;
-    bool started = false;
-    bool saveToFiles = false;
-
 #if 0    
     GAL::ComputePipelinePtr particles_update_pipeline_;
     GAL::ComputePipelinePtr particles_clear_forces_pipeline_;

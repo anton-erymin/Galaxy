@@ -120,7 +120,7 @@ void GalaxyRenderer::Render()
     }
 
     // Draw tree
-    if (render_params_.render_tree)
+    if (sim_context_.IsBarnesHut() && render_params_.render_tree)
     {
         size_t nodes_count = universe_.node_positions_.size();
         tree_draw_pipeline_->BeginGraphics();

@@ -51,6 +51,31 @@ static void BuildRowValue(const char* name, const T& value)
     BuildRow(name, [&](){ ImGui::Text(to_string(value).c_str()); });
 }
 
+static void BuildRowStringValue(const char* name, const string& value)
+{
+    BuildRow(name, [&](){ ImGui::Text(value.c_str()); });
+}
+
+static string TimeInYearsToStr(float time_years)
+{
+    if (time_years < 1e+6f)
+    {
+        return to_string(time_years) + " yrs";
+    }
+    else if (time_years < 1e+9f)
+    {
+        return to_string(int(time_years * 1e-6f)) + " mln yrs";
+    }
+    else if (time_years < 1e+12f)
+    {
+        return to_string(int(time_years * 1e-9f)) + " mlrd yrs";
+    }
+    else
+    {
+        return to_string(int(time_years * 1e-12f)) + " trln yrs";
+    }
+}
+
 void MainWindow::BuildUI()
 {
     float mass = 1.0f;
@@ -67,18 +92,18 @@ void MainWindow::BuildUI()
         [&]()
         {
             BuildRowValue("Render FPS", int(engine->GetFPSCounter().GetFPS()));
+            BuildRowValue("Simulation FPS", sim_context_.simulation_fps);
 
             int cur_type = 0;
             static const char* s_types[] = { "Bruteforce CPU", "Bruteforce GPU", "Barnes-Hut CPU", "Barnes-Hut GPU" };
             BuildRow("Simulation type", [&](){ ImGui::Combo("", &cur_type, s_types, 4); });
 
             BuildRow("Simulation enabled", [&](){ ImGui::Checkbox("", &sim_context_.is_simulated); });
-            BuildRowValue("Simulation FPS", sim_context_.simulation_fps);
             //BuildRowValue("Number of particles", 20);
-            BuildRowValue("Timestep", sim_context_.timestep);
-            BuildRowValue("Timestep, yrs", sim_context_.timestep_yrs);
-            BuildRowValue("Simulation time", sim_context_.simulation_time);
-            BuildRowValue("Simulation time, mln yrs", sim_context_.simulation_time_million_yrs);
+            BuildRow("Timestep", [&](){ ImGui::SliderFloat("", &sim_context_.timestep, 0.01f, 10.0f, nullptr, 1.0f); });
+            BuildRowStringValue("Timestep, yrs", TimeInYearsToStr(sim_context_.timestep_yrs));
+            BuildRowValue("Simulation time in units", sim_context_.simulation_time);
+            BuildRowStringValue("Simulation time in yrs", TimeInYearsToStr(sim_context_.simulation_time_million_yrs * 1e+6f));
             BuildRowValue("Number of time steps", sim_context_.timesteps_count);
             BuildRowValue("Build tree time, ms", sim_context_.build_tree_time_msecs);
             BuildRowValue("Solving time, ms", sim_context_.solver_time_msecs);

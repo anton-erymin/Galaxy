@@ -1,20 +1,12 @@
 #pragma once
 
-#include "ISolver.h"
+#include "CPUSolverBase.h"
 
-class Thread;
-
-class BruteforceCPUSolver : public ISolver
+class BruteforceCPUSolver : public CPUSolverBase
 {
 public:
     BruteforceCPUSolver(Universe& universe, SimulationContext& context);
     ~BruteforceCPUSolver();
 
-    virtual void Start() override;
     void Solve(float time) override;
-
-private:
-    vector<mutex> force_mutexes_;
-    unique_ptr<Thread> thread_;
-    volatile atomic_bool active_flag_;
 };

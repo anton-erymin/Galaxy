@@ -5,41 +5,16 @@
 #include "BarnesHut/BarnesHutCPUTree.h"
 #include "GalaxySimulator/GalaxyTypes.h"
 
-#include <Thread/Thread.h>
 #include <Thread/ThreadPool.h>
 
 BarnesHutCPUSolver::BarnesHutCPUSolver(Universe& universe, SimulationContext& context)
-    : ISolver(universe, context)
-    , force_mutexes_(universe.GetParticlesCount())
+    : CPUSolverBase(universe, context)
 {
     tree_ = make_unique<BarnesHutCPUTree>(float2(), 0);
 }
 
 BarnesHutCPUSolver::~BarnesHutCPUSolver()
 {
-    active_flag_ = false;
-    context_.solver_cv.notify_one();
-    thread_.reset();
-}
-
-void BarnesHutCPUSolver::Start()
-{
-    active_flag_ = true;
-
-    thread_.reset(new Thread("BarnesHutCPUSolver Thread",
-        [this]()
-        {
-            while (active_flag_)
-            {
-                if (!context_.is_simulated)
-                {
-                    Thread::Sleep(0.1f);
-                    continue;
-                }
-
-                Solve(context_.timestep);
-            }
-        }));
 }
 
 void BarnesHutCPUSolver::TraverseTree(const BarnesHutCPUTree& node)

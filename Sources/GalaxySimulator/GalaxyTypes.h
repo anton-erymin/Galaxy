@@ -19,10 +19,14 @@ struct SimulationContext
     bool simulate_dark_matter = false;
     float gravity_softening_length;
 
+    float cMillionYearsPerTimeUnit;
+    float cSecondsPerTimeUnit;
+
     float simulation_fps = 0.0f;
     float simulation_time = 0.0f;
     float simulation_time_million_yrs = 0.0f;
     size_t timesteps_count = 0;
+
 
     float build_tree_time_msecs = 0.0f;
     float solver_time_msecs = 0.0f;
@@ -33,6 +37,7 @@ struct SimulationContext
     mutex solver_mu;
 
     bool IsCPUAlgorithm() const { return algorithm == SimulationAlgorithm::BRUTEFORCE_CPU || algorithm == SimulationAlgorithm::BARNESHUT_CPU; }
+    bool IsBarnesHut() const { return algorithm == SimulationAlgorithm::BARNESHUT_CPU || algorithm == SimulationAlgorithm::BARNESHUT_GPU; }
 };
 
 struct RenderParameters

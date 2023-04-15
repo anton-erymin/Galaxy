@@ -11,6 +11,8 @@ set(SIMULATION_SOURCES
 	Solvers/BruteforceCPUSolver.h
 	Solvers/BruteforceGPUSolver.cpp
 	Solvers/BruteforceGPUSolver.h
+	Solvers/CPUSolverBase.cpp
+	Solvers/CPUSolverBase.h
 	Solvers/ISolver.h)
 	
 add_library(Galaxy.Simulation ${SIMULATION_SOURCES})

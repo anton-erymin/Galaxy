@@ -4,34 +4,15 @@
 #include "MathUtils.h"
 #include "GalaxySimulator/GalaxyTypes.h"
 
-#include <Thread/Thread.h>
 #include <Thread/ThreadPool.h>
 
 BruteforceCPUSolver::BruteforceCPUSolver(Universe& universe, SimulationContext& context)
-    : ISolver(universe, context)
-    , force_mutexes_(universe.GetParticlesCount())
+    : CPUSolverBase(universe, context)
 {
 }
 
 BruteforceCPUSolver::~BruteforceCPUSolver()
 {
-    active_flag_ = false;
-    context_.solver_cv.notify_one();
-    thread_.reset();
-}
-
-void BruteforceCPUSolver::Start()
-{
-    active_flag_ = true;
-
-    thread_.reset(new Thread("BarnesHutCPUSolver Thread",
-        [this]()
-        {
-            while (active_flag_)
-            {
-                Solve(context_.timestep);
-            }
-        }));
 }
 
 void BruteforceCPUSolver::Solve(float time)

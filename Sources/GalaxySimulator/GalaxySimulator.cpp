@@ -29,7 +29,11 @@ GalaxySimulator::GalaxySimulator()
 
     //srand(0);
 
-    sim_context_.timestep = 0.00005f;
+    sim_context_.cSecondsPerTimeUnit = static_cast<float>(sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG)));
+    sim_context_.cMillionYearsPerTimeUnit = sim_context_.cSecondsPerTimeUnit / 3600.0f / 24.0f / 365.0f / 1e+6f;
+
+    sim_context_.timestep = 0.0005f;
+    sim_context_.timestep_yrs = sim_context_.timestep * sim_context_.cMillionYearsPerTimeUnit * 1e6f;
     sim_context_.gravity_softening_length = cSoftFactor;
 
     CreateUniverse();
@@ -47,17 +51,6 @@ GalaxySimulator::GalaxySimulator()
             return false;
         });
 #endif // 0
-
-
-    // Old initialization
-    cSecondsPerTimeUnit = static_cast<float>(
-        sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG)));
-    cMillionYearsPerTimeUnit = cSecondsPerTimeUnit / 3600.0f / 24.0f / 365.0f / 1e+6f;
-
-    //deltaTime = 0.0000001f;
-    //deltaTimeYears = deltaTime * cMillionYearsPerTimeUnit * 1e6f;
-
-    saveToFiles = false;
 
 #if 0
 
@@ -346,18 +339,6 @@ void GalaxySimulator::Reset()
     currentSolver->SolveForces();
     universe->SetRadialVelocitiesFromForce();
     currentSolver->Prepare();
-
-
-    started = false;
-    solverThread = thread([this]()
-        {
-            while (started)
-            {
-                currentSolver->Solve(deltaTime);
-                simulationTime += deltaTime;
-                ++numSteps;
-            }
-        });
 }
 #endif // 0
 
