@@ -4,11 +4,13 @@
 #include <Entity.h>
 
 class Universe;
+struct SimulationContext;
+struct RenderParameters;
 
 class GalaxyRenderer : public IRendererPlugin
 {
 public:
-    GalaxyRenderer(Universe& universe, condition_variable* solver_cv = nullptr);
+    GalaxyRenderer(Universe& universe, SimulationContext& sim_context, const RenderParameters& render_params);
 
     virtual void CreatePipelines(RenderDevice& render_device) override;
     virtual void CreateSizeDependentResources(RenderDevice& render_device, const int2& output_size) override;
@@ -17,8 +19,6 @@ public:
     virtual void BindSceneDataBuffers() override;
     virtual vector<GAL::GraphicsPipelinePtr> GetPipelines() override;
     virtual void Render() override;
-
-    atomic_bool& GetBufferUpdateRequestedFlag() { return buffer_update_requested_flag_; }
 
 private:
     void CreateParticlesBuffer();
@@ -29,14 +29,13 @@ private:
 
 private:
     Universe& universe_;
+    SimulationContext& sim_context_;
+    const RenderParameters& render_params_;
 
-    Entity particles_positions_buffer_;
-    Entity nodes_positions_;
-    Entity nodes_sizes_;
+    GAL::BufferPtr particles_positions_buffer_;
+    GAL::BufferPtr nodes_positions_buffer_;
+    GAL::BufferPtr nodes_sizes_buffer_;
 
     GAL::GraphicsPipelinePtr particles_render_pipeline_;
     GAL::GraphicsPipelinePtr tree_draw_pipeline_;
-
-    atomic_bool buffer_update_requested_flag_ = true;
-    condition_variable* solver_cv_ = nullptr;
 };

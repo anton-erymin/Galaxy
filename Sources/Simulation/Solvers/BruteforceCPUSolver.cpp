@@ -2,12 +2,13 @@
 #include "Universe.h"
 #include "Galaxy.h"
 #include "MathUtils.h"
+#include "GalaxySimulator/GalaxyTypes.h"
 
 #include <Thread/Thread.h>
 #include <Thread/ThreadPool.h>
 
-BruteforceCPUSolver::BruteforceCPUSolver(Universe& universe)
-    : ISolver(universe)
+BruteforceCPUSolver::BruteforceCPUSolver(Universe& universe, SimulationContext& context)
+    : ISolver(universe, context)
     , force_mutexes_(universe.GetParticlesCount())
 {
 }
@@ -15,7 +16,7 @@ BruteforceCPUSolver::BruteforceCPUSolver(Universe& universe)
 BruteforceCPUSolver::~BruteforceCPUSolver()
 {
     active_flag_ = false;
-    solver_cv_.notify_one();
+    context_.solver_cv.notify_one();
     thread_.reset();
 }
 
@@ -28,7 +29,7 @@ void BruteforceCPUSolver::Start()
         {
             while (active_flag_)
             {
-                Solve(0.0005f);
+                Solve(context_.timestep);
             }
         }));
 }
@@ -83,15 +84,12 @@ void BruteforceCPUSolver::Solve(float time)
 
     // After computing force before integration phase wait for signal from renderer
     // that it has finished copying new positions into device buffer
-    unique_lock<mutex> lock(solver_mu_);
-    solver_cv_.wait(lock, [this]() { return *positions_update_completed_flag_ == false || !active_flag_; });
+    unique_lock<mutex> lock(context_.solver_mu);
+    context_.solver_cv.wait(lock, [this]() { return context_.positions_update_completed_flag == false || !active_flag_; });
 
     // Now we can start update positions
     PARALLEL_FOR(count, IntegrationKernel);
 
     // After updating positions turn on flag signaling to renderer that it needs to update device buffer
-    if (positions_update_completed_flag_)
-    {
-        *positions_update_completed_flag_ = true;
-    }
+    context_.positions_update_completed_flag = true;
 }

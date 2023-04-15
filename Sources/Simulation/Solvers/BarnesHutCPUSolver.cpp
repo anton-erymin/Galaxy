@@ -3,12 +3,13 @@
 #include "Galaxy.h"
 #include "MathUtils.h"
 #include "BarnesHut/BarnesHutCPUTree.h"
+#include "GalaxySimulator/GalaxyTypes.h"
 
 #include <Thread/Thread.h>
 #include <Thread/ThreadPool.h>
 
-BarnesHutCPUSolver::BarnesHutCPUSolver(Universe& universe)
-    : ISolver(universe)
+BarnesHutCPUSolver::BarnesHutCPUSolver(Universe& universe, SimulationContext& context)
+    : ISolver(universe, context)
     , force_mutexes_(universe.GetParticlesCount())
 {
     tree_ = make_unique<BarnesHutCPUTree>(float2(), 0);
@@ -17,7 +18,7 @@ BarnesHutCPUSolver::BarnesHutCPUSolver(Universe& universe)
 BarnesHutCPUSolver::~BarnesHutCPUSolver()
 {
     active_flag_ = false;
-    solver_cv_.notify_one();
+    context_.solver_cv.notify_one();
     thread_.reset();
 }
 
@@ -30,7 +31,13 @@ void BarnesHutCPUSolver::Start()
         {
             while (active_flag_)
             {
-                Solve(0.00005f);
+                if (!context_.is_simulated)
+                {
+                    Thread::Sleep(0.1f);
+                    continue;
+                }
+
+                Solve(context_.timestep);
             }
         }));
 }
@@ -54,12 +61,28 @@ void BarnesHutCPUSolver::TraverseTree(const BarnesHutCPUTree& node)
 void BarnesHutCPUSolver::Solve(float time)
 {
     size_t count = universe_.positions_.size();
+    size_t thread_count = ThreadPool::GetThreadCount();
+    size_t block_size = (count + thread_count - 1) / thread_count;
 
-    // Compute bounding box
-    BoundingBox bbox;
-    for (size_t i = 0; i < count; i++)
+    vector<BoundingBox> boxes(thread_count);
+    auto BoundingBoxKernel = [&](size_t i)
     {
-        bbox.grow(float3(universe_.positions_[i]));
+        size_t begin = i * block_size;
+        size_t end = min((i + 1) * block_size, count - 1);
+
+        for (size_t index = begin; index <= end; ++index)
+        {
+            boxes[i].grow(float3(universe_.positions_[index]));
+        }
+    };
+
+    PARALLEL_FOR(thread_count, BoundingBoxKernel);
+
+    // Compute final bounding box
+    BoundingBox bbox;
+    for (size_t i = 0; i < thread_count; i++)
+    {
+        bbox.grow(boxes[i]);
     }
     
     tree_->SetBoundingBox(bbox);
@@ -69,7 +92,7 @@ void BarnesHutCPUSolver::Solve(float time)
     for (size_t i = 0; i < count; i++)
     {
         const float4& pos = universe_.positions_[i];
-        tree_->InsertFlat(float2(pos.x, pos.z), universe_.masses_[i]);
+        tree_->Insert(float2(pos.x, pos.z), universe_.masses_[i]);
     }
 
     // Traverse tree
@@ -77,7 +100,6 @@ void BarnesHutCPUSolver::Solve(float time)
     universe_.node_sizes_.clear();
     TraverseTree(*tree_);
 
-#if 1
     auto ComputeForceKernel = [&](size_t i)
     {
         assert(i < count);
@@ -103,8 +125,6 @@ void BarnesHutCPUSolver::Solve(float time)
             }
         }
     };
-#endif // 0
-
 
     auto IntegrationKernel = [&](size_t i)
     {
@@ -124,18 +144,15 @@ void BarnesHutCPUSolver::Solve(float time)
 
     // After computing force before integration phase wait for signal from renderer
     // that it has finished copying new positions into device buffer
-    unique_lock<mutex> lock(solver_mu_);
-    solver_cv_.wait(lock, [this]()
+    unique_lock<mutex> lock(context_.solver_mu);
+    context_.solver_cv.wait(lock, [this]()
         {
-            return *positions_update_completed_flag_ == false || !active_flag_;
+            return context_.positions_update_completed_flag == false || !active_flag_;
         });
 
     // Now we can start update positions
     PARALLEL_FOR(count, IntegrationKernel);
 
     // After updating positions turn on flag signaling to renderer that it needs to update device buffer
-    if (positions_update_completed_flag_)
-    {
-        *positions_update_completed_flag_ = true;
-    }
+    context_.positions_update_completed_flag = true;
 }

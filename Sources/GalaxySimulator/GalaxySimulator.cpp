@@ -14,14 +14,6 @@
 #include <Renderer.h>
 #include <UIOverlay.h>
 
-enum class SimulationAlgorithm
-{
-    BRUTEFORCE_CPU,
-    BRUTEFORCE_GPU,
-    BARNESHUT_CPU,
-    BARNESHUT_GPU
-};
-
 GalaxySimulator::GalaxySimulator()
 {
     NLOG("Galaxy Model 0.5\nCopyright (c) LAXE LLC 2012-2021");
@@ -30,21 +22,22 @@ GalaxySimulator::GalaxySimulator()
 
     engine->SetActiveScene(engine->CreateScene());
     engine->Play();
-    g_engine_core->camera_components[engine->GetActiveCamera()]->z_near = 0.000001f;
-    g_engine_core->camera_components[engine->GetActiveCamera()]->z_far = 100000000.0f;
-    //g_engine_core->camera_components[engine->GetActiveCamera()]->eye = float3(0.119f, 0.264f, 0.085f);
-    //g_engine_core->camera_components[engine->GetActiveCamera()]->at = float3();
-    //g_engine_core->camera_components[engine->GetActiveCamera()]->is_changed = true;
+
+    Entity camera = engine->GetActiveCamera();
+    camera.Get<CameraComponent>()->z_near = 0.000001f;
+    camera.Get<CameraComponent>()->z_far = 100000000.0f;
 
     //srand(0);
+
+    sim_context_.timestep = 0.00005f;
+    sim_context_.gravity_softening_length = cSoftFactor;
 
     CreateUniverse();
     CreateSolver();
     CreateRenderer();
-    solver_->SetPositionsUpdateCompletedFlag(((GalaxyRenderer&)*renderer_).GetBufferUpdateRequestedFlag());
     solver_->Start();
 
-    main_window_ = make_unique<MainWindow>();
+    main_window_ = make_unique<MainWindow>(sim_context_, render_params_);
 
 #if 0
     engine->AddTimerAction(1.0f, false,
@@ -137,23 +130,22 @@ void GalaxySimulator::CreateUniverse()
     universe_ = make_unique<Universe>(GLX_UNIVERSE_SIZE);
 
     GalaxyParameters params = {};
-    params.disk_particles_count = 4;
+    params.disk_particles_count = 1000;
     universe_->CreateGalaxy(float3(), params);
-    //universe_->CreateGalaxy(float3(0.2f, 0.0f, 0.0f), params);
+    universe_->CreateGalaxy(float3(0.2f, 0.0f, 0.0f), params);
 }
 
 void GalaxySimulator::CreateSolver()
 {
-    SimulationAlgorithm algorithm = SimulationAlgorithm::BARNESHUT_CPU;
-    switch (algorithm)
+    switch (sim_context_.algorithm)
     {
     case SimulationAlgorithm::BRUTEFORCE_CPU:
-        solver_.reset(new BruteforceCPUSolver(*universe_));
+        solver_.reset(new BruteforceCPUSolver(*universe_, sim_context_));
         break;
     case SimulationAlgorithm::BRUTEFORCE_GPU:
         break;
     case SimulationAlgorithm::BARNESHUT_CPU:
-        solver_.reset(new BarnesHutCPUSolver(*universe_));
+        solver_.reset(new BarnesHutCPUSolver(*universe_, sim_context_));
         break;
     case SimulationAlgorithm::BARNESHUT_GPU:
         break;
@@ -164,7 +156,7 @@ void GalaxySimulator::CreateSolver()
 
 void GalaxySimulator::CreateRenderer()
 {
-    renderer_ = make_unique<GalaxyRenderer>(*universe_, solver_->GetSolverConditionVariable());
+    renderer_ = make_unique<GalaxyRenderer>(*universe_, sim_context_, render_params_);
     engine->GetRenderer().RegisterRendererPlugin(*renderer_);
 }
 
@@ -427,30 +419,4 @@ void GalaxySimulator::Update(float time)
     simulationTimeMillionYears = simulationTime * cMillionYearsPerTimeUnit;
 }
 
-#endif // 0
-
-#if 0
-static void DrawBarnesHutTree(const BarnesHutTree& node)
-{
-    float3 p = node.point;
-    float l = node.length;
-
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glBegin(GL_LINE_STRIP);
-
-    glVertex3f(p.x, p.y, 0.0f);
-    glVertex3f(p.x + l, p.y, 0.0f);
-    glVertex3f(p.x + l, p.y + l, 0.0f);
-    glVertex3f(p.x, p.y + l, 0.0f);
-    glVertex3f(p.x, p.y, 0.0f);
-    glEnd();
-
-    if (!node.isLeaf)
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            DrawBarnesHutTree(*node.children[i]);
-        }
-    }
-}
 #endif // 0

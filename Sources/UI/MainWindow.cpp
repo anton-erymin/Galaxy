@@ -1,7 +1,11 @@
 #include "MainWindow.h"
+#include "GalaxySimulator/GalaxyTypes.h"
+
 #include <EngineMinimal.h>
 
-MainWindow::MainWindow()
+MainWindow::MainWindow(SimulationContext& sim_context, RenderParameters& render_params)
+    : sim_context_(sim_context)
+    , render_params_(render_params)
 {
     window_ = engine->UISystem()->CreateUIWindow("Galaxy", true, int2(), int2(), [this](Entity e){ BuildUI(); })->entity;
     engine->UISystem()->ShowWindow(window_);
@@ -49,13 +53,6 @@ static void BuildRowValue(const char* name, const T& value)
 
 void MainWindow::BuildUI()
 {
-    bool render_points = true;
-    bool render_tree = false;
-    bool plot_potential = false;
-    float brightness = 1.0f;
-    float particle_size_scale = 1.0f;
-    bool simulate_dark_matter = false;
-    float gravity_softening_length = 1.0f;
     float mass = 1.0f;
     float disk_mass_ratio = 1.0f;
     int disk_particles_count = 1;
@@ -66,65 +63,40 @@ void MainWindow::BuildUI()
     float disk_thickness = 1.0f;
     float black_hole_mass = 1.0f;
 
-    float render_fps = 0.0f;
-
-    float simulation_fps = 0.0f;
-    float timestep = 0.0f;
-    float timestep_yrs = 0.0f;
-    float simulation_time = 0.0f;
-    float simulation_time_million_yrs = 0.0f;
-    size_t timesteps_count = 0;
-
-    float build_tree_time_msecs = 0.0f;
-    float solver_time_msecs = 0.0f;
-    float total_step_time_msecs = 1.0f;
-
-    struct SimulationParams
-    {
-        float simulation_fps = 0.0f;
-        float timestep = 0.0f;
-        float timestep_yrs = 0.0f;
-        float simulation_time = 0.0f;
-        float simulation_time_million_yrs = 0.0f;
-        size_t timesteps_count = 0;
-
-        float build_tree_time_msecs = 0.0f;
-        float solver_time_msecs = 0.0f;
-        float total_step_time_msecs = 1.0f;
-    };
-
     BuildTable("Simulation",
         [&]()
         {
-            BuildRowValue("Render FPS", render_fps);
+            BuildRowValue("Render FPS", int(engine->GetFPSCounter().GetFPS()));
 
             int cur_type = 0;
             static const char* s_types[] = { "Bruteforce CPU", "Bruteforce GPU", "Barnes-Hut CPU", "Barnes-Hut GPU" };
             BuildRow("Simulation type", [&](){ ImGui::Combo("", &cur_type, s_types, 4); });
 
-            BuildRowValue("Simulation FPS", simulation_fps);
-            BuildRowValue("Number of particles", 20);
-            BuildRowValue("Timestep", timestep);
-            BuildRowValue("Timestep, yrs", timestep_yrs);
-            BuildRowValue("Simulation time", simulation_time);
-            BuildRowValue("Simulation time, mln yrs", simulation_time_million_yrs);
-            BuildRowValue("Number of time steps", timesteps_count);
-            BuildRowValue("Build tree time, ms", build_tree_time_msecs);
-            BuildRowValue("Solving time, ms", solver_time_msecs);
-            BuildRowValue("Total step time, ms", total_step_time_msecs);
-            BuildRow("Dark matter", [&](){ ImGui::Checkbox("", &simulate_dark_matter); });
-            BuildRow("Gravity softness distance", [&](){ ImGui::SliderFloat("", &gravity_softening_length, 0.00001f, 0.1f, nullptr, 1.0f); });
+            BuildRow("Simulation enabled", [&](){ ImGui::Checkbox("", &sim_context_.is_simulated); });
+            BuildRowValue("Simulation FPS", sim_context_.simulation_fps);
+            //BuildRowValue("Number of particles", 20);
+            BuildRowValue("Timestep", sim_context_.timestep);
+            BuildRowValue("Timestep, yrs", sim_context_.timestep_yrs);
+            BuildRowValue("Simulation time", sim_context_.simulation_time);
+            BuildRowValue("Simulation time, mln yrs", sim_context_.simulation_time_million_yrs);
+            BuildRowValue("Number of time steps", sim_context_.timesteps_count);
+            BuildRowValue("Build tree time, ms", sim_context_.build_tree_time_msecs);
+            BuildRowValue("Solving time, ms", sim_context_.solver_time_msecs);
+            BuildRowValue("Total step time, ms", sim_context_.total_step_time_msecs);
+            BuildRow("Dark matter", [&](){ ImGui::Checkbox("", &sim_context_.simulate_dark_matter); });
+            BuildRow("Gravity softness distance", [&](){ ImGui::SliderFloat("", &sim_context_.gravity_softening_length, 0.00001f, 0.1f, nullptr, 1.0f); });
         });
 
     BuildTable("Rendering",
         [&]()
         {
             BuildRowValue("Camera distance, kpc", 20);
-            BuildRow("Render points", [&](){ ImGui::Checkbox("", &render_points); });
-            BuildRow("Render Barnes-Hut tree", [&](){ ImGui::Checkbox("", &render_tree); });
-            BuildRow("Plot potential", [&](){ ImGui::Checkbox("", &plot_potential); });
-            BuildRow("Brightness", [&](){ ImGui::SliderFloat("", &brightness, 0.05f, 10.0f, nullptr, 1.0f); });
-            BuildRow("Particles size scale", [&](){ ImGui::SliderFloat("", &particle_size_scale, 0.01f, 10.0f, nullptr, 1.0f); }); 
+            BuildRow("Render particles", [&](){ ImGui::Checkbox("", &render_params_.render_particles); });
+            BuildRow("Render particles as points", [&](){ ImGui::Checkbox("", &render_params_.render_as_points); });
+            BuildRow("Render Barnes-Hut tree", [&](){ ImGui::Checkbox("", &render_params_.render_tree); });
+            BuildRow("Plot potential", [&](){ ImGui::Checkbox("", &render_params_.plot_potential); });
+            BuildRow("Brightness", [&](){ ImGui::SliderFloat("", &render_params_.brightness, 0.05f, 10.0f, nullptr, 1.0f); });
+            BuildRow("Particles size scale", [&](){ ImGui::SliderFloat("", &render_params_.particle_size_scale, 0.01f, 10.0f, nullptr, 1.0f); });
         });
 
     BuildTable("Model",

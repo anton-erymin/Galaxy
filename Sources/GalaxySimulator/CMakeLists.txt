@@ -1,4 +1,5 @@
 set(GALAXY_SIMULATOR_SOURCES
+	GalaxyTypes.h
 	GalaxySimulator.cpp
 	GalaxySimulator.h)
 	

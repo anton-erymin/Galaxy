@@ -1,12 +1,14 @@
 #pragma once
 
 class Universe;
+struct SimulationContext;
 
 class ISolver
 {
 public:
-    ISolver(Universe& universe)
+    ISolver(Universe& universe, SimulationContext& context)
         : universe_(universe)
+        , context_(context)
     {
     }
 
@@ -17,9 +19,8 @@ public:
     virtual void SolveForces() { }
     virtual void Inititalize(float time) { }
     virtual void Prepare() { }
-    virtual condition_variable* GetSolverConditionVariable() { return nullptr; }
-    virtual void SetPositionsUpdateCompletedFlag(atomic_bool& flag) { }
 
 protected:
     Universe& universe_;
+    SimulationContext& context_;
 };
