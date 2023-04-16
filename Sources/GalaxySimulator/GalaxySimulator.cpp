@@ -8,6 +8,7 @@
 #include "Solvers/BarnesHutGPUSolver.h"
 #include "GalaxyRenderer.h"
 #include "MainWindow.h"
+#include "MathUtils.h"
 
 #include <Engine.h>
 #include <EngineCore.h>
@@ -18,29 +19,47 @@ GalaxySimulator::GalaxySimulator()
 {
     NLOG("Galaxy Model 0.5\nCopyright (c) LAXE LLC 2012-2021");
 
+    // Setup ImGui context for this module
     UI_ACTIVATE_CONTEXT();
 
+    // Create scene
     engine->SetActiveScene(engine->CreateScene());
     engine->Play();
+
+    // Setup top camera
+    Entity top_camera;
+    CameraComponent* camera_comp = top_camera.Create<CameraComponent>();
+    camera_comp->type = CameraComponent::Type::kOrtho;
+    camera_comp->eye = float3(0.0f, 1.0f, 0.0f);
+    camera_comp->at = float3();
+    camera_comp->up = -Math::Z;
+    engine->SetActiveCamera(top_camera);
 
     Entity camera = engine->GetActiveCamera();
     camera.Get<CameraComponent>()->z_near = 0.000001f;
     camera.Get<CameraComponent>()->z_far = 100000000.0f;
 
-    //srand(0);
+    srand(0);
 
+    // Setup time measure units
     sim_context_.cSecondsPerTimeUnit = static_cast<float>(sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG)));
     sim_context_.cMillionYearsPerTimeUnit = sim_context_.cSecondsPerTimeUnit / 3600.0f / 24.0f / 365.0f / 1e+6f;
 
-    sim_context_.timestep = 0.00005f;
-    sim_context_.gravity_softening_length = cSoftFactor;
+    // Setup context
+    sim_context_.timestep = 0.00001f;
+    sim_context_.algorithm = SimulationAlgorithm::BRUTEFORCE_CPU;
+    sim_context_.gravity_softening_length = 0.01f;// cSoftFactor;
+    sim_context_.barnes_hut_opening_angle = 0.05f;// cDefaultOpeningAngle;
+    sim_context_.is_simulated = false;
+
 
     CreateUniverse();
-    CreateSolver();
+    CreateSolver(sim_context_.algorithm);
     CreateRenderer();
-    solver_->Start();
 
     main_window_ = make_unique<MainWindow>(sim_context_, render_params_);
+
+    solver_->Start();
 }
 
 GalaxySimulator::~GalaxySimulator()
@@ -52,24 +71,63 @@ void GalaxySimulator::CreateUniverse()
     universe_ = make_unique<Universe>();
 
     GalaxyParameters params = {};
-    params.disk_particles_count = 1000;
+    params.disk_particles_count = 1;
     universe_->CreateGalaxy(float3(), params);
-    universe_->CreateGalaxy(float3(0.2f, 0.0f, 0.0f), params);
+    //universe_->CreateGalaxy(float3(0.2f, 0.0f, 0.0f), params);
+
+    //universe_->SetRandomVelocities(0.2f, 0.3f);
+
+    float r = 0.2f;
+
+    universe_->masses_[0] *= 100000.0f;
+
+    auto AddSatellite = [this](int i)
+    {
+        float dist = RAND_RANGE(0.1f, 1.0f);
+        float3 rand_dir(RAND_SNORM, 0.0f, RAND_SNORM);
+        rand_dir.normalize();
+        float3 ortho_dir = float3(rand_dir.z, 0.0f, -rand_dir.x);
+        float3 pos = rand_dir * dist;
+        GalaxyParameters params = {};
+        params.disk_particles_count = 1;
+        universe_->CreateGalaxy(pos, params);
+        float vmag = RadialVelocity(universe_->masses_[0], dist);
+        universe_->velocities_[i] = vmag * ortho_dir;
+    };
+
+    float3 v0 = RadialVelocity(universe_->masses_[1], r) * float3(0.0f, 0.0f, 1.0f);
+    float3 v1 = RadialVelocity(universe_->masses_[0], r) * float3(0.0f, 0.0f, -1.0f);
+
+    //float f = universe_->masses_[0] * universe_->masses_[1] / (r * r);
+    //float vmag = RadialVelocity(universe_->masses_[0], r);
+    //vmag = RadialVelocity(f, universe_->masses_[1], r);
+
+    //float3 v1 = RadialVelocity(f, universe_->masses_[1], r) * float3(0.0f, 0.0f, -1.0f);
+
+    //universe_->velocities_[0] = v0 * 0.5f;
+    //universe_->velocities_[1] = v1 * 0.5f;
+
+    for (size_t i = 0; i < 1; i++)
+    {
+        AddSatellite(i + 1);
+    }
 }
 
-void GalaxySimulator::CreateSolver()
+void GalaxySimulator::CreateSolver(SimulationAlgorithm algorithm)
 {
-    switch (sim_context_.algorithm)
+    switch (algorithm)
     {
     case SimulationAlgorithm::BRUTEFORCE_CPU:
         solver_.reset(new BruteforceCPUSolver(*universe_, sim_context_));
         break;
     case SimulationAlgorithm::BRUTEFORCE_GPU:
+        //solver_.reset(new BruteforceGPUSolver(*universe_, sim_context_));
         break;
     case SimulationAlgorithm::BARNESHUT_CPU:
         solver_.reset(new BarnesHutCPUSolver(*universe_, sim_context_));
         break;
     case SimulationAlgorithm::BARNESHUT_GPU:
+        //solver_.reset(new BarnesHutGPUSolver(*universe_, sim_context_));
         break;
     default:
         break;

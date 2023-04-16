@@ -7,8 +7,8 @@ class BarnesHutGPUTree
 public:
     BarnesHutGPUTree(const float3 &point, float length);
 
-    void Insert(const float3 &position, float bodyMass, uint32_t level = 0);
-    void InsertFlat(const float3 &position, float bodyMass);
+    void Insert(const float3 &position, float body_mass, uint32_t level = 0);
+    void InsertFlat(const float3 &position, float body_mass);
     float3 ComputeAcceleration(const float3 &position, float soft) const;
     float3 ComputeAccelerationFlat(const float3 &position, float soft) const;
     void Reset();

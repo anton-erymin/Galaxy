@@ -69,3 +69,16 @@ void Universe::SetRadialVelocitiesFromForce()
 
     }
 }
+
+void Universe::SetRandomVelocities(float min, float max)
+{
+    for (size_t i = 0; i < velocities_.size(); i++)
+    {
+        if (masses_[i] > 0.0f)
+        {
+            float3 rand_dir(RAND_SNORM, 0.0f, RAND_SNORM);
+            rand_dir.normalize();
+            velocities_[i] = RAND_RANGE(min, max) * rand_dir;
+        }
+    }
+}

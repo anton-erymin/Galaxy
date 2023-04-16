@@ -5,12 +5,13 @@ enum class SimulationAlgorithm
     BRUTEFORCE_CPU,
     BRUTEFORCE_GPU,
     BARNESHUT_CPU,
-    BARNESHUT_GPU
+    BARNESHUT_GPU,
+    MAX_COUNT
 };
 
 struct SimulationContext
 {
-    SimulationAlgorithm algorithm = SimulationAlgorithm::BARNESHUT_CPU;
+    SimulationAlgorithm algorithm = SimulationAlgorithm::BRUTEFORCE_CPU;
 
     bool is_simulated = true;
 
@@ -18,6 +19,7 @@ struct SimulationContext
     float timestep_yrs;
     bool simulate_dark_matter = false;
     float gravity_softening_length;
+    float barnes_hut_opening_angle;
 
     float cMillionYearsPerTimeUnit;
     float cSecondsPerTimeUnit;
@@ -46,8 +48,9 @@ struct RenderParameters
 {
     bool render_particles = true;
     bool render_as_points = true;
-    bool render_tree = true;
+    bool render_tree = false;
     bool plot_potential = false;
     float brightness = 1.0f;
-    float particle_size_scale = 1.0f;
+    float particle_size_scale = 7.0f;
+    bool colors_inverted = true;
 };

@@ -69,7 +69,6 @@ bool poisson1d(int numIter, float min, float max, int n, float *data, float(*f)(
     if (!data)			return false;
     if (!f)				return false;
 
-
     float h = (max - min) / (n - 1);
     float h2 = h * h;
     float nu;
@@ -94,7 +93,6 @@ bool poisson2d(int numIter, float min, float max, int n, float **data, float(*f)
     if (n < 3)			return false;
     if (!data)			return false;
     if (!f)				return false;
-
 
     float h = (max - min) / (n - 1);
     float h2 = h * h;
@@ -123,7 +121,6 @@ bool poisson3d(int numIter, float min, float max, int n, float ***data, float(*f
     if (n < 3)			return false;
     if (!data)			return false;
     if (!f)				return false;
-
 
     float h = (max - min) / (n - 1);
     float h2 = h * h;
@@ -175,7 +172,7 @@ float3 SphericalToCartesian(float r, float phi, float theta)
     return { r * sinf(theta) * cosf(phi), r * sinf(theta) * sinf(phi), r * cosf(theta) };
 }
 
-float3 SphericalToCartesian(const float3 & spherical)
+float3 SphericalToCartesian(const float3& spherical)
 {
     return SphericalToCartesian(spherical.x, spherical.y, spherical.z);
 }

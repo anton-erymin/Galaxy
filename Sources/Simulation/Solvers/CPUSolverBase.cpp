@@ -1,6 +1,7 @@
 #include "CPUSolverBase.h"
 #include "GalaxySimulator/GalaxyTypes.h"
 #include "Universe.h"
+#include "MathUtils.h"
 
 #include <Thread/Thread.h>
 #include <Misc/FPSCounter.h>
@@ -51,4 +52,36 @@ void CPUSolverBase::SolverRun()
         context_.simulation_fps = fps_counter.GetFPS();
         context_.timestep_yrs = context_.timestep * context_.cMillionYearsPerTimeUnit * 1e6f;
     }
+}
+
+#include "String/String.h"
+
+void CPUSolverBase::IntegrationKernel(THREAD_POOL_KERNEL_ARGS)
+{
+    assert(global_id < universe_.GetParticlesCount());
+
+    if (universe_.masses_[global_id] > 0.0f)
+    {
+        float3 pos = float3(universe_.positions_[global_id]);
+
+        if (global_id == 1)
+        {
+            NLOG("INTEGRATE BEFORE: pos: " << String::Float3ToStr(pos) << ", vel: " << 
+                String::Float3ToStr(universe_.velocities_[global_id]) << 
+            ", force: " << String::Float3ToStr(universe_.forces_[global_id]));
+        }
+
+        IntegrateMotionEquation(context_.timestep, pos, universe_.velocities_[global_id],
+            universe_.forces_[global_id], universe_.inverse_masses_[global_id]);
+        universe_.positions_[global_id] = pos;
+
+        if (global_id == 1)
+        {
+            NLOG("INTEGRATE AFTER: pos: " << String::Float3ToStr(pos) << ", vel: " <<
+                String::Float3ToStr(universe_.velocities_[global_id]) <<
+                ", force: " << String::Float3ToStr(universe_.forces_[global_id]));
+        }
+    }
+    // Clear force accumulator
+    universe_.forces_[global_id] = float3();
 }

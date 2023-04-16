@@ -15,7 +15,7 @@ public:
 
 private:
     void CreateUniverse();
-    void CreateSolver();
+    void CreateSolver(SimulationAlgorithm algorithm);
     void CreateRenderer();
 
 private:

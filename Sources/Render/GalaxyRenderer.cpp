@@ -85,6 +85,12 @@ vector<GAL::GraphicsPipelinePtr> GalaxyRenderer::GetPipelines()
 
 void GalaxyRenderer::Render()
 {
+    if (render_params_.colors_inverted)
+    {
+        GAL_OpenGL::SetClearColor(float4(1.0f, 1.0f, 1.0f, 1.0f));
+        GAL_OpenGL::ClearColor();
+    }
+
     if (sim_context_.IsCPUAlgorithm() && sim_context_.positions_update_completed_flag)
     {
         UpdateParticlesBuffer();
@@ -104,11 +110,16 @@ void GalaxyRenderer::Render()
     // Draw particles
     if (render_params_.render_particles && render_params_.render_as_points)
     {
-        GAL_OpenGL::EnableBlendOneOne();
+        if (!render_params_.colors_inverted)
+        {
+            GAL_OpenGL::EnableBlendOneOne();
+        }
+
         GAL_OpenGL::SetPointSize(render_params_.particle_size_scale);
 
         Device::ShadeSingleColorRootConstants root_constants = {};
-        root_constants.color = float4(1.0f) * render_params_.brightness;
+        float4 particle_color = render_params_.colors_inverted ? Math::kBlackColor : Math::kWhiteColor;
+        root_constants.color = particle_color * render_params_.brightness;
         root_constants.transform = Matrix();
         particles_render_pipeline_->SetRootConstants(&root_constants);
 
@@ -116,7 +127,10 @@ void GalaxyRenderer::Render()
         particles_render_pipeline_->Draw(0, universe_.GetParticlesCount(), GAL::PrimitiveType::Points);
         particles_render_pipeline_->EndGraphics();
 
-        GAL_OpenGL::DisableBlend();
+        if (!render_params_.colors_inverted)
+        {
+            GAL_OpenGL::DisableBlend();
+        }
     }
 
     // Draw tree

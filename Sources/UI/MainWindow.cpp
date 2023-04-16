@@ -96,11 +96,10 @@ void MainWindow::BuildUI()
         [&]()
         {
             BuildRowValue("Render FPS", int(engine->GetFPSCounter().GetFPS()));
-            BuildRowValue("Simulation FPS", sim_context_.simulation_fps);
+            BuildRowValue("Simulation FPS", int(sim_context_.simulation_fps));
 
-            int cur_type = 0;
-            static const char* s_types[] = { "Bruteforce CPU", "Bruteforce GPU", "Barnes-Hut CPU", "Barnes-Hut GPU" };
-            BuildRow("Simulation type", [&](){ ImGui::Combo("", &cur_type, s_types, 4); });
+            static const char* s_sim_types[] = { "Bruteforce CPU", "Bruteforce GPU", "Barnes-Hut CPU", "Barnes-Hut GPU" };
+            BuildRow("Simulation type", [&](){ ImGui::Combo("", (int*)(&sim_context_.algorithm), s_sim_types, int(SimulationAlgorithm::MAX_COUNT)); });
 
             BuildRow("Simulation enabled", [&](){ ImGui::Checkbox("", &sim_context_.is_simulated); });
             //BuildRowValue("Number of particles", 20);
@@ -113,7 +112,8 @@ void MainWindow::BuildUI()
             BuildRowValue("Solving time, ms", sim_context_.solver_time_msecs);
             BuildRowValue("Total step time, ms", sim_context_.total_step_time_msecs);
             BuildRow("Dark matter", [&](){ ImGui::Checkbox("", &sim_context_.simulate_dark_matter); });
-            BuildRow("Gravity softness distance", [&](){ ImGui::SliderFloat("", &sim_context_.gravity_softening_length, 0.00001f, 0.1f, nullptr, 1.0f); });
+            BuildRow("Gravity softness distance", [&](){ ImGui::SliderFloat("", &sim_context_.gravity_softening_length, 0.0001f, 0.001f, nullptr, 1.0f); });
+            BuildRow("Barnes-Hut Opening Angle", [&](){ ImGui::SliderFloat("", &sim_context_.barnes_hut_opening_angle, 0.1f, 1.0f, nullptr, 1.0f); });
             BuildRowValue("Tree nodes count", sim_context_.nodes_count);
         });
 
@@ -127,6 +127,7 @@ void MainWindow::BuildUI()
             BuildRow("Plot potential", [&](){ ImGui::Checkbox("", &render_params_.plot_potential); });
             BuildRow("Brightness", [&](){ ImGui::SliderFloat("", &render_params_.brightness, 0.05f, 10.0f, nullptr, 1.0f); });
             BuildRow("Particles size scale", [&](){ ImGui::SliderFloat("", &render_params_.particle_size_scale, 0.01f, 50.0f, nullptr, 1.0f); });
+            BuildRow("Invert colors", [&](){ ImGui::Checkbox("", &render_params_.colors_inverted); });
         });
 
     BuildTable("Model",

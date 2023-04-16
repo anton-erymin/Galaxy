@@ -21,7 +21,7 @@ void BarnesHutGPUTree::Reset()
     isBusy = false;
 }
 
-void BarnesHutGPUTree::Insert(const float3 &position, float bodyMass, uint32_t level)
+void BarnesHutGPUTree::Insert(const float3 &position, float body_mass, uint32_t level)
 {
     if (!Contains(position))
     {
@@ -38,7 +38,7 @@ void BarnesHutGPUTree::Insert(const float3 &position, float bodyMass, uint32_t l
         if (!isBusy)
         {
             center = position;
-            mass = bodyMass;
+            mass = body_mass;
             isBusy = true;
             return;
         }
@@ -60,23 +60,23 @@ void BarnesHutGPUTree::Insert(const float3 &position, float bodyMass, uint32_t l
             {
                 if (children[i]->Contains(position))
                 {
-                    children[i]->Insert(position, bodyMass, level + 1);
+                    children[i]->Insert(position, body_mass, level + 1);
                     break;
                 }
             }
 
-            float totalMass = bodyMass + mass;
+            float totalMass = body_mass + mass;
             center *= mass;
-            center += bodyMass * position;
+            center += body_mass * position;
             center *= (1.0f / totalMass);
             mass = totalMass; 
         }
     }
     else
     {
-        float totalMass = bodyMass + mass;
+        float totalMass = body_mass + mass;
         center *= mass;
-        center += bodyMass * position;
+        center += body_mass * position;
         center *= (1.0f / totalMass);
         mass = totalMass;
 
@@ -84,14 +84,14 @@ void BarnesHutGPUTree::Insert(const float3 &position, float bodyMass, uint32_t l
         {
             if (children[i]->Contains(position))
             {
-                children[i]->Insert(position, bodyMass, level + 1);
+                children[i]->Insert(position, body_mass, level + 1);
                 break;
             }
         }
     }
 }
 
-void BarnesHutGPUTree::InsertFlat(const float3& position, float bodyMass)
+void BarnesHutGPUTree::InsertFlat(const float3& position, float body_mass)
 {
     BarnesHutGPUTree* stack[cNodesStackSize];
     size_t count = 1;
@@ -99,7 +99,7 @@ void BarnesHutGPUTree::InsertFlat(const float3& position, float bodyMass)
     stack[0] = this;
 
     float3 insertedPosition[2] = { position };
-    float insertedMass[2] = { bodyMass };
+    float insertedMass[2] = { body_mass };
     int8_t current = 0;
     
     while (count)
@@ -150,18 +150,18 @@ void BarnesHutGPUTree::InsertFlat(const float3& position, float bodyMass)
                     }
                 }
 
-                float totalMass = bodyMass + node.mass;
+                float totalMass = body_mass + node.mass;
                 node.center *= node.mass;
-                node.center += bodyMass * position;
+                node.center += body_mass * position;
                 node.center *= (1.0f / totalMass);
                 node.mass = totalMass;
             }
         }
         else
         {
-            float totalMass = bodyMass + node.mass;
+            float totalMass = body_mass + node.mass;
             node.center *= node.mass;
-            node.center += bodyMass * position;
+            node.center += body_mass * position;
             node.center *= (1.0f / totalMass);
             node.mass = totalMass;
 

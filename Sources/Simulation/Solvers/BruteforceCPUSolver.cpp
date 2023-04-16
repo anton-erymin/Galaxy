@@ -25,6 +25,11 @@ void BruteforceCPUSolver::Solve(float time)
     {
         assert(global_id < count);
 
+        if (global_id == 1)
+        {
+            NLOG("COMPUTE FORCE");
+        }
+
         for (size_t j = global_id + 1; j < count; j++)
         {
             float3 l = float3(universe_.positions_[j]) - float3(universe_.positions_[global_id]);
@@ -47,20 +52,6 @@ void BruteforceCPUSolver::Solve(float time)
         }
     };
 
-    auto IntegrationKernel = [&](size_t global_id, size_t local_id, size_t block_id, size_t thread_id)
-    {
-        assert(global_id < count);
-        if (universe_.masses_[global_id] > 0.0f)
-        {
-            float3 pos = float3(universe_.positions_[global_id]);
-            IntegrateMotionEquation(time, pos, universe_.velocities_[global_id],
-                universe_.forces_[global_id], universe_.inverse_masses_[global_id]);
-            universe_.positions_[global_id] = pos;
-        }
-        // Clear force accumulator
-        universe_.forces_[global_id] = float3();
-    };
-
     PARALLEL_FOR(count, ComputeForceKernel);
 
     // After computing force before integration phase wait for signal from renderer
@@ -69,7 +60,7 @@ void BruteforceCPUSolver::Solve(float time)
     context_.solver_cv.wait(lock, [this]() { return context_.positions_update_completed_flag == false || !active_flag_; });
 
     // Now we can start update positions
-    PARALLEL_FOR(count, IntegrationKernel);
+    PARALLEL_FOR_METHOD_BIND(count, BruteforceCPUSolver::IntegrationKernel);
 
     // After updating positions turn on flag signaling to renderer that it needs to update device buffer
     context_.positions_update_completed_flag = true;

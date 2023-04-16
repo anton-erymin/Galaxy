@@ -10,4 +10,5 @@ target_link_libraries(Galaxy.GalaxySimulator PRIVATE
 	Galaxy.UI
 	Galaxy.Model
 	Galaxy.Simulation
+	Galaxy.Utils
 	Nucleus.Engine)

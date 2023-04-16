@@ -14,6 +14,8 @@ public:
 
     void SetRadialVelocitiesFromForce();
 
+    void SetRandomVelocities(float min, float max);
+
     vector<Galaxy>& GetGalaxies() { return galaxies_; }
     const vector<Particle*>& GetParticles() const { return all_particles_; }
     size_t GetParticlesCount() const { return positions_.size(); }
@@ -36,9 +38,11 @@ private:
     vector<float4> node_positions_;
     vector<float> node_sizes_;
 
+    friend class CPUSolverBase;
     friend class BruteforceCPUSolver;
     friend class BarnesHutCPUSolver;
     friend class GalaxyRenderer;
+    friend class GalaxySimulator;
 
     //unordered_map<const Image*, vector<size_t>> imageToParticles;
 };

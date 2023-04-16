@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ISolver.h"
+#include "Thread/ThreadPool.h"
 
 class Thread;
 
@@ -14,6 +15,9 @@ public:
 
 private:
 	void SolverRun();
+
+protected:
+	void IntegrationKernel(THREAD_POOL_KERNEL_ARGS);
 
 protected:
 	// This needs to be declared before thread

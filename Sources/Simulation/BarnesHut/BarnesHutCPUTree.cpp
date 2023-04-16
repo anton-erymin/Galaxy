@@ -4,19 +4,30 @@
 
 static constexpr uint32_t cMaxTreeLevel = 64;
 static constexpr uint32_t cNodesStackSize = 512;
-static constexpr float cOpeningAngle = 0.7f;
 
 static size_t lastId = 0;
 
+static float2 Float3To2(const float3& v) { return float2(v.x, v.y); }
+static float3 Float2To3(const float2& v) { return float3(v.x, 0.0f, v.y); }
+static float2 GravityAcceleration2(const float2& l, float mass, float soft)
+{
+    // TODO: Softended distance right?
+    float3 l3 = Float2To3(l);
+    float dist = SoftenedDistance(l3.length_sq(), soft);
+    float dist_cubic = dist * dist * dist;
+    float3 a = GravityAcceleration(l3, mass, dist_cubic);
+    return Float3To2(a);
+}
+
 BarnesHutCPUTree::BarnesHutCPUTree()
 {
-    id = lastId++;
+    id_ = lastId++;
 }
 
 void BarnesHutCPUTree::Reset()
 {
-    isLeaf = true;
-    isBusy = false;
+    is_leaf_ = true;
+    is_busy_ = false;
 }
 
 void BarnesHutCPUTree::SetBoundingBox(const BoundingBox& bbox)
@@ -26,19 +37,19 @@ void BarnesHutCPUTree::SetBoundingBox(const BoundingBox& bbox)
     float3 bbox_center = bbox.center();
     float2 bbox_center_2d = float2(bbox_center.x, bbox_center.z);
 
-    point = bbox_center_2d - float2(half_max_len);
-    oppositePoint = bbox_center_2d + float2(half_max_len);
-    length = max_len;
+    point_ = bbox_center_2d - float2(half_max_len);
+    opposite_point_ = bbox_center_2d + float2(half_max_len);
+    length_ = max_len;
 }
 
 void BarnesHutCPUTree::SetStartPointAndLength(const float2& point, float length)
 {
-    this->length = length;
-    this->point = point;
-    oppositePoint = point + float2(length);
+    length_ = length;
+    point_ = point;
+    opposite_point_ = point + float2(length);
 }
 
-void BarnesHutCPUTree::Insert(const float2 &position, float bodyMass, uint32_t level)
+void BarnesHutCPUTree::Insert(const float2 &position, float body_mass, uint32_t level)
 {
     if (!Contains(position))
     {
@@ -50,65 +61,65 @@ void BarnesHutCPUTree::Insert(const float2 &position, float bodyMass, uint32_t l
         //return;
     }
     
-    if (isLeaf)
+    if (is_leaf_)
     {
-        if (!isBusy)
+        if (!is_busy_)
         {
-            center = position;
-            mass = bodyMass;
-            isBusy = true;
+            center_ = position;
+            mass_ = body_mass;
+            is_busy_ = true;
             return;
         }
         else
         {		
-            isLeaf = false;
+            is_leaf_ = false;
             ResetChildren();
             
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < TREE_CHILDREN_COUNT; i++)
             {
-                if (children[i]->Contains(center))
+                if (children_[i]->Contains(center_))
                 {
-                    children[i]->Insert(center, mass, level + 1);
+                    children_[i]->Insert(center_, mass_, level + 1);
                     break;
                 }
             }
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < TREE_CHILDREN_COUNT; i++)
             {
-                if (children[i]->Contains(position))
+                if (children_[i]->Contains(position))
                 {
-                    children[i]->Insert(position, bodyMass, level + 1);
+                    children_[i]->Insert(position, body_mass, level + 1);
                     break;
                 }
             }
 
-            float totalMass = bodyMass + mass;
-            center *= mass;
-            center += bodyMass * position;
-            center *= (1.0f / totalMass);
-            mass = totalMass; 
+            float totalMass = body_mass + mass_;
+            center_ *= mass_;
+            center_ += body_mass * position;
+            center_ *= (1.0f / totalMass);
+            mass_ = totalMass; 
         }
     }
     else
     {
-        float totalMass = bodyMass + mass;
-        center *= mass;
-        center += bodyMass * position;
-        center *= (1.0f / totalMass);
-        mass = totalMass;
+        float totalMass = body_mass + mass_;
+        center_ *= mass_;
+        center_ += body_mass * position;
+        center_ *= (1.0f / totalMass);
+        mass_ = totalMass;
 
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < TREE_CHILDREN_COUNT; i++)
         {
-            if (children[i]->Contains(position))
+            if (children_[i]->Contains(position))
             {
-                children[i]->Insert(position, bodyMass, level + 1);
+                children_[i]->Insert(position, body_mass, level + 1);
                 break;
             }
         }
     }
 }
 
-void BarnesHutCPUTree::InsertFlat(const float2& position, float bodyMass)
+void BarnesHutCPUTree::InsertFlat(const float2& position, float body_mass)
 {
     BarnesHutCPUTree* stack[cNodesStackSize];
     size_t count = 1;
@@ -116,7 +127,7 @@ void BarnesHutCPUTree::InsertFlat(const float2& position, float bodyMass)
     stack[0] = this;
 
     float2 insertedPosition[2] = { position };
-    float insertedMass[2] = { bodyMass };
+    float insertedMass[2] = { body_mass };
     int8_t current = 0;
     
     while (count)
@@ -128,13 +139,13 @@ void BarnesHutCPUTree::InsertFlat(const float2& position, float bodyMass)
             continue;
         }
 
-        if (node.isLeaf)
+        if (node.is_leaf_)
         {
-            if (!node.isBusy)
+            if (!node.is_busy_)
             {
-                node.center = insertedPosition[current];
-                node.mass = insertedMass[current];
-                node.isBusy = true;
+                node.center_ = insertedPosition[current];
+                node.mass_ = insertedMass[current];
+                node.is_busy_ = true;
                 if (--current < 0)
                 {
                     break;
@@ -142,51 +153,51 @@ void BarnesHutCPUTree::InsertFlat(const float2& position, float bodyMass)
             }
             else
             {
-                node.isLeaf = false;
+                node.is_leaf_ = false;
                 node.ResetChildren();
 
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < TREE_CHILDREN_COUNT; i++)
                 {
-                    if (node.children[i] && node.children[i]->Contains(position))
+                    if (node.children_[i] && node.children_[i]->Contains(position))
                     {
-                        stack[count++] = node.children[i].get();
+                        stack[count++] = node.children_[i].get();
                         break;
                     }
                 }
 
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < TREE_CHILDREN_COUNT; i++)
                 {
-                    if (node.children[i] && node.children[i]->Contains(node.center))
+                    if (node.children_[i] && node.children_[i]->Contains(node.center_))
                     {
                         ++current;
                         assert(current < 2);
-                        insertedPosition[current] = node.center;
-                        insertedMass[current] = node.mass;
-                        stack[count++] = node.children[i].get();
+                        insertedPosition[current] = node.center_;
+                        insertedMass[current] = node.mass_;
+                        stack[count++] = node.children_[i].get();
                         break;
                     }
                 }
 
-                float totalMass = bodyMass + node.mass;
-                node.center *= node.mass;
-                node.center += bodyMass * position;
-                node.center *= (1.0f / totalMass);
-                node.mass = totalMass;
+                float totalMass = body_mass + node.mass_;
+                node.center_ *= node.mass_;
+                node.center_ += body_mass * position;
+                node.center_ *= (1.0f / totalMass);
+                node.mass_ = totalMass;
             }
         }
         else
         {
-            float totalMass = bodyMass + node.mass;
-            node.center *= node.mass;
-            node.center += bodyMass * position;
-            node.center *= (1.0f / totalMass);
-            node.mass = totalMass;
+            float totalMass = body_mass + node.mass_;
+            node.center_ *= node.mass_;
+            node.center_ += body_mass * position;
+            node.center_ *= (1.0f / totalMass);
+            node.mass_ = totalMass;
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < TREE_CHILDREN_COUNT; i++)
             {
-                if (node.children[i] && node.children[i]->Contains(position))
+                if (node.children_[i] && node.children_[i]->Contains(position))
                 {
-                    stack[count++] = node.children[i].get();
+                    stack[count++] = node.children_[i].get();
                     break;
                 }
             }
@@ -194,102 +205,72 @@ void BarnesHutCPUTree::InsertFlat(const float2& position, float bodyMass)
     }
 }
 
-inline bool BarnesHutCPUTree::Contains(const float2 &position) const
+bool BarnesHutCPUTree::Contains(const float2 &position) const
 {
-    if (position.x >= point.x && position.x <= oppositePoint.x &&
-        position.y >= point.y && position.y <= oppositePoint.y)
-        return true;
-
-    return false;
+    return 
+        (position.x >= point_.x && position.x <= opposite_point_.x &&
+        position.y >= point_.y && position.y <= opposite_point_.y);
 }
 
-inline void BarnesHutCPUTree::ResetChildren()
+void BarnesHutCPUTree::ResetChildren()
 {
-    if (!children[0])
+    if (!children_[0])
     {
-        children[0] = make_unique<BarnesHutCPUTree>();
-        children[1] = make_unique<BarnesHutCPUTree>();
-        children[2] = make_unique<BarnesHutCPUTree>();
-        children[3] = make_unique<BarnesHutCPUTree>();
-    }
-
-    float nl = 0.5f * length;
-
-    float x = point.x + nl;
-    float y = point.y + nl;
-
-    float2 np1(x, point.y);
-    float2 np2(x, y);
-    float2 np3(point.x, y);
-
-    children[0]->SetStartPointAndLength(point, nl);
-    children[1]->SetStartPointAndLength(np1, nl);
-    children[2]->SetStartPointAndLength(np2, nl);
-    children[3]->SetStartPointAndLength(np3, nl);
-
-    children[0]->Reset();
-    children[1]->Reset();
-    children[2]->Reset();
-    children[3]->Reset();
-}
-
-size_t BarnesHutCPUTree::GetNodesCount() const
-{
-    size_t nodesCount = 0;
-
-    const BarnesHutCPUTree* stack[cNodesStackSize];
-    size_t count = 1;
-
-    stack[0] = this;
-
-    while (count)
-    {
-        const BarnesHutCPUTree& node = *stack[--count];
-
-        ++nodesCount;
-
-        for (int i = 0; i < 4; i++)
+        for (size_t i = 0; i < TREE_CHILDREN_COUNT; i++)
         {
-            auto child = node.children[i].get();
-            if (child)
-            {
-                assert(count < cNodesStackSize);
-                stack[count++] = child;
-            }
+            children_[i] = make_unique<BarnesHutCPUTree>();
         }
     }
 
-    return nodesCount;
+    float nl = 0.5f * length_;
+
+    float x = point_.x + nl;
+    float y = point_.y + nl;
+
+    float2 np1(x, point_.y);
+    float2 np2(x, y);
+    float2 np3(point_.x, y);
+
+    children_[0]->SetStartPointAndLength(point_, nl);
+    children_[1]->SetStartPointAndLength(np1, nl);
+    children_[2]->SetStartPointAndLength(np2, nl);
+    children_[3]->SetStartPointAndLength(np3, nl);
+
+    for (size_t i = 0; i < TREE_CHILDREN_COUNT; i++)
+    {
+        children_[i]->Reset();
+    }
 }
 
-float2 BarnesHutCPUTree::ComputeAcceleration(const float2& position, float soft) const
+float2 BarnesHutCPUTree::ComputeAcceleration(const float2& position, float soft, float opening_angle) const
 {
     float2 acceleration = {};
 
-    if (isLeaf)
+    float2 l = center_ - position;
+
+    if (is_leaf_)
     {
-        if (isBusy && !equal_eps(position, center, EPS))
+        if (is_busy_ && !equal_eps(position, center_, EPS))
         {
-            //acceleration = GravityAcceleration(center - position, mass, soft);
+            acceleration = GravityAcceleration2(l, mass_, soft);
         }
     }
     else
     {
-        float2 vec = center - position;
-        float r = Math::length(vec);
-        float theta = length / r;
+        float r = l.length();
+        float theta = length_ / r;
 
-        if (theta < cOpeningAngle)
+        if (theta < opening_angle)
         {
-            //acceleration = GravityAcceleration(vec, mass, soft, r);
+            acceleration = GravityAcceleration2(l, mass_, soft);
         }
         else
         {
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < TREE_CHILDREN_COUNT; i++)
             {
-                if (children[i])
+                if (children_[i])
                 {
-                    acceleration += children[i]->ComputeAcceleration(position, soft);
+                    acceleration += children_[i]->ComputeAcceleration(position, soft, opening_angle);
                 }
             }
         }
@@ -298,7 +279,7 @@ float2 BarnesHutCPUTree::ComputeAcceleration(const float2& position, float soft)
     return acceleration;
 }
 
-float2 BarnesHutCPUTree::ComputeAccelerationFlat(const float2& position, float soft) const
+float2 BarnesHutCPUTree::ComputeAccelerationFlat(const float2& position, float soft, float opening_angle) const
 {
     float2 acceleration = {};
 
@@ -311,28 +292,28 @@ float2 BarnesHutCPUTree::ComputeAccelerationFlat(const float2& position, float s
     {
         const BarnesHutCPUTree& node = *stack[--count];
 
-        if (node.isLeaf)
+        if (node.is_leaf_)
         {
-            if (node.isBusy && !equal_eps(position, node.center, EPS))
+            if (node.is_busy_ && !equal_eps(position, node.center_, EPS))
             {
-                //acceleration += GravityAcceleration(node.center - position, node.mass, soft);
+                //acceleration += GravityAcceleration(node.center_ - position, node.mass_, soft);
             }
         }
         else
         {
-            float2 vec = node.center - position;
-            float r = Math::length(vec);
-            float theta = node.length / r;
+            float2 vec = node.center_ - position;
+            float r = vec.length();
+            float theta = node.length_ / r;
 
-            if (theta < cOpeningAngle)
+            if (theta < opening_angle)
             {
-                //acceleration += GravityAcceleration(vec, node.mass, soft, r);
+                //acceleration += GravityAcceleration(vec, node.mass_, soft, r);
             }
             else
             {
                 for (int i = 3; i >= 0; --i)
                 {
-                    auto child = node.children[i].get();
+                    auto child = node.children_[i].get();
                     if (child)
                     {
                         assert(count < cNodesStackSize);
