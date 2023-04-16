@@ -8,7 +8,7 @@ class Thread;
 class CPUSolverBase : public ISolver
 {
 public:
-	CPUSolverBase(Universe& universe, SimulationContext& context);
+	CPUSolverBase(Universe& universe, SimulationContext& context, const RenderParameters& render_params);
 	~CPUSolverBase();
 
 	virtual void Start() override;

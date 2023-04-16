@@ -7,7 +7,7 @@ static constexpr uint32_t cNodesStackSize = 512;
 
 static size_t lastId = 0;
 
-static float2 Float3To2(const float3& v) { return float2(v.x, v.y); }
+static float2 Float3To2(const float3& v) { return float2(v.x, v.z); }
 static float3 Float2To3(const float2& v) { return float3(v.x, 0.0f, v.y); }
 static float2 GravityAcceleration2(const float2& l, float mass, float soft)
 {
@@ -51,16 +51,19 @@ void BarnesHutCPUTree::SetStartPointAndLength(const float2& point, float length)
 
 void BarnesHutCPUTree::Insert(const float2 &position, float body_mass, uint32_t level)
 {
+#if 0
     if (!Contains(position))
     {
         return;
     }
-
     if (level > cMaxTreeLevel)
     {
         //return;
     }
+#endif // 0
     
+    bool need_adjust = false;
+
     if (is_leaf_)
     {
         if (!is_busy_)
@@ -93,20 +96,12 @@ void BarnesHutCPUTree::Insert(const float2 &position, float body_mass, uint32_t 
                 }
             }
 
-            float totalMass = body_mass + mass_;
-            center_ *= mass_;
-            center_ += body_mass * position;
-            center_ *= (1.0f / totalMass);
-            mass_ = totalMass; 
+            need_adjust = true;
         }
     }
     else
     {
-        float totalMass = body_mass + mass_;
-        center_ *= mass_;
-        center_ += body_mass * position;
-        center_ *= (1.0f / totalMass);
-        mass_ = totalMass;
+        need_adjust = true;
 
         for (int i = 0; i < TREE_CHILDREN_COUNT; i++)
         {
@@ -116,6 +111,15 @@ void BarnesHutCPUTree::Insert(const float2 &position, float body_mass, uint32_t 
                 break;
             }
         }
+    }
+
+    if (need_adjust)
+    {
+        float totalMass = body_mass + mass_;
+        center_ *= mass_;
+        center_ += body_mass * position;
+        center_ *= (1.0f / totalMass);
+        mass_ = totalMass;
     }
 }
 

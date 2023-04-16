@@ -7,8 +7,8 @@
 
 #include <Thread/ThreadPool.h>
 
-BarnesHutCPUSolver::BarnesHutCPUSolver(Universe& universe, SimulationContext& context)
-    : CPUSolverBase(universe, context)
+BarnesHutCPUSolver::BarnesHutCPUSolver(Universe& universe, SimulationContext& context, const RenderParameters& render_params)
+    : CPUSolverBase(universe, context, render_params)
 {
     tree_ = make_unique<BarnesHutCPUTree>();
 }
@@ -70,10 +70,13 @@ void BarnesHutCPUSolver::Solve(float time)
 
     END_TIME_MEASURE(build_tree_timer);
 
-    // Traverse tree
     universe_.node_positions_.clear();
     universe_.node_sizes_.clear();
-    TraverseTree(*tree_);
+    // Traverse tree
+    if (render_params_.render_tree)
+    {
+        TraverseTree(*tree_);
+    }
 
     context_.nodes_count = universe_.node_positions_.size();
 
@@ -84,6 +87,11 @@ void BarnesHutCPUSolver::Solve(float time)
         assert(global_id < count);
 
         if (universe_.masses_[global_id] == 0.0f)
+        {
+            return;
+        }
+
+        if (global_id == 0)
         {
             return;
         }

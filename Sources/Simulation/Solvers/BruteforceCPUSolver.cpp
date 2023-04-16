@@ -6,8 +6,8 @@
 
 #include <Thread/ThreadPool.h>
 
-BruteforceCPUSolver::BruteforceCPUSolver(Universe& universe, SimulationContext& context)
-    : CPUSolverBase(universe, context)
+BruteforceCPUSolver::BruteforceCPUSolver(Universe& universe, SimulationContext& context, const RenderParameters& render_params)
+    : CPUSolverBase(universe, context, render_params)
 {
 }
 
@@ -25,15 +25,10 @@ void BruteforceCPUSolver::Solve(float time)
     {
         assert(global_id < count);
 
-        if (global_id == 1)
-        {
-            NLOG("COMPUTE FORCE");
-        }
-
         for (size_t j = global_id + 1; j < count; j++)
         {
             float3 l = float3(universe_.positions_[j]) - float3(universe_.positions_[global_id]);
-            // TODO: Softended distance right?
+            // TODO: Softened distance right?
             float dist = SoftenedDistance(l.length_sq(), context_.gravity_softening_length);
             float dist_cubic = dist * dist * dist;
 

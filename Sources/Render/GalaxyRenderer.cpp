@@ -170,6 +170,11 @@ void GalaxyRenderer::UpdateNodesBuffers()
 {
     size_t nodes_count = universe_.node_positions_.size();
 
+    if (nodes_count == 0)
+    {
+        return;
+    }
+
     size_t required_size = nodes_count * sizeof(float4);
     if (!nodes_positions_buffer_ || nodes_positions_buffer_->GetSize() < required_size)
     {

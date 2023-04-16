@@ -33,7 +33,7 @@ GalaxySimulator::GalaxySimulator()
     camera_comp->eye = float3(0.0f, 1.0f, 0.0f);
     camera_comp->at = float3();
     camera_comp->up = -Math::Z;
-    engine->SetActiveCamera(top_camera);
+    //engine->SetActiveCamera(top_camera);
 
     Entity camera = engine->GetActiveCamera();
     camera.Get<CameraComponent>()->z_near = 0.000001f;
@@ -47,11 +47,10 @@ GalaxySimulator::GalaxySimulator()
 
     // Setup context
     sim_context_.timestep = 0.00001f;
-    sim_context_.algorithm = SimulationAlgorithm::BRUTEFORCE_CPU;
-    sim_context_.gravity_softening_length = 0.01f;// cSoftFactor;
-    sim_context_.barnes_hut_opening_angle = 0.05f;// cDefaultOpeningAngle;
+    sim_context_.algorithm = SimulationAlgorithm::BARNESHUT_CPU;
+    sim_context_.gravity_softening_length = cSoftFactor;
+    sim_context_.barnes_hut_opening_angle = cDefaultOpeningAngle;
     sim_context_.is_simulated = false;
-
 
     CreateUniverse();
     CreateSolver(sim_context_.algorithm);
@@ -83,7 +82,7 @@ void GalaxySimulator::CreateUniverse()
 
     auto AddSatellite = [this](int i)
     {
-        float dist = RAND_RANGE(0.1f, 1.0f);
+        float dist = RAND_RANGE(0.01f, 1.0f);
         float3 rand_dir(RAND_SNORM, 0.0f, RAND_SNORM);
         rand_dir.normalize();
         float3 ortho_dir = float3(rand_dir.z, 0.0f, -rand_dir.x);
@@ -107,7 +106,7 @@ void GalaxySimulator::CreateUniverse()
     //universe_->velocities_[0] = v0 * 0.5f;
     //universe_->velocities_[1] = v1 * 0.5f;
 
-    for (size_t i = 0; i < 1; i++)
+    for (size_t i = 0; i < 5000; i++)
     {
         AddSatellite(i + 1);
     }
@@ -118,16 +117,16 @@ void GalaxySimulator::CreateSolver(SimulationAlgorithm algorithm)
     switch (algorithm)
     {
     case SimulationAlgorithm::BRUTEFORCE_CPU:
-        solver_.reset(new BruteforceCPUSolver(*universe_, sim_context_));
+        solver_.reset(new BruteforceCPUSolver(*universe_, sim_context_, render_params_));
         break;
     case SimulationAlgorithm::BRUTEFORCE_GPU:
-        //solver_.reset(new BruteforceGPUSolver(*universe_, sim_context_));
+        //solver_.reset(new BruteforceGPUSolver(*universe_, sim_context_, render_params_));
         break;
     case SimulationAlgorithm::BARNESHUT_CPU:
-        solver_.reset(new BarnesHutCPUSolver(*universe_, sim_context_));
+        solver_.reset(new BarnesHutCPUSolver(*universe_, sim_context_, render_params_));
         break;
     case SimulationAlgorithm::BARNESHUT_GPU:
-        //solver_.reset(new BarnesHutGPUSolver(*universe_, sim_context_));
+        //solver_.reset(new BarnesHutGPUSolver(*universe_, sim_context_, render_params_));
         break;
     default:
         break;

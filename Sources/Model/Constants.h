@@ -16,8 +16,8 @@ constexpr double cKiloParsec = 1000 * cParsec;    // m
 constexpr double cSolarMass = 1.9885e+30;         // kg
 constexpr double cMassUnit = 1e+10 * cSolarMass;  // kg
 
-constexpr float cSoftFactor = 0.02f;
-constexpr float cDefaultOpeningAngle = 0.7f;
+constexpr float cSoftFactor = 0.01f;
+constexpr float cDefaultOpeningAngle = 0.5f;
 
 constexpr float cRadialVelocityFactor = 0.7f;
 

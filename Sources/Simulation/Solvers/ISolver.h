@@ -2,13 +2,15 @@
 
 class Universe;
 struct SimulationContext;
+struct RenderParameters;
 
 class ISolver
 {
 public:
-    ISolver(Universe& universe, SimulationContext& context)
+    ISolver(Universe& universe, SimulationContext& context, const RenderParameters& render_params)
         : universe_(universe)
         , context_(context)
+        , render_params_(render_params)
     {
     }
 
@@ -23,4 +25,5 @@ public:
 protected:
     Universe& universe_;
     SimulationContext& context_;
+    const RenderParameters& render_params_;
 };

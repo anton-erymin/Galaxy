@@ -113,7 +113,7 @@ void MainWindow::BuildUI()
             BuildRowValue("Total step time, ms", sim_context_.total_step_time_msecs);
             BuildRow("Dark matter", [&](){ ImGui::Checkbox("", &sim_context_.simulate_dark_matter); });
             BuildRow("Gravity softness distance", [&](){ ImGui::SliderFloat("", &sim_context_.gravity_softening_length, 0.0001f, 0.001f, nullptr, 1.0f); });
-            BuildRow("Barnes-Hut Opening Angle", [&](){ ImGui::SliderFloat("", &sim_context_.barnes_hut_opening_angle, 0.1f, 1.0f, nullptr, 1.0f); });
+            BuildRow("Barnes-Hut Opening Angle", [&](){ ImGui::SliderFloat("", &sim_context_.barnes_hut_opening_angle, 0.1f, 2.0f, nullptr, 1.0f); });
             BuildRowValue("Tree nodes count", sim_context_.nodes_count);
         });
 

@@ -7,6 +7,13 @@
 // Collision
 // Video
 
+Leap-frog integration
+Build tree in multiple threads
+Fix bug with drawing tree (blinking)
+Octree
+Linearize tree
+
+
 Expose dark matter halo params
 
 Non recursive tree build

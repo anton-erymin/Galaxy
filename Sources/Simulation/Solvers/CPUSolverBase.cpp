@@ -6,8 +6,8 @@
 #include <Thread/Thread.h>
 #include <Misc/FPSCounter.h>
 
-CPUSolverBase::CPUSolverBase(Universe& universe, SimulationContext& context)
-    : ISolver(universe, context)
+CPUSolverBase::CPUSolverBase(Universe& universe, SimulationContext& context, const RenderParameters& render_params)
+    : ISolver(universe, context, render_params)
     , force_mutexes_(universe.GetParticlesCount())
 {
 }
@@ -54,8 +54,6 @@ void CPUSolverBase::SolverRun()
     }
 }
 
-#include "String/String.h"
-
 void CPUSolverBase::IntegrationKernel(THREAD_POOL_KERNEL_ARGS)
 {
     assert(global_id < universe_.GetParticlesCount());
@@ -64,23 +62,9 @@ void CPUSolverBase::IntegrationKernel(THREAD_POOL_KERNEL_ARGS)
     {
         float3 pos = float3(universe_.positions_[global_id]);
 
-        if (global_id == 1)
-        {
-            NLOG("INTEGRATE BEFORE: pos: " << String::Float3ToStr(pos) << ", vel: " << 
-                String::Float3ToStr(universe_.velocities_[global_id]) << 
-            ", force: " << String::Float3ToStr(universe_.forces_[global_id]));
-        }
-
         IntegrateMotionEquation(context_.timestep, pos, universe_.velocities_[global_id],
             universe_.forces_[global_id], universe_.inverse_masses_[global_id]);
         universe_.positions_[global_id] = pos;
-
-        if (global_id == 1)
-        {
-            NLOG("INTEGRATE AFTER: pos: " << String::Float3ToStr(pos) << ", vel: " <<
-                String::Float3ToStr(universe_.velocities_[global_id]) <<
-                ", force: " << String::Float3ToStr(universe_.forces_[global_id]));
-        }
     }
     // Clear force accumulator
     universe_.forces_[global_id] = float3();
