@@ -33,21 +33,19 @@ void BarnesHutCPUSolver::TraverseTree(const BarnesHutCPUTree& node)
     }
 }
 
-void BarnesHutCPUSolver::Solve(float time)
+void BarnesHutCPUSolver::ComputeAcceleration()
 {
-    size_t count = universe_.positions_.size();
-
-    BEGIN_TIME_MEASURE(total_timer, context_.total_step_time_msecs);
-    BEGIN_TIME_MEASURE(build_tree_timer, context_.build_tree_time_msecs);
-    BEGIN_TIME_MEASURE(solver_timer, context_.solver_time_msecs);
-
     // 1. Compute bounding box
+
+    BEGIN_TIME_MEASURE(build_tree_timer, context_.build_tree_time_msecs);
 
     vector<BoundingBox> boxes(ThreadPool::GetThreadCount());
     auto BoundingBoxKernel = [&](THREAD_POOL_KERNEL_ARGS)
     {
         boxes[block_id].grow(float3(universe_.positions_[global_id]));
     };
+
+    size_t count = universe_.positions_.size();
 
     PARALLEL_FOR(count, BoundingBoxKernel);
 
@@ -57,7 +55,7 @@ void BarnesHutCPUSolver::Solve(float time)
     {
         bbox.grow(boxes[i]);
     }
-    
+
     // 2. Build tree
 
     tree_->Reset();
@@ -68,6 +66,7 @@ void BarnesHutCPUSolver::Solve(float time)
         const float4& pos = universe_.positions_[global_id];
         tree_->Insert(float2(pos.x, pos.z), universe_.masses_[global_id]);
     };
+
 
     PARALLEL_FOR(count, BuildTreeKernel);
     //for (size_t i = 0; i < count; i++) { BuildTreeKernel(i, 0, 0, 0); }
@@ -95,11 +94,6 @@ void BarnesHutCPUSolver::Solve(float time)
             return;
         }
 
-        if (global_id == 0)
-        {
-            return;
-        }
-
         const float4& pos = universe_.positions_[global_id];
 
         float2 force = tree_->ComputeAcceleration(float2(pos.x, pos.z), context_.gravity_softening_length, context_.barnes_hut_opening_angle);
@@ -107,21 +101,4 @@ void BarnesHutCPUSolver::Solve(float time)
     };
 
     PARALLEL_FOR(count, ComputeForceKernel);
-
-    END_TIME_MEASURE(solver_timer);
-
-    // After computing force before integration phase wait for signal from renderer
-    // that it has finished copying new positions into device buffer
-    unique_lock<mutex> lock(context_.solver_mu);
-    context_.solver_cv.wait(lock, [this]() { return context_.positions_update_completed_flag == false || !active_flag_; });
-
-    // 4. Integrate    
-    // Now we can start update positions
-
-    PARALLEL_FOR_METHOD_BIND(count, BarnesHutCPUSolver::IntegrationKernel);
-
-    END_TIME_MEASURE(total_timer);
-
-    // After updating positions turn on flag signaling to renderer that it needs to update device buffer
-    context_.positions_update_completed_flag = true;
 }

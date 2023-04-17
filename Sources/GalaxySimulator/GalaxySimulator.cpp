@@ -33,7 +33,7 @@ GalaxySimulator::GalaxySimulator()
     camera_comp->eye = float3(0.0f, 1.0f, 0.0f);
     camera_comp->at = float3();
     camera_comp->up = -Math::Z;
-    //engine->SetActiveCamera(top_camera);
+    engine->SetActiveCamera(top_camera);
 
     Entity camera = engine->GetActiveCamera();
     camera.Get<CameraComponent>()->z_near = 0.000001f;
@@ -47,7 +47,7 @@ GalaxySimulator::GalaxySimulator()
 
     // Setup context
     sim_context_.timestep = 0.00001f;
-    sim_context_.algorithm = SimulationAlgorithm::BARNESHUT_CPU;
+    sim_context_.algorithm = SimulationAlgorithm::BRUTEFORCE_CPU;
     sim_context_.gravity_softening_length = cSoftFactor;
     sim_context_.barnes_hut_opening_angle = cDefaultOpeningAngle;
     sim_context_.is_simulated = false;
@@ -106,7 +106,7 @@ void GalaxySimulator::CreateUniverse()
     //universe_->velocities_[0] = v0 * 0.5f;
     //universe_->velocities_[1] = v1 * 0.5f;
 
-    for (size_t i = 0; i < 5000; i++)
+    for (size_t i = 0; i < 5; i++)
     {
         AddSatellite(i + 1);
     }

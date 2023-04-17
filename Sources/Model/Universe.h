@@ -43,6 +43,7 @@ private:
     friend class BarnesHutCPUSolver;
     friend class GalaxyRenderer;
     friend class GalaxySimulator;
+    friend class ParticleTracker;
 
     //unordered_map<const Image*, vector<size_t>> imageToParticles;
 };

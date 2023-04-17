@@ -15,9 +15,14 @@ public:
 
 private:
 	void SolverRun();
-
-protected:
+	void Solve(float time) override;
 	void IntegrationKernel(THREAD_POOL_KERNEL_ARGS);
+	void LeapFrogKickDriftIntegrationKernel(THREAD_POOL_KERNEL_ARGS);
+	void LeapFrogKickIntegrationKernel(THREAD_POOL_KERNEL_ARGS);
+
+	// This must not be pure virtual because it is called from the separate thread
+	// and destructor of subclass can have been called by the moment
+	virtual void ComputeAcceleration() { }
 
 protected:
 	// This needs to be declared before thread

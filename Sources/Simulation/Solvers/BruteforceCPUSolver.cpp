@@ -15,7 +15,7 @@ BruteforceCPUSolver::~BruteforceCPUSolver()
 {
 }
 
-void BruteforceCPUSolver::Solve(float time)
+void BruteforceCPUSolver::ComputeAcceleration()
 {
     // Bruteforce
 
@@ -48,15 +48,4 @@ void BruteforceCPUSolver::Solve(float time)
     };
 
     PARALLEL_FOR(count, ComputeForceKernel);
-
-    // After computing force before integration phase wait for signal from renderer
-    // that it has finished copying new positions into device buffer
-    unique_lock<mutex> lock(context_.solver_mu);
-    context_.solver_cv.wait(lock, [this]() { return context_.positions_update_completed_flag == false || !active_flag_; });
-
-    // Now we can start update positions
-    PARALLEL_FOR_METHOD_BIND(count, BruteforceCPUSolver::IntegrationKernel);
-
-    // After updating positions turn on flag signaling to renderer that it needs to update device buffer
-    context_.positions_update_completed_flag = true;
 }

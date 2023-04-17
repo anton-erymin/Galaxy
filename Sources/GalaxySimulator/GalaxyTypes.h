@@ -16,6 +16,7 @@ struct SimulationContext
     bool is_simulated = true;
 
     float timestep;
+    float half_timestep;
     float timestep_yrs;
     bool simulate_dark_matter = false;
     float gravity_softening_length;
