@@ -20,8 +20,9 @@ public:
     void SetStartPointAndLength(const float2& point, float length);
 
 private:
-    inline bool Contains(const float2 &position) const;
-    inline void ResetChildren();
+    bool Contains(const float2 &position) const;
+    void ResetChildren();
+    void AdjustCenterMass(const float2& p, float mass);
 
     // TODO: Replace with BoundingBox
     float2 point_;
@@ -35,6 +36,8 @@ private:
     unique_ptr<BarnesHutCPUTree> children_[TREE_CHILDREN_COUNT];
     
     size_t id_ = 0;
+
+    mutex mu_;
 
     friend class BarnesHutCPUSolver;
 };

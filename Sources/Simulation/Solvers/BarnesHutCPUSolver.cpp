@@ -58,15 +58,19 @@ void BarnesHutCPUSolver::Solve(float time)
         bbox.grow(boxes[i]);
     }
     
+    // 2. Build tree
+
+    tree_->Reset();
     tree_->SetBoundingBox(bbox);
 
-    // 2. Build tree
-    tree_->Reset();
-    for (size_t i = 0; i < count; i++)
+    auto BuildTreeKernel = [&](THREAD_POOL_KERNEL_ARGS)
     {
-        const float4& pos = universe_.positions_[i];
-        tree_->Insert(float2(pos.x, pos.z), universe_.masses_[i]);
-    }
+        const float4& pos = universe_.positions_[global_id];
+        tree_->Insert(float2(pos.x, pos.z), universe_.masses_[global_id]);
+    };
+
+    PARALLEL_FOR(count, BuildTreeKernel);
+    //for (size_t i = 0; i < count; i++) { BuildTreeKernel(i, 0, 0, 0); }
 
     END_TIME_MEASURE(build_tree_timer);
 

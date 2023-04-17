@@ -62,7 +62,7 @@ void BarnesHutCPUTree::Insert(const float2 &position, float body_mass, uint32_t 
     }
 #endif // 0
     
-    bool need_adjust = false;
+    mu_.lock();
 
     if (is_leaf_)
     {
@@ -71,22 +71,33 @@ void BarnesHutCPUTree::Insert(const float2 &position, float body_mass, uint32_t 
             center_ = position;
             mass_ = body_mass;
             is_busy_ = true;
+            mu_.unlock();
             return;
         }
         else
         {		
             is_leaf_ = false;
+
+            // Copy prev body values
+            float prev_mass = mass_;
+            float2 prev_center = center_;
+
+            AdjustCenterMass(position, body_mass);
             ResetChildren();
-            
+
+            mu_.unlock();
+
+            // Insert previous body
             for (int i = 0; i < TREE_CHILDREN_COUNT; i++)
             {
-                if (children_[i]->Contains(center_))
-                {
-                    children_[i]->Insert(center_, mass_, level + 1);
+                if (children_[i]->Contains(prev_center))
+                {        
+                    children_[i]->Insert(prev_center, prev_mass, level + 1);
                     break;
                 }
             }
 
+            // Insert new body
             for (int i = 0; i < TREE_CHILDREN_COUNT; i++)
             {
                 if (children_[i]->Contains(position))
@@ -96,12 +107,14 @@ void BarnesHutCPUTree::Insert(const float2 &position, float body_mass, uint32_t 
                 }
             }
 
-            need_adjust = true;
+            
         }
     }
     else
     {
-        need_adjust = true;
+        AdjustCenterMass(position, body_mass);
+
+        mu_.unlock();
 
         for (int i = 0; i < TREE_CHILDREN_COUNT; i++)
         {
@@ -111,15 +124,6 @@ void BarnesHutCPUTree::Insert(const float2 &position, float body_mass, uint32_t 
                 break;
             }
         }
-    }
-
-    if (need_adjust)
-    {
-        float totalMass = body_mass + mass_;
-        center_ *= mass_;
-        center_ += body_mass * position;
-        center_ *= (1.0f / totalMass);
-        mass_ = totalMass;
     }
 }
 
@@ -244,6 +248,15 @@ void BarnesHutCPUTree::ResetChildren()
     {
         children_[i]->Reset();
     }
+}
+
+void BarnesHutCPUTree::AdjustCenterMass(const float2& p, float mass)
+{
+    float total_mass = mass_ + mass;
+    center_ *= mass_;
+    center_ += (mass * p);
+    center_ *= (1.0f / total_mass);
+    mass_ = total_mass;
 }
 
 float2 BarnesHutCPUTree::ComputeAcceleration(const float2& position, float soft, float opening_angle) const
