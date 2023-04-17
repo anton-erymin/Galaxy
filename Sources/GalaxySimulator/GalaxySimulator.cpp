@@ -47,7 +47,7 @@ GalaxySimulator::GalaxySimulator()
 
     // Setup context
     sim_context_.timestep = 0.00001f;
-    sim_context_.algorithm = SimulationAlgorithm::BRUTEFORCE_CPU;
+    sim_context_.algorithm = SimulationAlgorithm::BARNESHUT_CPU;
     sim_context_.gravity_softening_length = cSoftFactor;
     sim_context_.barnes_hut_opening_angle = cDefaultOpeningAngle;
     sim_context_.is_simulated = false;
@@ -106,7 +106,7 @@ void GalaxySimulator::CreateUniverse()
     //universe_->velocities_[0] = v0 * 0.5f;
     //universe_->velocities_[1] = v1 * 0.5f;
 
-    for (size_t i = 0; i < 5; i++)
+    for (size_t i = 0; i < 1; i++)
     {
         AddSatellite(i + 1);
     }

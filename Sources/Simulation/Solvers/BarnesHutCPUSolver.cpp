@@ -26,7 +26,7 @@ void BarnesHutCPUSolver::TraverseTree(const BarnesHutCPUTree& node)
 
     if (!node.is_leaf_)
     {
-        for (size_t i = 0; i < 4; i++)
+        for (size_t i = 0; i < TREE_CHILDREN_COUNT; i++)
         {
             TraverseTree(*node.children_[i]);
         }
@@ -96,7 +96,8 @@ void BarnesHutCPUSolver::ComputeAcceleration()
 
         const float4& pos = universe_.positions_[global_id];
 
-        float2 force = tree_->ComputeAcceleration(float2(pos.x, pos.z), context_.gravity_softening_length, context_.barnes_hut_opening_angle);
+        float2 force = tree_->ComputeAcceleration(float2(pos.x, pos.z), context_.gravity_softening_length,
+            context_.barnes_hut_opening_angle);
         universe_.forces_[global_id] = float3(force.x, 0.0f, force.y);
     };
 
