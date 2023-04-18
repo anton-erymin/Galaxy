@@ -97,7 +97,12 @@ void CPUSolverBase::SolverRun()
         context_.simulation_fps = fps_counter.GetFPS();
         context_.timestep_yrs = context_.timestep * context_.cMillionYearsPerTimeUnit * 1e6f;
 
-        tracker.Track();
+        //tracker.Track();
+
+        if (context_.max_timesteps_count > 0 && context_.timesteps_count == context_.max_timesteps_count)
+        {
+            break;
+        }
     }
 }
 
@@ -167,4 +172,14 @@ void CPUSolverBase::LeapFrogKickIntegrationKernel(THREAD_POOL_KERNEL_ARGS)
         // 1/2 kick
         universe_.velocities_[global_id] += universe_.forces_[global_id] * context_.half_timestep;
     }
+}
+
+#include "String/String.h"
+void CPUSolverBase::Dump(const char* prefix)
+{
+    size_t i = 1;
+    NLOG("Step " << context_.timesteps_count << " [" << prefix << "]: "
+        "pos: " << String::Float3ToStr(universe_.positions_[i]) << 
+        ", vel: " << String::Float3ToStr(universe_.velocities_[i]) <<
+        ", force: " << String::Float3ToStr(universe_.forces_[i]));
 }

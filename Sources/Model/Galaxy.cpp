@@ -72,7 +72,7 @@ Galaxy::Galaxy(const float3& position, const GalaxyParameters& parameters)
     : position_(position)
     , parameters_(parameters)
 {
-    halo_ = SphericalModel(0.0f, 2.0f * parameters.halo_radius, parameters.halo_radius);
+    //halo_ = SphericalModel(0.0f, 2.0f * parameters.halo_radius, parameters.halo_radius);
 
     Create();
 }

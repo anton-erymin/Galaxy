@@ -32,21 +32,38 @@ void BarnesHutCPUTree::Reset()
 
 void BarnesHutCPUTree::SetBoundingBox(const BoundingBox& bbox)
 {
+    int max_dim_idx = bbox.maxdim();
     float max_len = bbox.max_extent();
     float half_max_len = 0.5f * max_len;
     float3 bbox_center = bbox.center();
     float2 bbox_center_2d = float2(bbox_center.x, bbox_center.z);
 
-    point_ = bbox_center_2d - float2(half_max_len);
-    opposite_point_ = bbox_center_2d + float2(half_max_len);
+    point_ = Float3To2(bbox.pmin);
+    opposite_point_ = Float3To2(bbox.pmax);
     length_ = max_len;
+
+    switch (max_dim_idx)
+    {
+    case 0:
+        point_.y = bbox_center_2d.y - half_max_len;
+        opposite_point_.y = bbox_center_2d.y + half_max_len;
+        break;
+    case 1:
+        break;
+    case 2:
+        point_.x = bbox_center_2d.x - half_max_len;
+        opposite_point_.x = bbox_center_2d.x + half_max_len;
+        break;
+    default:
+        break;
+    }
 }
 
-void BarnesHutCPUTree::SetStartPointAndLength(const float2& point, float length)
+void BarnesHutCPUTree::SetDimensions(const float2& point, const float2& opposite_point, float length)
 {
     length_ = length;
     point_ = point;
-    opposite_point_ = point + float2(length);
+    opposite_point_ = opposite_point;
 }
 
 void BarnesHutCPUTree::Insert(const float2 &position, float body_mass, uint32_t level)
@@ -230,19 +247,18 @@ void BarnesHutCPUTree::ResetChildren()
         }
     }
 
-    float nl = 0.5f * length_;
+    float child_length = 0.5f * length_;
+    float2 middle = 0.5f * (point_ + opposite_point_);
 
-    float x = point_.x + nl;
-    float y = point_.y + nl;
+    float2 np1(middle.x, point_.y);
+    float2 np2(opposite_point_.x, middle.y);
+    float2 np3(point_.x, middle.y);
+    float2 np4(middle.x, opposite_point_.y);
 
-    float2 np1(x, point_.y);
-    float2 np2(x, y);
-    float2 np3(point_.x, y);
-
-    children_[0]->SetStartPointAndLength(point_, nl);
-    children_[1]->SetStartPointAndLength(np1, nl);
-    children_[2]->SetStartPointAndLength(np2, nl);
-    children_[3]->SetStartPointAndLength(np3, nl);
+    children_[0]->SetDimensions(point_, middle, child_length );
+    children_[1]->SetDimensions(np1, np2, child_length);
+    children_[2]->SetDimensions(middle, opposite_point_, child_length);
+    children_[3]->SetDimensions(np3, np4 ,child_length);
 
     for (size_t i = 0; i < TREE_CHILDREN_COUNT; i++)
     {

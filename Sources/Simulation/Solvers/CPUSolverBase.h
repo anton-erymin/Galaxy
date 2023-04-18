@@ -24,6 +24,8 @@ private:
 	// and destructor of subclass can have been called by the moment
 	virtual void ComputeAcceleration() { }
 
+	void Dump(const char* prefix);
+
 protected:
 	// This needs to be declared before thread
 	vector<mutex> force_mutexes_;

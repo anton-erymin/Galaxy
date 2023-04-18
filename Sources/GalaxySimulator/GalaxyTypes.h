@@ -29,6 +29,7 @@ struct SimulationContext
     float simulation_time = 0.0f;
     float simulation_time_million_yrs = 0.0f;
     size_t timesteps_count = 0;
+    size_t max_timesteps_count = 0;
 
     float build_tree_time_msecs = 0.0f;
     float solver_time_msecs = 0.0f;

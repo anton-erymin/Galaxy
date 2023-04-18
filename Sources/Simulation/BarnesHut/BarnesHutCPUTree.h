@@ -17,7 +17,7 @@ public:
     void Reset();
 
     void SetBoundingBox(const BoundingBox& bbox);
-    void SetStartPointAndLength(const float2& point, float length);
+    void SetDimensions(const float2& point, const float2& opposite_point, float length);
 
 private:
     bool Contains(const float2 &position) const;

@@ -2,7 +2,7 @@
 #include <Math/Math.h>
 #include "MathUtils.h"
 
-static constexpr uint32_t N = 1000;
+static constexpr uint32_t N = 10;
 
 SphericalModel::SphericalModel(float gridXMin, float gridXMax, float radius)
 	: rmin(gridXMin),
