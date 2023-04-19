@@ -21,7 +21,6 @@ private:
     void InsertBody(int32 body, int32 node, float radius);
     int32 AddNode(const float4& node_center_pos);
     float4 GetChildCenterPos(const float4& node_center, int32 child_branch, float radius);
-    float4 GetCenterOfGravity(float mass0, const float4& pos0, float mass1, const float4& pos1, float& out_mass);
     float2 ComputeAccelerationRecursive(int32 body, int32 node, float radius, float soft, float opening_angle) const;
 
     // Index helpers

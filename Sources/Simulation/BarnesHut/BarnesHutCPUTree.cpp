@@ -171,19 +171,17 @@ void BarnesHutCPUTree::SummarizeTree()
                 float child_mass = GetMass(child_index);
                 assert(child_mass >= 0.0f);
                 const float4& child_gravity_center = GetPosition(child_index);
-                gravity_center = GetCenterOfGravity(node_mass, gravity_center, child_mass, child_gravity_center, node_mass);
+
+                gravity_center += child_mass * child_gravity_center;
+                node_mass += child_mass;
             }
         }
+
+        gravity_center *= (1.0f / node_mass);
 
         SetMass(i, node_mass);
         SetPosition(i, gravity_center);
     }
-}
-
-float4 BarnesHutCPUTree::GetCenterOfGravity(float mass0, const float4& pos0, float mass1, const float4& pos1, float& out_mass)
-{
-    out_mass = mass0 + mass1;
-    return (mass0 * pos0 + mass1 * pos1) * (1.0f / out_mass);
 }
 
 float2 BarnesHutCPUTree::ComputeAcceleration(int32 body, float soft, float opening_angle) const
