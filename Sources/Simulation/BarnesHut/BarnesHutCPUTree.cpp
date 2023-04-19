@@ -21,40 +21,37 @@ static float2 GravityAcceleration2(const float2& l, float mass, float soft)
 
 BarnesHutCPUTree::BarnesHutCPUTree(const vector<float4>& body_position, const vector<float>& body_mass)
     : body_position_(body_position)
-    , body_mass_(body_mass),
-    mass_(2 * body_position.size())
+    , body_mass_(body_mass)
+    , mass_(2 * body_position.size())
+    , children_mu_(2 * body_position.size() * TREE_CHILDREN_COUNT)
 {
     size_t nodes_max_count = 2 * GetBodyCount();
     position_.resize(nodes_max_count);
     children_.resize(TREE_CHILDREN_COUNT * nodes_max_count);
+    bbox_per_thread_.resize(ThreadPool::GetThreadCount());
 }
 
 void BarnesHutCPUTree::BuildTree()
 {
     BoundingBox bbox = ComputeBoundingBox();
     ResetTree(bbox);
-
-    for (size_t i = 0; i < GetBodyCount(); i++)
-    {
-        InsertBody(i, GetRootIndex(), radius_);
-    }
+    BuildHierarchy();
 }
 
 BoundingBox BarnesHutCPUTree::ComputeBoundingBox()
 {
-    vector<BoundingBox> boxes(ThreadPool::GetThreadCount());
-    auto BoundingBoxKernel = [&](THREAD_POOL_KERNEL_ARGS)
+    auto BoundingBoxKernel = [this](THREAD_POOL_KERNEL_ARGS)
     {
-        boxes[block_id].grow(float3(body_position_[global_id]));
+        bbox_per_thread_[block_id].grow(float3(body_position_[global_id]));
     };
 
     PARALLEL_FOR(GetBodyCount(), BoundingBoxKernel);
 
     // Compute final bounding box
     BoundingBox bbox;
-    for (size_t i = 0; i < boxes.size(); i++)
+    for (size_t i = 0; i < bbox_per_thread_.size(); i++)
     {
-        bbox.grow(boxes[i]);
+        bbox.grow(bbox_per_thread_[i]);
     }
 
     return bbox;
@@ -71,6 +68,16 @@ void BarnesHutCPUTree::ResetTree(const BoundingBox& bbox)
 
     // Setup root node
     AddNode(bbox_center);
+}
+
+void BarnesHutCPUTree::BuildHierarchy()
+{
+    auto BuildHierarchyKernel = [this](THREAD_POOL_KERNEL_ARGS)
+    {
+        InsertBody(global_id, GetRootIndex(), radius_);
+    };
+
+    PARALLEL_FOR(GetBodyCount(), BuildHierarchyKernel);
 }
 
 static int32 FindChildBranch(const float4& node_center, const float4& body_pos)
@@ -106,22 +113,29 @@ void BarnesHutCPUTree::InsertBody(int32 body, int32 node, float radius)
     float half_radius = 0.5f * radius;
 
     int32 branch = FindChildBranch(node_pos, body_pos);
+
+    LockChild(node, branch);
     int32 child_index = GetChildIndex(node, branch);
 
     if (IsNull(child_index))
     {
         // No body here yet so just insert
+        //LockChild(node, branch);
         SetChildIndex(node, branch, body);
+        UnlockChild(node, branch);
     }
     else if (IsNode(child_index))
     {
-        // Follow this child
+        // Unlock and follow this child
+        UnlockChild(node, branch);
         InsertBody(body, child_index, half_radius);
     }
     else
     {
         // Child is body
         // Create new node(s) and insert the old and new body
+
+        //LockChild(node, branch);
 
         // Setup new node
         int32 new_node = AddNode(GetChildCenterPos(node_pos, branch, radius));
@@ -131,6 +145,8 @@ void BarnesHutCPUTree::InsertBody(int32 body, int32 node, float radius)
 
         // Attach new subtree to tree
         SetChildIndex(node, branch, new_node);
+
+        UnlockChild(node, branch);
     }
 }
 
@@ -154,8 +170,6 @@ int32 BarnesHutCPUTree::AddNode(const float4& node_center_pos)
 
 void BarnesHutCPUTree::SummarizeTree()
 {
-    size_t actual_nodes_count = GetRootIndex() - cur_node_idx_;
-
     auto SummarizeKernel = [this](THREAD_POOL_KERNEL_ARGS)
     {
         int32 node = cur_node_idx_ + global_id + 1;
@@ -232,7 +246,7 @@ void BarnesHutCPUTree::SummarizeTree()
         SetMass(node, node_mass);
     };
 
-    ThreadPool::Dispatch(actual_nodes_count, 1, SummarizeKernel);
+    ThreadPool::Dispatch(GetActualNodeCount(), 1, SummarizeKernel);
 }
 
 float2 BarnesHutCPUTree::ComputeAcceleration(int32 body, float soft, float opening_angle) const

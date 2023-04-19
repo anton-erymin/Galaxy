@@ -18,6 +18,7 @@ public:
 private:
     BoundingBox ComputeBoundingBox();
     void ResetTree(const BoundingBox& bbox);
+    void BuildHierarchy();
     void InsertBody(int32 body, int32 node, float radius);
     int32 AddNode(const float4& node_center_pos);
     float4 GetChildCenterPos(const float4& node_center, int32 child_branch, float radius);
@@ -26,6 +27,7 @@ private:
     // Index helpers
     int32 GetBodyCount() const { return int32(body_position_.size()); }
     int32 GetNodeCount() const { return int32(position_.size()); }
+    int32 GetActualNodeCount() const { return GetRootIndex() - cur_node_idx_; }
     bool IsNull(int32 index) const { return index == NULL_INDEX; }
     bool IsBody(int32 index) const { return !IsNull(index) && index < GetBodyCount(); }
     bool IsBodyOrNull(int32 index) const { return index < GetBodyCount(); }
@@ -39,6 +41,8 @@ private:
     int32 GetChildIndex(int32 uni_index, int32 child_branch) const { assert(IsNode(uni_index)); return children_[GetNodeArrayIndex(uni_index) * TREE_CHILDREN_COUNT + child_branch]; }
     void SetChildIndex(int32 uni_index, int32 child_branch, int32 child_index) { assert(IsNode(uni_index)); children_[GetNodeArrayIndex(uni_index) * TREE_CHILDREN_COUNT + child_branch] = child_index; }
     int32 GetRootIndex() const { return GetNodeUniIndex(GetNodeCount() - 1); }
+    void LockChild(int32 uni_index, int32 child_branch) { assert(IsNode(uni_index)); return children_mu_[GetNodeArrayIndex(uni_index) * TREE_CHILDREN_COUNT + child_branch].lock(); }
+    void UnlockChild(int32 uni_index, int32 child_branch) { assert(IsNode(uni_index)); return children_mu_[GetNodeArrayIndex(uni_index) * TREE_CHILDREN_COUNT + child_branch].unlock(); }
 
 private:
     const vector<float4>& body_position_;
@@ -49,6 +53,9 @@ private:
     vector<float4> position_;
     vector<atomic<float>> mass_;
     vector<int32> children_;
+    vector<mutex> children_mu_;
+
+    vector<BoundingBox> bbox_per_thread_;
 
     // Root radius
     float radius_ = 0.0f;
