@@ -2,12 +2,14 @@
 
 #include "GalaxyTypes.h"
 
+#include <Events/EventHandler.h>
+
 class Universe;
 class ISolver;
 class IRendererPlugin;
 class MainWindow;
 
-class GalaxySimulator
+class GalaxySimulator : public IEventHandler
 {
 public:
     GalaxySimulator();
@@ -17,6 +19,8 @@ private:
     void CreateUniverse();
     void CreateSolver(SimulationAlgorithm algorithm);
     void CreateRenderer();
+
+    void OnEvent(Event& e);
 
 private:
     SimulationContext sim_context_;

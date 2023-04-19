@@ -57,6 +57,8 @@ GalaxySimulator::GalaxySimulator()
     CreateRenderer();
 
     main_window_ = make_unique<MainWindow>(sim_context_, render_params_);
+    BIND_EVENT_HANDLER(OnEvent);
+    main_window_->AddEventHandler(*this);
 
     solver_->Start();
 }
@@ -137,6 +139,19 @@ void GalaxySimulator::CreateRenderer()
 {
     renderer_ = make_unique<GalaxyRenderer>(*universe_, sim_context_, render_params_);
     engine->GetRenderer().RegisterRendererPlugin(*renderer_);
+}
+
+void GalaxySimulator::OnEvent(Event& e)
+{
+    if (e.type == SID_DUP("AlgorithmChanged"))
+    {
+        solver_.reset();
+        CreateSolver(sim_context_.algorithm);
+        if (solver_)
+        {
+            solver_->Start();
+        }
+    }
 }
 
 #if 0

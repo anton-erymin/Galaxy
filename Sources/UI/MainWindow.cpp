@@ -92,14 +92,21 @@ void MainWindow::BuildUI()
     float disk_thickness = 1.0f;
     float black_hole_mass = 1.0f;
 
+    static const char* s_sim_types[] = { "Bruteforce CPU", "Bruteforce GPU", "Barnes-Hut CPU", "Barnes-Hut GPU" };
+
     BuildTable("Simulation",
         [&]()
         {
             BuildRowValue("Render FPS", int(engine->GetFPSCounter().GetFPS()));
             BuildRowValue("Simulation FPS", int(sim_context_.simulation_fps));
 
-            static const char* s_sim_types[] = { "Bruteforce CPU", "Bruteforce GPU", "Barnes-Hut CPU", "Barnes-Hut GPU" };
-            BuildRow("Simulation type", [&](){ ImGui::Combo("", (int*)(&sim_context_.algorithm), s_sim_types, int(SimulationAlgorithm::MAX_COUNT)); });
+            BuildRow("Simulation type", [&]()
+                {
+                    if (ImGui::Combo("", (int*)(&sim_context_.algorithm), s_sim_types, int(SimulationAlgorithm::MAX_COUNT)))
+                    {
+                        DispatchEvent(Event(SID_DUP("AlgorithmChanged")));
+                    }
+                });
 
             BuildRow("Simulation enabled", [&](){ ImGui::Checkbox("", &sim_context_.is_simulated); });
             //BuildRowValue("Number of particles", 20);

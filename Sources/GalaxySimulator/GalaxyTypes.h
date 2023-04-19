@@ -56,6 +56,6 @@ struct RenderParameters
     bool render_tracks = true;
     bool plot_potential = false;
     float brightness = 1.0f;
-    float particle_size_scale = 7.0f;
+    float particle_size_scale = 5.0f;
     bool colors_inverted = true;
 };
