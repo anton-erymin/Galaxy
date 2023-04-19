@@ -33,13 +33,13 @@ GalaxySimulator::GalaxySimulator()
     camera_comp->eye = float3(0.0f, 1.0f, 0.0f);
     camera_comp->at = float3();
     camera_comp->up = -Math::Z;
-    //engine->SetActiveCamera(top_camera);
+    engine->SetActiveCamera(top_camera);
 
     Entity camera = engine->GetActiveCamera();
     camera.Get<CameraComponent>()->z_near = 0.000001f;
     camera.Get<CameraComponent>()->z_far = 100000000.0f;
 
-    srand(0);
+    //srand(0);
 
     // Setup time measure units
     sim_context_.cSecondsPerTimeUnit = static_cast<float>(sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG)));
@@ -106,7 +106,7 @@ void GalaxySimulator::CreateUniverse()
     //universe_->velocities_[0] = v0 * 0.5f;
     //universe_->velocities_[1] = v1 * 0.5f;
 
-    for (size_t i = 0; i < 10000; i++)
+    for (size_t i = 0; i < 100; i++)
     {
         AddSatellite(i + 1);
     }

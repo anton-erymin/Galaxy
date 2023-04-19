@@ -5,27 +5,24 @@ namespace Math { class BoundingBox; }
 constexpr uint32 TREE_CHILDREN_COUNT = 4;
 constexpr int32 NULL_INDEX = -1;
 
-// TODO: Improve by storing nodes in linear array
 class BarnesHutCPUTree
 {
 public:
     BarnesHutCPUTree(const vector<float4>& body_position, const vector<float>& body_mass);
 
     void BuildTree();
-    //void InsertFlat(const float2 &position, float body_mass);
-    float2 ComputeAcceleration(const float2 &position, float soft, float opening_angle) const;
+    void SummarizeTree();
+    float2 ComputeAcceleration(int32 body, float soft, float opening_angle) const;
     //float2 ComputeAccelerationFlat(const float2 &position, float soft, float opening_angle) const;
 
-    void SetBoundingBox(const BoundingBox& bbox);
-
 private:
+    BoundingBox ComputeBoundingBox();
+    void ResetTree(const BoundingBox& bbox);
     void InsertBody(int32 body, int32 node, float radius);
-    bool Contains(const float2 &position) const;
-    void ResetChildren();
-
     int32 AddNode(const float4& node_center_pos);
     float4 GetChildCenterPos(const float4& node_center, int32 child_branch, float radius);
     float4 GetCenterOfGravity(float mass0, const float4& pos0, float mass1, const float4& pos1, float& out_mass);
+    float2 ComputeAccelerationRecursive(int32 body, int32 node, float radius, float soft, float opening_angle) const;
 
     // Index helpers
     int32 GetBodyCount() const { return int32(body_position_.size()); }
@@ -49,6 +46,7 @@ private:
     const vector<float>& body_mass_;
 
     // Nodes
+    // Firstly contain geometrical centers of nodes, after summarize contain centers of gravity
     vector<float4> position_;
     vector<float> mass_;
     vector<int32> children_;
@@ -57,8 +55,6 @@ private:
     float radius_ = 0.0f;
 
     atomic<size_t> cur_node_idx_;
-
-    //mutex mu_;
 
     friend class BarnesHutCPUSolver;
 };

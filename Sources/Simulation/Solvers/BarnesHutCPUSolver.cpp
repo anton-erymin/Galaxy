@@ -51,33 +51,11 @@ void BarnesHutCPUSolver::TraverseTree(int32 node, float radius)
 
 void BarnesHutCPUSolver::ComputeAcceleration()
 {
-    // 1. Compute bounding box
-
     BEGIN_TIME_MEASURE(build_tree_timer, context_.build_tree_time_msecs);
 
-    vector<BoundingBox> boxes(ThreadPool::GetThreadCount());
-    auto BoundingBoxKernel = [&](THREAD_POOL_KERNEL_ARGS)
-    {
-        boxes[block_id].grow(float3(universe_.positions_[global_id]));
-    };
+    // 1. Build tree
 
-    size_t count = universe_.positions_.size();
-
-    PARALLEL_FOR(count, BoundingBoxKernel);
-
-    // Compute final bounding box
-    BoundingBox bbox;
-    for (size_t i = 0; i < boxes.size(); i++)
-    {
-        bbox.grow(boxes[i]);
-    }
-
-    // 2. Build tree
-
-    tree_->SetBoundingBox(bbox);
     tree_->BuildTree();
-
-    END_TIME_MEASURE(build_tree_timer);
 
     universe_.node_positions_.clear();
     universe_.node_sizes_.clear();
@@ -89,7 +67,13 @@ void BarnesHutCPUSolver::ComputeAcceleration()
 
     context_.nodes_count = universe_.node_positions_.size();
 
-    // 3. Compute force
+    tree_->SummarizeTree();
+
+    END_TIME_MEASURE(build_tree_timer);
+
+    // 2. Compute force
+
+    size_t count = universe_.positions_.size();
 
     auto ComputeForceKernel = [&](THREAD_POOL_KERNEL_ARGS)
     {
@@ -100,14 +84,8 @@ void BarnesHutCPUSolver::ComputeAcceleration()
             return;
         }
 
-        const float4& pos = universe_.positions_[global_id];
-
-#if 0
-        float2 force = tree_->ComputeAcceleration(float2(pos.x, pos.z), context_.gravity_softening_length,
-            context_.barnes_hut_opening_angle);
+        float2 force = tree_->ComputeAcceleration(global_id, context_.gravity_softening_length, context_.barnes_hut_opening_angle);
         universe_.forces_[global_id] = float3(force.x, 0.0f, force.y);
-#endif // 0
-
     };
 
     PARALLEL_FOR(count, ComputeForceKernel);
