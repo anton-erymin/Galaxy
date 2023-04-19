@@ -159,36 +159,71 @@ void BarnesHutCPUTree::SummarizeTree()
     auto SummarizeKernel = [this](THREAD_POOL_KERNEL_ARGS)
     {
         int32 node = cur_node_idx_ + global_id + 1;
+
         float node_mass = GetMass(node);
         assert(IsNode(node) && node_mass == -1.0f);
 
-        float4 gravity_center;
+        float4 gravity_center = float4();
         node_mass = 0.0f;
 
-        size_t missing = 0;
-        //int32 missing_childs[TREE_CHILDREN_COUNT];
+        // Counter of non-completed nodes (mass is not available yet)
+        size_t missing_count = 0;
+        int32 missing_childs[TREE_CHILDREN_COUNT];
 
         for (size_t j = 0; j < TREE_CHILDREN_COUNT; j++)
         {
             int32 child_index = GetChildIndex(node, j);
-
             bool is_child_node = IsNode(child_index);
 
             if (IsBody(child_index) || is_child_node)
             {
-                if (is_child_node)
+                float child_mass = GetMass(child_index);
+
+                if (is_child_node && child_mass < 0.0f)
                 {
-                    // Wait for child be ready
-                    while (GetMass(child_index) < 0.0f);
+                    // Add to missing
+                    missing_childs[missing_count++] = child_index;
+                    continue;
                 }
 
                 // Add contribution
-                float child_mass = GetMass(child_index);
                 assert(child_mass >= 0.0f);
                 gravity_center += child_mass * GetPosition(child_index);
                 node_mass += child_mass;
             }
         }
+
+        int32 missing_child_i = 0;
+        while (missing_count > 0)
+        {
+            int32 child_index = missing_childs[missing_child_i];
+            float child_mass = GetMass(child_index);
+
+            if (child_mass < 0.0f)
+            {
+                missing_child_i = (missing_child_i + 1) % missing_count;
+                continue;
+            }
+
+            // Add contribution
+            gravity_center += child_mass * GetPosition(child_index);
+            node_mass += child_mass;
+
+            int32 last = missing_count - 1;
+            if (missing_child_i != last)
+            {
+                // Remove current missing
+                swap(missing_childs[missing_child_i], missing_childs[last]);
+            }
+            else
+            {
+                missing_child_i = 0;
+            }
+
+            --missing_count;
+        }
+
+        assert(missing_count == 0);
 
         gravity_center *= (1.0f / node_mass);
 
