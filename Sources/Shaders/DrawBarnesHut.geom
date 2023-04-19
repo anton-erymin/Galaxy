@@ -37,11 +37,10 @@ void DrawQuad(mat4 proj_view, vec3 v0, vec3 v1, vec3 v2, vec3 v3)
 void main()
 {
     vec3 node_pos = g_node_positions[gl_PrimitiveIDIn].xyz;
-    float node_size = g_node_sizes[gl_PrimitiveIDIn];
+    float radius = g_node_sizes[gl_PrimitiveIDIn];
     
     mat4 proj_view = g_camera.projection_view_transform;
 
-	float radius = 0.5 * node_size;
     vec3 v0 = node_pos + vec3(-radius, 0.0, -radius);
     vec3 v1 = node_pos + vec3(-radius, 0.0, radius);
     vec3 v2 = node_pos + vec3(radius, 0.0, radius);

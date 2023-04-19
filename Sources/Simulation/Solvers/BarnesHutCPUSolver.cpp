@@ -10,25 +10,41 @@
 BarnesHutCPUSolver::BarnesHutCPUSolver(Universe& universe, SimulationContext& context, const RenderParameters& render_params)
     : CPUSolverBase(universe, context, render_params)
 {
-    tree_ = make_unique<BarnesHutCPUTree>();
+    tree_ = make_unique<BarnesHutCPUTree>(universe.positions_, universe_.masses_);
 }
 
 BarnesHutCPUSolver::~BarnesHutCPUSolver()
 {
+    Stop();
+    tree_.reset();
 }
 
-void BarnesHutCPUSolver::TraverseTree(const BarnesHutCPUTree& node)
+void BarnesHutCPUSolver::TraverseTree(int32 node, float radius)
 {
-    float2 node_pos = 0.5f * (node.point_ + node.opposite_point_);
+    node = node == NULL_INDEX ? tree_->GetRootIndex() : node;
+    radius = radius == 0.0f ? tree_->radius_ : radius;
+    float half_radius = 0.5f * radius;
 
-    universe_.node_positions_.push_back(float4(node_pos.x, 0.0f, node_pos.y, 1.0f));
-    universe_.node_sizes_.push_back(node.length_);
+    const float4& node_pos = tree_->GetPosition(node);
 
-    if (!node.is_leaf_)
+    universe_.node_positions_.push_back(float4(node_pos.x, 0.0f, node_pos.z, 1.0f));
+    universe_.node_sizes_.push_back(radius);
+
+    if (tree_->IsNode(node))
     {
         for (size_t i = 0; i < TREE_CHILDREN_COUNT; i++)
         {
-            TraverseTree(*node.children_[i]);
+            int32 child_index = tree_->GetChildIndex(node, i);
+            if (tree_->IsNode(child_index))
+            {
+                TraverseTree(child_index, half_radius);
+            }
+            else if (tree_->IsBodyOrNull(child_index))
+            {
+                // For child refering to body add info here
+                universe_.node_positions_.push_back(tree_->GetChildCenterPos(node_pos, i, radius));
+                universe_.node_sizes_.push_back(half_radius);
+            }
         }
     }
 }
@@ -58,18 +74,8 @@ void BarnesHutCPUSolver::ComputeAcceleration()
 
     // 2. Build tree
 
-    tree_->Reset();
     tree_->SetBoundingBox(bbox);
-
-    auto BuildTreeKernel = [&](THREAD_POOL_KERNEL_ARGS)
-    {
-        const float4& pos = universe_.positions_[global_id];
-        tree_->Insert(float2(pos.x, pos.z), universe_.masses_[global_id]);
-    };
-
-
-    PARALLEL_FOR(count, BuildTreeKernel);
-    //for (size_t i = 0; i < count; i++) { BuildTreeKernel(i, 0, 0, 0); }
+    tree_->BuildTree();
 
     END_TIME_MEASURE(build_tree_timer);
 
@@ -78,7 +84,7 @@ void BarnesHutCPUSolver::ComputeAcceleration()
     // Traverse tree
     if (render_params_.render_tree)
     {
-        TraverseTree(*tree_);
+        TraverseTree();
     }
 
     context_.nodes_count = universe_.node_positions_.size();
@@ -96,9 +102,12 @@ void BarnesHutCPUSolver::ComputeAcceleration()
 
         const float4& pos = universe_.positions_[global_id];
 
+#if 0
         float2 force = tree_->ComputeAcceleration(float2(pos.x, pos.z), context_.gravity_softening_length,
             context_.barnes_hut_opening_angle);
         universe_.forces_[global_id] = float3(force.x, 0.0f, force.y);
+#endif // 0
+
     };
 
     PARALLEL_FOR(count, ComputeForceKernel);

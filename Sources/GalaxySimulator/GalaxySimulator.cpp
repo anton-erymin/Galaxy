@@ -39,7 +39,7 @@ GalaxySimulator::GalaxySimulator()
     camera.Get<CameraComponent>()->z_near = 0.000001f;
     camera.Get<CameraComponent>()->z_far = 100000000.0f;
 
-    //srand(0);
+    srand(0);
 
     // Setup time measure units
     sim_context_.cSecondsPerTimeUnit = static_cast<float>(sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG)));

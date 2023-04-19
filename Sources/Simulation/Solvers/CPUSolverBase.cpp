@@ -55,15 +55,23 @@ CPUSolverBase::CPUSolverBase(Universe& universe, SimulationContext& context, con
 
 CPUSolverBase::~CPUSolverBase()
 {
-    active_flag_ = false;
-    context_.solver_cv.notify_one();
-    thread_.reset();
+    Stop();
 }
 
 void CPUSolverBase::Start()
 {
     active_flag_ = true;
     thread_.reset(new Thread("CPUSolver Thread", bind(&CPUSolverBase::SolverRun, this)));
+}
+
+void CPUSolverBase::Stop()
+{
+    if (active_flag_)
+    {
+        active_flag_ = false;
+        context_.solver_cv.notify_one();
+        thread_.reset();
+    }
 }
 
 void CPUSolverBase::SolverRun()

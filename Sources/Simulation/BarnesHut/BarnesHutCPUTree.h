@@ -3,41 +3,62 @@
 namespace Math { class BoundingBox; }
 
 constexpr uint32 TREE_CHILDREN_COUNT = 4;
+constexpr int32 NULL_INDEX = -1;
 
 // TODO: Improve by storing nodes in linear array
 class BarnesHutCPUTree
 {
 public:
-    BarnesHutCPUTree();
+    BarnesHutCPUTree(const vector<float4>& body_position, const vector<float>& body_mass);
 
-    void Insert(const float2 &position, float body_mass, uint32_t level = 0);
-    void InsertFlat(const float2 &position, float body_mass);
+    void BuildTree();
+    //void InsertFlat(const float2 &position, float body_mass);
     float2 ComputeAcceleration(const float2 &position, float soft, float opening_angle) const;
-    float2 ComputeAccelerationFlat(const float2 &position, float soft, float opening_angle) const;
-    void Reset();
+    //float2 ComputeAccelerationFlat(const float2 &position, float soft, float opening_angle) const;
 
     void SetBoundingBox(const BoundingBox& bbox);
-    void SetDimensions(const float2& point, const float2& opposite_point, float length);
 
 private:
+    void InsertBody(int32 body, int32 node, float radius);
     bool Contains(const float2 &position) const;
     void ResetChildren();
-    void AdjustCenterMass(const float2& p, float mass);
 
-    // TODO: Replace with BoundingBox
-    float2 point_;
-    float2 opposite_point_;
-    float length_ = 0.0f;
-    float mass_ = 0.0f;
-    float2 center_;
-    bool is_leaf_ = true;
-    bool is_busy_ = false;
+    int32 AddNode(const float4& node_center_pos);
+    float4 GetChildCenterPos(const float4& node_center, int32 child_branch, float radius);
+    float4 GetCenterOfGravity(float mass0, const float4& pos0, float mass1, const float4& pos1, float& out_mass);
 
-    unique_ptr<BarnesHutCPUTree> children_[TREE_CHILDREN_COUNT];
-    
-    size_t id_ = 0;
+    // Index helpers
+    int32 GetBodyCount() const { return int32(body_position_.size()); }
+    int32 GetNodeCount() const { return int32(position_.size()); }
+    bool IsNull(int32 index) const { return index == NULL_INDEX; }
+    bool IsBody(int32 index) const { return !IsNull(index) && index < GetBodyCount(); }
+    bool IsBodyOrNull(int32 index) const { return index < GetBodyCount(); }
+    bool IsNode(int32 index) const { return index >= GetBodyCount(); }
+    int32 GetNodeUniIndex(int32 array_index) const { return array_index + GetBodyCount(); }
+    int32 GetNodeArrayIndex(int32 uni_index) const { return uni_index - GetBodyCount(); }
+    const float4& GetPosition(int32 uni_index) const { return IsBody(uni_index) ? body_position_[uni_index] : position_[GetNodeArrayIndex(uni_index)]; }
+    void SetPosition(int32 uni_index, const float4& pos) { assert(IsNode(uni_index)); position_[GetNodeArrayIndex(uni_index)] = pos; }
+    float GetMass(int32 uni_index) const { return IsBody(uni_index) ? body_mass_[uni_index] : mass_[GetNodeArrayIndex(uni_index)]; }
+    void SetMass(int32 uni_index, float mass) { assert(IsNode(uni_index)); mass_[GetNodeArrayIndex(uni_index)] = mass; }
+    int32 GetChildIndex(int32 uni_index, int32 child_branch) const { assert(IsNode(uni_index)); return children_[GetNodeArrayIndex(uni_index) * TREE_CHILDREN_COUNT + child_branch]; }
+    void SetChildIndex(int32 uni_index, int32 child_branch, int32 child_index) { assert(IsNode(uni_index)); children_[GetNodeArrayIndex(uni_index) * TREE_CHILDREN_COUNT + child_branch] = child_index; }
+    int32 GetRootIndex() const { return GetNodeUniIndex(GetNodeCount() - 1); }
 
-    mutex mu_;
+private:
+    const vector<float4>& body_position_;
+    const vector<float>& body_mass_;
+
+    // Nodes
+    vector<float4> position_;
+    vector<float> mass_;
+    vector<int32> children_;
+
+    // Root radius
+    float radius_ = 0.0f;
+
+    atomic<size_t> cur_node_idx_;
+
+    //mutex mu_;
 
     friend class BarnesHutCPUSolver;
 };

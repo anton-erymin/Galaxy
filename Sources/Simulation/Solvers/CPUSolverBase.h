@@ -13,6 +13,9 @@ public:
 
 	virtual void Start() override;
 
+protected:
+	void Stop();
+
 private:
 	void SolverRun();
 	void Solve(float time) override;
