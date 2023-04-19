@@ -106,7 +106,7 @@ void GalaxySimulator::CreateUniverse()
     //universe_->velocities_[0] = v0 * 0.5f;
     //universe_->velocities_[1] = v1 * 0.5f;
 
-    for (size_t i = 0; i < 500; i++)
+    for (size_t i = 0; i < 10000; i++)
     {
         AddSatellite(i + 1);
     }
