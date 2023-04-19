@@ -83,9 +83,9 @@ void CPUSolverBase::Stop()
 void CPUSolverBase::SolverRun()
 {
     FPSCounter fps_counter;
-
     ParticleTracker tracker(universe_);
 
+    // Initial acceleration
     ComputeAcceleration();
 
     while (active_flag_)
@@ -111,7 +111,10 @@ void CPUSolverBase::SolverRun()
         context_.simulation_fps = fps_counter.GetFPS();
         context_.timestep_yrs = context_.timestep * context_.cMillionYearsPerTimeUnit * 1e6f;
 
-        //tracker.Track();
+        if (render_params_.render_tracks)
+        {
+            tracker.Track();
+        }
 
         if (context_.max_timesteps_count > 0 && context_.timesteps_count == context_.max_timesteps_count)
         {

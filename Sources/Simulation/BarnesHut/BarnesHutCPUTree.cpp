@@ -52,6 +52,8 @@ BoundingBox BarnesHutCPUTree::ComputeBoundingBox()
     for (size_t i = 0; i < bbox_per_thread_.size(); i++)
     {
         bbox.grow(bbox_per_thread_[i]);
+        // Reset box
+        bbox_per_thread_[i] = BoundingBox();
     }
 
     return bbox;
@@ -120,7 +122,6 @@ void BarnesHutCPUTree::InsertBody(int32 body, int32 node, float radius)
     if (IsNull(child_index))
     {
         // No body here yet so just insert
-        //LockChild(node, branch);
         SetChildIndex(node, branch, body);
         UnlockChild(node, branch);
     }
@@ -134,8 +135,6 @@ void BarnesHutCPUTree::InsertBody(int32 body, int32 node, float radius)
     {
         // Child is body
         // Create new node(s) and insert the old and new body
-
-        //LockChild(node, branch);
 
         // Setup new node
         int32 new_node = AddNode(GetChildCenterPos(node_pos, branch, radius));

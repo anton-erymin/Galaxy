@@ -109,7 +109,7 @@ void MainWindow::BuildUI()
             BuildRowStringValue("Simulation time in yrs", TimeInYearsToStr(sim_context_.simulation_time_million_yrs * 1e+6f));
             BuildRowValue("Number of time steps", sim_context_.timesteps_count);
             BuildRowValue("Build tree time, ms", sim_context_.build_tree_time_msecs);
-            BuildRowValue("Solving time, ms", sim_context_.solver_time_msecs);
+            BuildRowValue("Compute force time, ms", sim_context_.compute_force_time_msecs);
             BuildRowValue("Total step time, ms", sim_context_.total_step_time_msecs);
             BuildRow("Dark matter", [&](){ ImGui::Checkbox("", &sim_context_.simulate_dark_matter); });
             BuildRow("Gravity softness distance", [&](){ ImGui::SliderFloat("", &sim_context_.gravity_softening_length, 0.0001f, 0.001f, nullptr, 1.0f); });
@@ -124,6 +124,7 @@ void MainWindow::BuildUI()
             BuildRow("Render particles", [&](){ ImGui::Checkbox("", &render_params_.render_particles); });
             BuildRow("Render particles as points", [&](){ ImGui::Checkbox("", &render_params_.render_as_points); });
             BuildRow("Render Barnes-Hut tree", [&](){ ImGui::Checkbox("", &render_params_.render_tree); });
+            BuildRow("Tracks", [&](){ ImGui::Checkbox("", &render_params_.render_tracks); });
             BuildRow("Plot potential", [&](){ ImGui::Checkbox("", &render_params_.plot_potential); });
             BuildRow("Brightness", [&](){ ImGui::SliderFloat("", &render_params_.brightness, 0.05f, 10.0f, nullptr, 1.0f); });
             BuildRow("Particles size scale", [&](){ ImGui::SliderFloat("", &render_params_.particle_size_scale, 0.01f, 50.0f, nullptr, 1.0f); });

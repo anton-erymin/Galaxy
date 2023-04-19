@@ -32,7 +32,7 @@ struct SimulationContext
     size_t max_timesteps_count = 0;
 
     float build_tree_time_msecs = 0.0f;
-    float solver_time_msecs = 0.0f;
+    float compute_force_time_msecs = 0.0f;
     float total_step_time_msecs = 0.0f;
 
     atomic<size_t> nodes_count = 0;
@@ -51,6 +51,7 @@ struct RenderParameters
     bool render_particles = true;
     bool render_as_points = true;
     bool render_tree = false;
+    bool render_tracks = true;
     bool plot_potential = false;
     float brightness = 1.0f;
     float particle_size_scale = 7.0f;

@@ -88,7 +88,7 @@ void BarnesHutCPUSolver::ComputeAcceleration()
         universe_.forces_[global_id] = float3(force.x, 0.0f, force.y);
     };
 
-    BEGIN_TIME_MEASURE(solving_timer, context_.solver_time_msecs);
+    BEGIN_TIME_MEASURE(solving_timer, context_.compute_force_time_msecs);
 
     PARALLEL_FOR(count, ComputeForceKernel);
 
