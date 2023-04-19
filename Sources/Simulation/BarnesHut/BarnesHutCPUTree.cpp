@@ -117,10 +117,10 @@ float2 BarnesHutCPUTree::ComputeAccelerationRecursive(int32 body, int32 node, fl
     float2 acceleration = {};
 
     float2 position = Float3To2(GetPosition(body));
-    float2 center_ = Float3To2(GetPosition(node));
+    float2 center = Float3To2(GetPosition(node));
     float mass = GetMass(node);
 
-    float2 l = center_ - position;
+    float2 l = center - position;
 
     if (IsBody(node))
     {
@@ -251,7 +251,7 @@ float2 BarnesHutCPUTree::ComputeAccelerationFlat(const float2& position, float s
 
         if (node.is_leaf_)
         {
-            if (node.is_busy_ && !equal_eps(position, node.center_, EPS))
+            if (node.is_busy_ && !equal_eps(position, node.center, EPS))
             {
                 //acceleration += GravityAcceleration(node.center_ - position, node.mass_, soft);
             }
