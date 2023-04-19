@@ -33,6 +33,8 @@ struct SimulationContext
 
     float build_tree_time_msecs = 0.0f;
     float compute_force_time_msecs = 0.0f;
+    float compute_acceleration_time_msecs = 0.0f;
+    float integration_time_msecs = 0.0f;
     float total_step_time_msecs = 0.0f;
 
     atomic<size_t> nodes_count = 0;

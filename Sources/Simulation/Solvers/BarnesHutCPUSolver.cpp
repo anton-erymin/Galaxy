@@ -89,8 +89,6 @@ void BarnesHutCPUSolver::ComputeAcceleration()
     };
 
     BEGIN_TIME_MEASURE(solving_timer, context_.compute_force_time_msecs);
-
     PARALLEL_FOR(count, ComputeForceKernel);
-
     END_TIME_MEASURE(solving_timer);
 }

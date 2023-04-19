@@ -133,21 +133,30 @@ void CPUSolverBase::Solve(float time)
 
     // After computing force before integration phase wait for signal from renderer
     // that it has finished copying new positions into device buffer
-    unique_lock<mutex> lock(context_.solver_mu);
-    context_.solver_cv.wait(lock, [this]() { return context_.positions_update_completed_flag == false || !active_flag_; });
+    //unique_lock<mutex> lock(context_.solver_mu);
+    //context_.solver_cv.wait(lock, [this]() { return context_.positions_update_completed_flag == false || !active_flag_; });
+
+    float integration_time_part_1;
+    float integration_time_part_2;
 
     // Leap-frog Kick-drift first part
+    BEGIN_TIME_MEASURE(int_timer_1, integration_time_part_1);
     PARALLEL_FOR_METHOD_BIND(count, CPUSolverBase::LeapFrogKickDriftIntegrationKernel);
+    END_TIME_MEASURE(int_timer_1);
 
     // After updating positions turn on flag signaling to renderer that it needs to update the device buffers
     context_.positions_update_completed_flag = true;
 
+    BEGIN_TIME_MEASURE(acc_timer, context_.compute_acceleration_time_msecs);
     ComputeAcceleration();
+    END_TIME_MEASURE(acc_timer);
 
     // Leap-frog Kick second part
+    BEGIN_TIME_MEASURE(int_timer_2, integration_time_part_2);
     PARALLEL_FOR_METHOD_BIND(count, CPUSolverBase::LeapFrogKickIntegrationKernel);
+    END_TIME_MEASURE(int_timer_2);
 
-    END_TIME_MEASURE(total_timer);
+    context_.integration_time_msecs = integration_time_part_1 + integration_time_part_2;
 }
 
 void CPUSolverBase::IntegrationKernel(THREAD_POOL_KERNEL_ARGS)
