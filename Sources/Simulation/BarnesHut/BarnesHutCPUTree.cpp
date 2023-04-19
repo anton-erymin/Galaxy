@@ -21,11 +21,11 @@ static float2 GravityAcceleration2(const float2& l, float mass, float soft)
 
 BarnesHutCPUTree::BarnesHutCPUTree(const vector<float4>& body_position, const vector<float>& body_mass)
     : body_position_(body_position)
-    , body_mass_(body_mass)
+    , body_mass_(body_mass),
+    mass_(2 * body_position.size())
 {
     size_t nodes_max_count = 2 * GetBodyCount();
     position_.resize(nodes_max_count);
-    mass_.resize(nodes_max_count);
     children_.resize(TREE_CHILDREN_COUNT * nodes_max_count);
 }
 
@@ -154,34 +154,50 @@ int32 BarnesHutCPUTree::AddNode(const float4& node_center_pos)
 
 void BarnesHutCPUTree::SummarizeTree()
 {
-    for (size_t i = cur_node_idx_ + 1; i <= GetRootIndex(); i++)
+    size_t actual_nodes_count = GetRootIndex() - cur_node_idx_;
+
+    auto SummarizeKernel = [this](THREAD_POOL_KERNEL_ARGS)
     {
-        float node_mass = GetMass(i);
-        assert(IsNode(i) && node_mass == -1.0f);
-        
+        int32 node = cur_node_idx_ + global_id + 1;
+        float node_mass = GetMass(node);
+        assert(IsNode(node) && node_mass == -1.0f);
+
         float4 gravity_center;
         node_mass = 0.0f;
 
+        size_t missing = 0;
+        //int32 missing_childs[TREE_CHILDREN_COUNT];
+
         for (size_t j = 0; j < TREE_CHILDREN_COUNT; j++)
         {
-            int32 child_index = GetChildIndex(i, j);
+            int32 child_index = GetChildIndex(node, j);
 
-            if (IsBody(child_index) || IsNode(child_index))
+            bool is_child_node = IsNode(child_index);
+
+            if (IsBody(child_index) || is_child_node)
             {
+                if (is_child_node)
+                {
+                    // Wait for child be ready
+                    while (GetMass(child_index) < 0.0f);
+                }
+
+                // Add contribution
                 float child_mass = GetMass(child_index);
                 assert(child_mass >= 0.0f);
-                const float4& child_gravity_center = GetPosition(child_index);
-
-                gravity_center += child_mass * child_gravity_center;
+                gravity_center += child_mass * GetPosition(child_index);
                 node_mass += child_mass;
             }
         }
 
         gravity_center *= (1.0f / node_mass);
 
-        SetMass(i, node_mass);
-        SetPosition(i, gravity_center);
-    }
+        SetPosition(node, gravity_center);
+        // Mass is atomically written last
+        SetMass(node, node_mass);
+    };
+
+    ThreadPool::Dispatch(actual_nodes_count, 1, SummarizeKernel);
 }
 
 float2 BarnesHutCPUTree::ComputeAcceleration(int32 body, float soft, float opening_angle) const

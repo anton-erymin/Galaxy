@@ -27,8 +27,14 @@ public:
         for (size_t i = 0; i < universe_.GetParticlesCount(); i++)
         {
             const float3& new_pos = universe_.positions_[i];
-            engine->DebugDrawSystem()->DrawLine(prev_pos_[i], new_pos, Math::kRedColor, 0.5f, 0.0f, false);
-            prev_pos_[i] = new_pos;
+            float dist_sq = (new_pos - prev_pos_[i]).length_sq();
+            constexpr float TRACK_TRHESHOLD_DIST = 0.05f;
+            constexpr float TRACK_TRHESHOLD_DIST_SQ = TRACK_TRHESHOLD_DIST * TRACK_TRHESHOLD_DIST;
+            if (dist_sq > TRACK_TRHESHOLD_DIST_SQ)
+            {
+                engine->DebugDrawSystem()->DrawLine(prev_pos_[i], new_pos, Math::kRedColor, 0.5f, 0.0f, false);
+                prev_pos_[i] = new_pos;
+            }
         }
     }
 
@@ -105,7 +111,7 @@ void CPUSolverBase::SolverRun()
         context_.simulation_fps = fps_counter.GetFPS();
         context_.timestep_yrs = context_.timestep * context_.cMillionYearsPerTimeUnit * 1e6f;
 
-        //tracker.Track();
+        tracker.Track();
 
         if (context_.max_timesteps_count > 0 && context_.timesteps_count == context_.max_timesteps_count)
         {

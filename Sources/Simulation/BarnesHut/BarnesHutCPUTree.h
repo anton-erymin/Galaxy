@@ -47,7 +47,7 @@ private:
     // Nodes
     // Firstly contain geometrical centers of nodes, after summarize contain centers of gravity
     vector<float4> position_;
-    vector<float> mass_;
+    vector<atomic<float>> mass_;
     vector<int32> children_;
 
     // Root radius
