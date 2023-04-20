@@ -6,7 +6,8 @@
 #include <Thread/Thread.h>
 #include <Misc/FPSCounter.h>
 #include <Engine.h>
-#include "Interfaces/IDebugDrawSystem.h"
+#include <Interfaces/IDebugDrawSystem.h>
+#include <String/String.h>
 
 class ParticleTracker
 {
@@ -159,22 +160,6 @@ void CPUSolverBase::Solve(float time)
     context_.integration_time_msecs = integration_time_part_1 + integration_time_part_2;
 }
 
-void CPUSolverBase::IntegrationKernel(THREAD_POOL_KERNEL_ARGS)
-{
-    assert(global_id < universe_.GetParticlesCount());
-
-    if (universe_.masses_[global_id] > 0.0f)
-    {
-        float3 pos = float3(universe_.positions_[global_id]);
-
-        IntegrateMotionEquation(context_.timestep, pos, universe_.velocities_[global_id],
-            universe_.forces_[global_id], universe_.inverse_masses_[global_id]);
-        universe_.positions_[global_id] = pos;
-    }
-    // Clear force accumulator
-    universe_.forces_[global_id] = float3();
-}
-
 void CPUSolverBase::LeapFrogKickDriftIntegrationKernel(THREAD_POOL_KERNEL_ARGS)
 {
     if (universe_.masses_[global_id] > 0.0f)
@@ -200,7 +185,6 @@ void CPUSolverBase::LeapFrogKickIntegrationKernel(THREAD_POOL_KERNEL_ARGS)
     }
 }
 
-#include "String/String.h"
 void CPUSolverBase::Dump(const char* prefix)
 {
     size_t i = 1;

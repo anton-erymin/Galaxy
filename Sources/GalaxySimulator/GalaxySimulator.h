@@ -17,6 +17,7 @@ public:
 
 private:
     void CreateUniverse();
+    void CreateGalaxy(const float3& position, const float3& velocity);
     void CreateSolver(SimulationAlgorithm algorithm);
     void CreateRenderer();
 

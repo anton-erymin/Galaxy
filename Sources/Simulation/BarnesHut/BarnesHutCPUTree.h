@@ -58,7 +58,7 @@ private:
     vector<BoundingBox> bbox_per_thread_;
 
     // Root radius
-    float radius_ = 0.0f;
+    float radius_;
 
     atomic<size_t> cur_node_idx_;
 
