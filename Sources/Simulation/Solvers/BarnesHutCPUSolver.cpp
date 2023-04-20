@@ -21,7 +21,7 @@ BarnesHutCPUSolver::~BarnesHutCPUSolver()
 
 void BarnesHutCPUSolver::TraverseTree(int32 node, float radius)
 {
-    node = node == NULL_INDEX ? tree_->GetRootIndex() : node;
+    node = node == NULL_INDEX ? tree_->GetRootNode() : node;
     radius = radius == 0.0f ? tree_->radius_ : radius;
     float half_radius = 0.5f * radius;
 

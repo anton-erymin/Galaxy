@@ -66,7 +66,7 @@ void BarnesHutCPUTree::ResetTree(const BoundingBox& bbox)
     float3 bbox_center = bbox.center();
 
     radius_ = 0.5f * max_len;
-    cur_node_idx_ = GetRootIndex();
+    cur_node_idx_ = GetRootNode();
 
     // Setup root node
     AddNode(bbox_center);
@@ -76,10 +76,14 @@ void BarnesHutCPUTree::BuildHierarchy()
 {
     auto BuildHierarchyKernel = [this](THREAD_POOL_KERNEL_ARGS)
     {
-        InsertBody(global_id, GetRootIndex(), radius_);
+        InsertBody(global_id);
     };
 
-    PARALLEL_FOR(GetBodyCount(), BuildHierarchyKernel);
+    //PARALLEL_FOR(GetBodyCount(), BuildHierarchyKernel);
+    for (size_t i = 0; i < GetBodyCount(); i++)
+    {
+        BuildHierarchyKernel(i, 0, 0, 0);
+    }
 }
 
 static int32 FindChildBranch(const float4& node_center, const float4& body_pos)
@@ -108,44 +112,81 @@ float4 BarnesHutCPUTree::GetChildCenterPos(const float4& node_center, int32 chil
     return pos;
 }
 
-void BarnesHutCPUTree::InsertBody(int32 body, int32 node, float radius)
+void BarnesHutCPUTree::InsertBody(int32 body)
 {
     const float4& body_pos = body_position_[body];
-    const float4& node_pos = GetPosition(node);
-    float half_radius = 0.5f * radius;
 
-    int32 branch = FindChildBranch(node_pos, body_pos);
+    // Setup following from root
+    int32 node = GetRootNode();
+    float4 node_pos = GetPosition(node);
+    float current_radius = radius_;
 
-    LockChild(node, branch);
-    int32 child_index = GetChildIndex(node, branch);
+    int32 subdivided_node, subdivided_branch, subtree, old_child_branch;
+
+    int32 child_branch = FindChildBranch(node_pos, body_pos);
+    int32 child_index = GetChildIndex(node, child_branch);
+
+    // Follow from root to the current available leaf
+    while (IsNode(child_index))
+    {
+        node = child_index;
+        node_pos = GetPosition(node);
+        child_branch = FindChildBranch(node_pos, body_pos);
+        child_index = GetChildIndex(node, child_branch);
+        current_radius *= 0.5f;
+    }
 
     if (IsNull(child_index))
     {
         // No body here yet so just insert
-        SetChildIndex(node, branch, body);
-        UnlockChild(node, branch);
-    }
-    else if (IsNode(child_index))
-    {
-        // Unlock and follow this child
-        UnlockChild(node, branch);
-        InsertBody(body, child_index, half_radius);
+        SetChildIndex(node, child_branch, body);
+        //UnlockChild(node, branch);
     }
     else
     {
         // Child is body
         // Create new node(s) and insert the old and new body
+        assert(IsBody(child_index));
 
-        // Setup new node
-        int32 new_node = AddNode(GetChildCenterPos(node_pos, branch, radius));
+        const float4& old_body_pos = GetPosition(child_index);
 
-        InsertBody(child_index, new_node, half_radius);
-        InsertBody(body, new_node, half_radius);
+        subdivided_node = node;
+        subdivided_branch = child_branch;
 
+        subtree = -1;
+
+        do
+        {
+            // Create new node
+            int32 new_node = AddNode(GetChildCenterPos(node_pos, child_branch, current_radius));
+            const float4& new_node_pos = GetPosition(new_node);
+
+            // Get index of subtree
+            subtree = max(subtree, new_node);
+
+            // Link new child node to parent
+            if (new_node != subtree)
+            {
+                SetChildIndex(node, child_branch, new_node);
+            }
+
+            // Find branches for old and new bodies in newly created node
+            child_branch = FindChildBranch(new_node_pos, body_pos);
+            old_child_branch = FindChildBranch(new_node_pos, old_body_pos);
+
+            node = new_node;
+            node_pos = new_node_pos;
+
+            current_radius *= 0.5f;
+        }
+        while (child_branch == old_child_branch); // Subdivide until two bodies are in different child branches
+
+        SetChildIndex(node, old_child_branch, child_index);
+        SetChildIndex(node, child_branch, body);
         // Attach new subtree to tree
-        SetChildIndex(node, branch, new_node);
+        SetChildIndex(subdivided_node, subdivided_branch, subtree);
 
-        UnlockChild(node, branch);
+        //UnlockChild(node, branch);
     }
 }
 
@@ -250,7 +291,7 @@ void BarnesHutCPUTree::SummarizeTree()
 
 float2 BarnesHutCPUTree::ComputeAcceleration(int32 body, float soft, float opening_angle) const
 {
-    return ComputeAccelerationRecursive(body, GetRootIndex(), radius_, soft, opening_angle);
+    return ComputeAccelerationRecursive(body, GetRootNode(), radius_, soft, opening_angle);
 }
 
 float2 BarnesHutCPUTree::ComputeAccelerationRecursive(int32 body, int32 node, float radius, float soft, float opening_angle) const

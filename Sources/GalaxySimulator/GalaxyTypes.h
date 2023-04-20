@@ -40,7 +40,7 @@ struct SimulationContext
     atomic<size_t> nodes_count = 0;
 
     // Sync context
-    atomic_bool positions_update_completed_flag = false;
+    atomic_bool positions_update_completed_flag = true;
     condition_variable solver_cv;
     mutex solver_mu;
 
