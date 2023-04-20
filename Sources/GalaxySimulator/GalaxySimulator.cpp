@@ -13,11 +13,12 @@
 #include <Engine.h>
 #include <EngineCore.h>
 #include <Renderer.h>
+//#include <Private/RenderManager.h>
 #include <UIOverlay.h>
 
 GalaxySimulator::GalaxySimulator()
 {
-    NLOG("Galaxy Model 0.5\nCopyright (c) LAXE LLC 2012-2021");
+    NLOG("Galaxy Simulator 0.5\nCopyright (c) LAXE LLC 2012-2021");
 
     // Setup ImGui context for this module
     UI_ACTIVATE_CONTEXT();
@@ -33,7 +34,7 @@ GalaxySimulator::GalaxySimulator()
     camera_comp->eye = float3(0.0f, 1.0f, 0.0f);
     camera_comp->at = float3();
     camera_comp->up = -Math::Z;
-    //engine->SetActiveCamera(top_camera);
+    engine->SetActiveCamera(top_camera);
 
     Entity camera = engine->GetActiveCamera();
     camera.Get<CameraComponent>()->z_near = 0.000001f;
@@ -43,7 +44,7 @@ GalaxySimulator::GalaxySimulator()
 
     // Setup time measure units
     sim_context_.cSecondsPerTimeUnit = static_cast<float>(sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG)));
-    sim_context_.cMillionYearsPerTimeUnit = sim_context_.cSecondsPerTimeUnit / 3600.0f / 24.0f / 365.0f / 1e+6f;
+    sim_context_.cMillionYearsPerTimeUnit = sim_context_.cSecondsPerTimeUnit / cSecondsPerHour / cHoursPerDay / cDaysPerYear / 1e+6f;
 
     // Setup context
     sim_context_.timestep = 0.0000001f; //0.00001f
@@ -57,8 +58,12 @@ GalaxySimulator::GalaxySimulator()
     CreateRenderer();
 
     main_window_ = make_unique<MainWindow>(sim_context_, render_params_);
+    BIND_EVENT_HANDLER(OnEvent);
+    main_window_->AddEventHandler(*this);
 
     solver_->Start();
+
+    //engine->GetRenderer().GetRenderManager().SetVideoRecordState(true);
 }
 
 GalaxySimulator::~GalaxySimulator()
@@ -69,46 +74,44 @@ void GalaxySimulator::CreateUniverse()
 {
     universe_ = make_unique<Universe>();
 
-    GalaxyParameters params = {};
-    params.disk_particles_count = 1;
-    universe_->CreateGalaxy(float3(), params);
+    //GalaxyParameters params = {};
+    //params.disk_particles_count = 1;
+    //universe_->CreateGalaxy(float3(), params);
     //universe_->CreateGalaxy(float3(0.2f, 0.0f, 0.0f), params);
 
-    //universe_->SetRandomVelocities(0.2f, 0.3f);
+    CreateGalaxy(float3(-0.0f, 0.0f, 0.0f), float3(0.0f, 0.0f, 0.0f));
+    //CreateGalaxy(float3(1.5f, 0.0f, 0.0f), float3(-300.0f, 0.0f, 0.0f));
+}
 
-    float r = 0.2f;
+void GalaxySimulator::CreateGalaxy(const float3& position, const float3& vel)
+{
+    // Save current count
+    size_t cur_count = universe_->GetParticlesCount();
 
-    universe_->masses_[0] *= 10000000.0f;
+    GalaxyParameters params = {};
+    params.disk_particles_count = 1;
+    universe_->CreateGalaxy(position, params);
 
-    auto AddSatellite = [this](int i)
+    universe_->masses_[cur_count] *= 10000000.0f;
+    universe_->velocities_[cur_count] = vel;
+
+    auto AddSatellite = [&](int i)
     {
         float dist = RAND_RANGE(0.01f, 1.0f);
         float3 rand_dir(RAND_SNORM, 0.0f, RAND_SNORM);
         rand_dir.normalize();
         float3 ortho_dir = float3(rand_dir.z, 0.0f, -rand_dir.x);
-        float3 pos = rand_dir * dist;
+        float3 pos = position + rand_dir * dist;
         GalaxyParameters params = {};
         params.disk_particles_count = 1;
         universe_->CreateGalaxy(pos, params);
-        float vmag = RadialVelocity(universe_->masses_[0], dist);
-        universe_->velocities_[i] = vmag * ortho_dir;
+        float vmag = RadialVelocity(universe_->masses_[cur_count], dist);
+        universe_->velocities_[cur_count + i + 1] = vmag * ortho_dir + vel;
     };
-
-    float3 v0 = RadialVelocity(universe_->masses_[1], r) * float3(0.0f, 0.0f, 1.0f);
-    float3 v1 = RadialVelocity(universe_->masses_[0], r) * float3(0.0f, 0.0f, -1.0f);
-
-    //float f = universe_->masses_[0] * universe_->masses_[1] / (r * r);
-    //float vmag = RadialVelocity(universe_->masses_[0], r);
-    //vmag = RadialVelocity(f, universe_->masses_[1], r);
-
-    //float3 v1 = RadialVelocity(f, universe_->masses_[1], r) * float3(0.0f, 0.0f, -1.0f);
-
-    //universe_->velocities_[0] = v0 * 0.5f;
-    //universe_->velocities_[1] = v1 * 0.5f;
 
     for (size_t i = 0; i < 50000; i++)
     {
-        AddSatellite(i + 1);
+        AddSatellite(i);
     }
 }
 
@@ -137,6 +140,18 @@ void GalaxySimulator::CreateRenderer()
 {
     renderer_ = make_unique<GalaxyRenderer>(*universe_, sim_context_, render_params_);
     engine->GetRenderer().RegisterRendererPlugin(*renderer_);
+}
+
+void GalaxySimulator::OnEvent(Event& e)
+{
+    if (e.type == SID_DUP("AlgorithmChanged"))
+    {
+        CreateSolver(sim_context_.algorithm);
+        if (solver_)
+        {
+            solver_->Start();
+        }
+    }
 }
 
 #if 0
@@ -192,32 +207,6 @@ void GalaxySimulator::PostRender()
             particles_update_pipeline_->Dispatch(group_count);
             GL_CALL(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
         }
-    }
-
-    if (!particles_render_pipeline_ && g_shaded_image)
-    {
-        CreateParticlesRenderPipelines();
-    }
-
-    if (renderParams.renderPoints && particles_render_pipeline_)
-    {
-        DEBUG_TIMING_BLOCK_GPU("Render particles");
-
-        //GL_CALL(glEnable(GL_BLEND));
-        GL_CALL(glBlendFunc(GL_ONE, GL_ONE));
-        GL_CALL(glPointSize(5.0f));
-
-        Device::ShadeSingleColorRootConstants root_constants = {};
-        //root_constants.color = float4(50000.0f / count);
-        root_constants.color = float4(1.0f);
-        root_constants.transform = matrix();
-        particles_render_pipeline_->SetRootConstants(&root_constants);
-
-        particles_render_pipeline_->BeginGraphics();
-        particles_render_pipeline_->Draw(0, count, GL_POINTS);
-        particles_render_pipeline_->EndGraphics();
-
-        GL_CALL(glDisable(GL_BLEND));
     }
 
 #if 0
@@ -281,20 +270,6 @@ void GalaxySimulator::PostRender()
     glDisable(GL_BLEND);
 #endif // 0
 
-    if (renderParams.renderTree)
-    {
-        DEBUG_TIMING_BLOCK_GPU("Draw tree");
-
-        Device::ShadeSingleColorRootConstants root_constants = {};
-        root_constants.color = Utils::kGreenColor;
-        root_constants.transform = matrix();
-        tree_draw_pipeline_->SetRootConstants(&root_constants);
-
-        tree_draw_pipeline_->BeginGraphics();
-        tree_draw_pipeline_->Draw(0, nodes_count, GL_POINTS);
-        tree_draw_pipeline_->EndGraphics();
-    }
-
     if (renderParams.plotFunctions)
     {
         for (auto& galaxy : universe->GetGalaxies())
@@ -303,32 +278,7 @@ void GalaxySimulator::PostRender()
         }
     }
 }
-#endif // 0
 
-#if 0
-void GalaxySimulator::Reset()
-{
-    if (started)
-    {
-        started = false;
-        solverThread.join();
-    }
-
-    
-
-    solverBruteforce = make_unique<BruteforceSolver>(*universe);
-    solverBarneshut = make_unique<BarnesHutCPUSolver>(*universe);
-    //solverBarneshutGPU = make_unique<BarnesHutGPUSolver>(*universe);
-    currentSolver = &*solverBarneshut;
-
-    currentSolver->Inititalize(deltaTime);
-    currentSolver->SolveForces();
-    universe->SetRadialVelocitiesFromForce();
-    currentSolver->Prepare();
-}
-#endif // 0
-
-#if 0
 void GalaxySimulator::UpdateDeltaTime(float new_time)
 {
     deltaTime = new_time;
@@ -365,36 +315,6 @@ int3 CalcNumGroups(int3 size, uint group_size)
     return int3((size.x + group_size - 1) / group_size, (size.y + group_size - 1) / group_size,
         (size.z + group_size - 1) / group_size);
 }
-#endif // 0
-
-#if 0
-void GalaxySimulator::Update(float time)
-{
-    ++frameCounter;
-
-    static auto lastTime = chrono::high_resolution_clock::now();
-    static float fpsTimer = 0.0f;
-    static float frameTimer = 0.0f;
-
-    auto now = chrono::high_resolution_clock::now();
-    float time2 = chrono::duration<float>(now - lastTime).count();
-    lastTime = now;
-
-    frameTimer += time2;
-    fpsTimer += time2;
-
-    simulationTimeMillionYears = simulationTime * cMillionYearsPerTimeUnit;
-}
-
-#endif // 0
-
-#if 0
-engine->AddTimerAction(1.0f, false,
-    [](float) -> bool
-    {
-        engine->RequestExit();
-        return false;
-    });
 #endif // 0
 
 #if 0

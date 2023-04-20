@@ -7,10 +7,9 @@
 // Collision
 // Video
 
-Leap-frog integration
 Fix bug with drawing tree (blinking)
 Octree
-Linearize tree
+Get rid of recursion in tree code
 
 
 Expose dark matter halo params

@@ -32,13 +32,15 @@ struct SimulationContext
     size_t max_timesteps_count = 0;
 
     float build_tree_time_msecs = 0.0f;
-    float solver_time_msecs = 0.0f;
+    float compute_force_time_msecs = 0.0f;
+    float compute_acceleration_time_msecs = 0.0f;
+    float integration_time_msecs = 0.0f;
     float total_step_time_msecs = 0.0f;
 
     atomic<size_t> nodes_count = 0;
 
     // Sync context
-    atomic_bool positions_update_completed_flag = false;
+    atomic_bool positions_update_completed_flag = true;
     condition_variable solver_cv;
     mutex solver_mu;
 
@@ -51,8 +53,9 @@ struct RenderParameters
     bool render_particles = true;
     bool render_as_points = true;
     bool render_tree = false;
+    bool render_tracks = true;
     bool plot_potential = false;
     float brightness = 1.0f;
-    float particle_size_scale = 7.0f;
+    float particle_size_scale = 5.0f;
     bool colors_inverted = true;
 };

@@ -6,7 +6,8 @@
 #include <Thread/Thread.h>
 #include <Misc/FPSCounter.h>
 #include <Engine.h>
-#include "Interfaces/IDebugDrawSystem.h"
+#include <Interfaces/IDebugDrawSystem.h>
+#include <String/String.h>
 
 class ParticleTracker
 {
@@ -27,8 +28,14 @@ public:
         for (size_t i = 0; i < universe_.GetParticlesCount(); i++)
         {
             const float3& new_pos = universe_.positions_[i];
-            engine->DebugDrawSystem()->DrawLine(prev_pos_[i], new_pos, Math::kRedColor, 0.5f, 0.0f, false);
-            prev_pos_[i] = new_pos;
+            float dist_sq = (new_pos - prev_pos_[i]).length_sq();
+            constexpr float TRACK_TRHESHOLD_DIST = 0.05f;
+            constexpr float TRACK_TRHESHOLD_DIST_SQ = TRACK_TRHESHOLD_DIST * TRACK_TRHESHOLD_DIST;
+            if (dist_sq > TRACK_TRHESHOLD_DIST_SQ)
+            {
+                engine->DebugDrawSystem()->DrawLine(prev_pos_[i], new_pos, Math::kRedColor, 0.5f, 0.0f, false);
+                prev_pos_[i] = new_pos;
+            }
         }
     }
 
@@ -55,9 +62,7 @@ CPUSolverBase::CPUSolverBase(Universe& universe, SimulationContext& context, con
 
 CPUSolverBase::~CPUSolverBase()
 {
-    active_flag_ = false;
-    context_.solver_cv.notify_one();
-    thread_.reset();
+    Stop();
 }
 
 void CPUSolverBase::Start()
@@ -66,12 +71,22 @@ void CPUSolverBase::Start()
     thread_.reset(new Thread("CPUSolver Thread", bind(&CPUSolverBase::SolverRun, this)));
 }
 
+void CPUSolverBase::Stop()
+{
+    if (active_flag_)
+    {
+        active_flag_ = false;
+        context_.solver_cv.notify_one();
+        thread_.reset();
+    }
+}
+
 void CPUSolverBase::SolverRun()
 {
     FPSCounter fps_counter;
-
     ParticleTracker tracker(universe_);
 
+    // Initial acceleration
     ComputeAcceleration();
 
     while (active_flag_)
@@ -97,7 +112,10 @@ void CPUSolverBase::SolverRun()
         context_.simulation_fps = fps_counter.GetFPS();
         context_.timestep_yrs = context_.timestep * context_.cMillionYearsPerTimeUnit * 1e6f;
 
-        //tracker.Track();
+        if (render_params_.render_tracks)
+        {
+            tracker.Track();
+        }
 
         if (context_.max_timesteps_count > 0 && context_.timesteps_count == context_.max_timesteps_count)
         {
@@ -116,37 +134,30 @@ void CPUSolverBase::Solve(float time)
 
     // After computing force before integration phase wait for signal from renderer
     // that it has finished copying new positions into device buffer
-    unique_lock<mutex> lock(context_.solver_mu);
-    context_.solver_cv.wait(lock, [this]() { return context_.positions_update_completed_flag == false || !active_flag_; });
+    //unique_lock<mutex> lock(context_.solver_mu);
+    //context_.solver_cv.wait(lock, [this]() { return context_.positions_update_completed_flag == false || !active_flag_; });
+
+    float integration_time_part_1;
+    float integration_time_part_2;
 
     // Leap-frog Kick-drift first part
+    BEGIN_TIME_MEASURE(int_timer_1, integration_time_part_1);
     PARALLEL_FOR_METHOD_BIND(count, CPUSolverBase::LeapFrogKickDriftIntegrationKernel);
+    END_TIME_MEASURE(int_timer_1);
 
     // After updating positions turn on flag signaling to renderer that it needs to update the device buffers
     context_.positions_update_completed_flag = true;
 
+    BEGIN_TIME_MEASURE(acc_timer, context_.compute_acceleration_time_msecs);
     ComputeAcceleration();
+    END_TIME_MEASURE(acc_timer);
 
     // Leap-frog Kick second part
+    BEGIN_TIME_MEASURE(int_timer_2, integration_time_part_2);
     PARALLEL_FOR_METHOD_BIND(count, CPUSolverBase::LeapFrogKickIntegrationKernel);
+    END_TIME_MEASURE(int_timer_2);
 
-    END_TIME_MEASURE(total_timer);
-}
-
-void CPUSolverBase::IntegrationKernel(THREAD_POOL_KERNEL_ARGS)
-{
-    assert(global_id < universe_.GetParticlesCount());
-
-    if (universe_.masses_[global_id] > 0.0f)
-    {
-        float3 pos = float3(universe_.positions_[global_id]);
-
-        IntegrateMotionEquation(context_.timestep, pos, universe_.velocities_[global_id],
-            universe_.forces_[global_id], universe_.inverse_masses_[global_id]);
-        universe_.positions_[global_id] = pos;
-    }
-    // Clear force accumulator
-    universe_.forces_[global_id] = float3();
+    context_.integration_time_msecs = integration_time_part_1 + integration_time_part_2;
 }
 
 void CPUSolverBase::LeapFrogKickDriftIntegrationKernel(THREAD_POOL_KERNEL_ARGS)
@@ -174,7 +185,6 @@ void CPUSolverBase::LeapFrogKickIntegrationKernel(THREAD_POOL_KERNEL_ARGS)
     }
 }
 
-#include "String/String.h"
 void CPUSolverBase::Dump(const char* prefix)
 {
     size_t i = 1;

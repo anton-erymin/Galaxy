@@ -11,7 +11,7 @@ public:
     ~BarnesHutCPUSolver();
 
 private:
-    void TraverseTree(const BarnesHutCPUTree& node);
+    void TraverseTree(int32 node = -1, float radius = 0.0f);
     virtual void ComputeAcceleration() override;
 
 private:

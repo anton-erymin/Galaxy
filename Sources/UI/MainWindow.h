@@ -1,11 +1,12 @@
 #pragma once
 
 #include <Entity.h>
+#include <Events/EventDispatcher.h>
 
 struct SimulationContext;
 struct RenderParameters;
 
-class MainWindow
+class MainWindow : public EventDispatcher
 {
 public:
     MainWindow(SimulationContext& sim_context, RenderParameters& render_params);
