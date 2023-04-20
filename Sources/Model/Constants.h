@@ -19,7 +19,7 @@ constexpr double cSecondsPerHour = 3600.0f;
 constexpr double cHoursPerDay = 24.0f;
 constexpr double cDaysPerYear = 365.0f;
 
-constexpr float cSoftFactor = 0.01f;
+constexpr float cSoftFactor = 0.02f;
 constexpr float cDefaultOpeningAngle = 0.5f;
 
 constexpr float cRadialVelocityFactor = 0.7f;

@@ -34,7 +34,7 @@ GalaxySimulator::GalaxySimulator()
     camera_comp->eye = float3(0.0f, 1.0f, 0.0f);
     camera_comp->at = float3();
     camera_comp->up = -Math::Z;
-    engine->SetActiveCamera(top_camera);
+    //engine->SetActiveCamera(top_camera);
 
     Entity camera = engine->GetActiveCamera();
     camera.Get<CameraComponent>()->z_near = 0.000001f;
@@ -47,7 +47,7 @@ GalaxySimulator::GalaxySimulator()
     sim_context_.cMillionYearsPerTimeUnit = sim_context_.cSecondsPerTimeUnit / cSecondsPerHour / cHoursPerDay / cDaysPerYear / 1e+6f;
 
     // Setup context
-    sim_context_.timestep = 0.0000009f; //0.00001f
+    sim_context_.timestep = 0.00001f; //0.00001f
     sim_context_.algorithm = SimulationAlgorithm::BARNESHUT_CPU;
     sim_context_.gravity_softening_length = cSoftFactor;
     sim_context_.barnes_hut_opening_angle = cDefaultOpeningAngle;
@@ -79,8 +79,10 @@ void GalaxySimulator::CreateUniverse()
     //universe_->CreateGalaxy(float3(), params);
     //universe_->CreateGalaxy(float3(0.2f, 0.0f, 0.0f), params);
 
-    CreateGalaxy(float3(-0.0f, 0.0f, 0.0f), float3(0.0f, 0.0f, 0.0f));
-    //CreateGalaxy(float3(1.5f, 0.0f, 0.0f), float3(-300.0f, 0.0f, 0.0f));
+    CreateGalaxy(float3(0.0f, 0.0f, 0.0f), float3(0.0f, 0.0f, 0.0f));
+
+    //CreateGalaxy(float3(-1.5f, 0.0f, 0.0f), float3(0.0f, 0.0f, 0.0f));
+    //CreateGalaxy(float3(1.5f, 0.0f, -1.5f), float3(-1.0f, 0.0f, 0.0f));
 }
 
 void GalaxySimulator::CreateGalaxy(const float3& position, const float3& vel)
@@ -92,7 +94,7 @@ void GalaxySimulator::CreateGalaxy(const float3& position, const float3& vel)
     params.disk_particles_count = 1;
     universe_->CreateGalaxy(position, params);
 
-    universe_->masses_[cur_count] *= 10000000.0f;
+    universe_->masses_[cur_count] *= 100000.0f;
     universe_->velocities_[cur_count] = vel;
 
     auto AddSatellite = [&](int i)
@@ -106,10 +108,11 @@ void GalaxySimulator::CreateGalaxy(const float3& position, const float3& vel)
         params.disk_particles_count = 1;
         universe_->CreateGalaxy(pos, params);
         float vmag = RadialVelocity(universe_->masses_[cur_count], dist);
-        universe_->velocities_[cur_count + i + 1] = vmag * ortho_dir + vel;
+        universe_->velocities_[cur_count + i + 1] = vel;
+        universe_->velocities_[cur_count + i + 1] += vmag * ortho_dir;
     };
 
-    for (size_t i = 0; i < 50000; i++)
+    for (size_t i = 0; i < 60000; i++)
     {
         AddSatellite(i);
     }
