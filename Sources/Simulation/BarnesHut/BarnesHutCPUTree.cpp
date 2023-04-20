@@ -79,11 +79,7 @@ void BarnesHutCPUTree::BuildHierarchy()
         InsertBody(global_id);
     };
 
-    //PARALLEL_FOR(GetBodyCount(), BuildHierarchyKernel);
-    for (size_t i = 0; i < GetBodyCount(); i++)
-    {
-        BuildHierarchyKernel(i, 0, 0, 0);
-    }
+    PARALLEL_FOR(GetBodyCount(), BuildHierarchyKernel);
 }
 
 static int32 FindChildBranch(const float4& node_center, const float4& body_pos)
@@ -124,23 +120,28 @@ void BarnesHutCPUTree::InsertBody(int32 body)
     int32 subdivided_node, subdivided_branch, subtree, old_child_branch;
 
     int32 child_branch = FindChildBranch(node_pos, body_pos);
+
+    LockChild(node, child_branch);
     int32 child_index = GetChildIndex(node, child_branch);
 
     // Follow from root to the current available leaf
     while (IsNode(child_index))
     {
+        UnlockChild(node, child_branch);
         node = child_index;
         node_pos = GetPosition(node);
         child_branch = FindChildBranch(node_pos, body_pos);
+
+        LockChild(node, child_branch);
         child_index = GetChildIndex(node, child_branch);
         current_radius *= 0.5f;
     }
 
     if (IsNull(child_index))
     {
-        // No body here yet so just insert
+        // No body here yet so just insert and unlock
         SetChildIndex(node, child_branch, body);
-        //UnlockChild(node, branch);
+        UnlockChild(node, child_branch);
     }
     else
     {
@@ -186,7 +187,7 @@ void BarnesHutCPUTree::InsertBody(int32 body)
         // Attach new subtree to tree
         SetChildIndex(subdivided_node, subdivided_branch, subtree);
 
-        //UnlockChild(node, branch);
+        UnlockChild(subdivided_node, subdivided_branch);
     }
 }
 
