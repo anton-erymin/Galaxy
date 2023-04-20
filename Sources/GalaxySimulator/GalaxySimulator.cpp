@@ -47,7 +47,7 @@ GalaxySimulator::GalaxySimulator()
     sim_context_.cMillionYearsPerTimeUnit = sim_context_.cSecondsPerTimeUnit / cSecondsPerHour / cHoursPerDay / cDaysPerYear / 1e+6f;
 
     // Setup context
-    sim_context_.timestep = 0.000002f; //0.00001f
+    sim_context_.timestep = 0.00005f; //0.00001f
     sim_context_.algorithm = SimulationAlgorithm::BARNESHUT_CPU;
     sim_context_.gravity_softening_length = cSoftFactor;
     sim_context_.barnes_hut_opening_angle = cDefaultOpeningAngle;
@@ -97,7 +97,7 @@ void GalaxySimulator::CreateGalaxy(const float3& position, const float3& vel)
 
     auto AddSatellite = [&](int i)
     {
-        float dist = RAND_RANGE(0.01f, 0.3f);
+        float dist = RAND_RANGE(0.01f, 1.0f);
         float3 rand_dir(RAND_SNORM, 0.0f, RAND_SNORM);
         rand_dir.normalize();
         float3 ortho_dir = float3(rand_dir.z, 0.0f, -rand_dir.x);
@@ -109,7 +109,7 @@ void GalaxySimulator::CreateGalaxy(const float3& position, const float3& vel)
         universe_->velocities_[cur_count + i + 1] = vmag * ortho_dir + vel;
     };
 
-    for (size_t i = 0; i < 10000; i++)
+    for (size_t i = 0; i < 30000; i++)
     {
         AddSatellite(i);
     }
