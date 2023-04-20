@@ -22,7 +22,6 @@ private:
     void InsertBody(int32 body);
     int32 AddNode(const float4& node_center_pos);
     float4 GetChildCenterPos(const float4& node_center, int32 child_branch, float radius);
-    float2 ComputeAccelerationRecursive(int32 body, int32 node, float radius, float soft, float opening_angle) const;
 
     // Index helpers
     int32 GetBodyCount() const { return int32(body_position_.size()); }

@@ -5,7 +5,7 @@
 #include <Thread/ThreadPool.h>
 
 static constexpr uint32_t cMaxTreeLevel = 64;
-static constexpr uint32_t cNodesStackSize = 512;
+static constexpr uint32_t cNodesStackSize = 64;
 
 static float2 Float3To2(const float3& v) { return float2(v.x, v.z); }
 static float3 Float2To3(const float2& v) { return float3(v.x, 0.0f, v.y); }
@@ -186,7 +186,6 @@ void BarnesHutCPUTree::InsertBody(int32 body)
         SetChildIndex(node, child_branch, body);
         // Attach new subtree to tree
         SetChildIndex(subdivided_node, subdivided_branch, subtree);
-
         UnlockChild(subdivided_node, subdivided_branch);
     }
 }
@@ -292,43 +291,46 @@ void BarnesHutCPUTree::SummarizeTree()
 
 float2 BarnesHutCPUTree::ComputeAcceleration(int32 body, float soft, float opening_angle) const
 {
-    return ComputeAccelerationRecursive(body, GetRootNode(), radius_, soft, opening_angle);
-}
-
-float2 BarnesHutCPUTree::ComputeAccelerationRecursive(int32 body, int32 node, float radius, float soft, float opening_angle) const
-{
     float2 acceleration = {};
 
-    float2 position = Float3To2(GetPosition(body));
-    float2 center = Float3To2(GetPosition(node));
-    float mass = GetMass(node);
+    float2 body_position = Float3To2(GetPosition(body));
 
-    float2 l = center - position;
+    int32 stack[cNodesStackSize];
+    float coeff_stack[cNodesStackSize];
 
-    if (IsBody(node))
+    stack[0] = GetRootNode();
+    coeff_stack[0] = 4.0f * radius_ * radius_ / (opening_angle * opening_angle);
+
+    size_t stack_count = 1;
+
+    while (stack_count)
     {
-        if (body != node)
-        {
-            acceleration = GravityAcceleration2(l, mass, soft);
-        }
-    }
-    else
-    {
-        float r = l.length();
-        float theta = (2.0f * radius) / r;
+        --stack_count;
+        int32 node = stack[stack_count];
+        float threshold_dist = coeff_stack[stack_count];
 
-        if (theta < opening_angle)
+        float2 center = Float3To2(GetPosition(node));
+        float mass = GetMass(node);
+
+        float2 l = center - body_position;
+
+        if (IsBody(node) || l.sqnorm() > threshold_dist)
         {
-            acceleration = GravityAcceleration2(l, mass, soft);
+            acceleration += GravityAcceleration2(l, mass, soft);
         }
         else
         {
+            float half_threshold = 0.25f * threshold_dist;
+
             for (int i = 0; i < TREE_CHILDREN_COUNT; i++)
             {
                 int32 child_index = GetChildIndex(node, i);
-                if (!IsNull(child_index))
+                if (!IsNull(child_index) && child_index != body)
                 {
-                    acceleration += ComputeAccelerationRecursive(body, child_index, 0.5f * radius, soft, opening_angle);
+                    assert(stack_count < cNodesStackSize);
+                    stack[stack_count] = child_index;
+                    coeff_stack[stack_count] = half_threshold;
+                    ++stack_count;
                 }
             }
         }
@@ -336,54 +338,3 @@ float2 BarnesHutCPUTree::ComputeAccelerationRecursive(int32 body, int32 node, fl
 
     return acceleration;
 }
-
-#if 0
-float2 BarnesHutCPUTree::ComputeAccelerationFlat(const float2& position, float soft, float opening_angle) const
-{
-    float2 acceleration = {};
-
-    const BarnesHutCPUTree* stack[cNodesStackSize];
-    size_t count = 1;
-
-    stack[0] = this;
-
-    while (count)
-    {
-        const BarnesHutCPUTree& node = *stack[--count];
-
-        if (node.is_leaf_)
-        {
-            if (node.is_busy_ && !equal_eps(position, node.center, EPS))
-            {
-                //acceleration += GravityAcceleration(node.center_ - position, node.mass_, soft);
-            }
-        }
-        else
-        {
-            float2 vec = node.center_ - position;
-            float r = vec.length();
-            float theta = node.length_ / r;
-
-            if (theta < opening_angle)
-            {
-                //acceleration += GravityAcceleration(vec, node.mass_, soft, r);
-            }
-            else
-            {
-                for (int i = 3; i >= 0; --i)
-                {
-                    auto child = node.children_[i].get();
-                    if (child)
-                    {
-                        assert(count < cNodesStackSize);
-                        stack[count++] = child;
-                    }
-                }
-            }
-        }
-    }
-
-    return acceleration;
-}
-
-#endif // 0

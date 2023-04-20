@@ -47,7 +47,7 @@ GalaxySimulator::GalaxySimulator()
     sim_context_.cMillionYearsPerTimeUnit = sim_context_.cSecondsPerTimeUnit / cSecondsPerHour / cHoursPerDay / cDaysPerYear / 1e+6f;
 
     // Setup context
-    sim_context_.timestep = 0.0000001f; //0.00001f
+    sim_context_.timestep = 0.0000005f; //0.00001f
     sim_context_.algorithm = SimulationAlgorithm::BARNESHUT_CPU;
     sim_context_.gravity_softening_length = cSoftFactor;
     sim_context_.barnes_hut_opening_angle = cDefaultOpeningAngle;
