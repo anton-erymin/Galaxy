@@ -84,8 +84,8 @@ void BarnesHutCPUSolver::ComputeAcceleration()
             return;
         }
 
-        float2 force = tree_->ComputeAcceleration(global_id, context_.gravity_softening_length, context_.barnes_hut_opening_angle);
-        universe_.forces_[global_id] = float3(force.x, 0.0f, force.y);
+        universe_.forces_[global_id] = tree_->ComputeAcceleration(
+            global_id, context_.gravity_softening_length, context_.barnes_hut_opening_angle);
     };
 
     BEGIN_TIME_MEASURE(solving_timer, context_.compute_force_time_msecs);

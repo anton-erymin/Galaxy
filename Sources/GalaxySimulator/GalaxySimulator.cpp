@@ -47,7 +47,7 @@ GalaxySimulator::GalaxySimulator()
     sim_context_.cMillionYearsPerTimeUnit = sim_context_.cSecondsPerTimeUnit / cSecondsPerHour / cHoursPerDay / cDaysPerYear / 1e+6f;
 
     // Setup context
-    sim_context_.timestep = 0.00001f; //0.00001f
+    sim_context_.timestep = 0.000015f; //0.00001f
     sim_context_.algorithm = SimulationAlgorithm::BARNESHUT_CPU;
     sim_context_.gravity_softening_length = cSoftFactor;
     sim_context_.barnes_hut_opening_angle = cDefaultOpeningAngle;
@@ -104,6 +104,7 @@ void GalaxySimulator::CreateGalaxy(const float3& position, const float3& vel)
         rand_dir.normalize();
         float3 ortho_dir = float3(rand_dir.z, 0.0f, -rand_dir.x);
         float3 pos = position + rand_dir * dist;
+        pos.y = RAND_RANGE(-0.2f, 0.2f);
         GalaxyParameters params = {};
         params.disk_particles_count = 1;
         universe_->CreateGalaxy(pos, params);

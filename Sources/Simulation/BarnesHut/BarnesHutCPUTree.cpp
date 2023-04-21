@@ -7,18 +7,6 @@
 static constexpr uint32_t cMaxTreeLevel = 64;
 static constexpr uint32_t cNodesStackSize = 64;
 
-static float2 Float3To2(const float3& v) { return float2(v.x, v.z); }
-static float3 Float2To3(const float2& v) { return float3(v.x, 0.0f, v.y); }
-static float2 GravityAcceleration2(const float2& l, float mass, float soft)
-{
-    // TODO: Softended distance right?
-    float3 l3 = Float2To3(l);
-    float dist = SoftenedDistance(l3.length_sq(), soft);
-    float dist_cubic = dist * dist * dist;
-    float3 a = GravityAcceleration(l3, mass, dist_cubic);
-    return Float3To2(a);
-}
-
 BarnesHutCPUTree::BarnesHutCPUTree(const vector<float4>& body_position, const vector<float>& body_mass)
     : body_position_(body_position)
     , body_mass_(body_mass)
@@ -42,7 +30,7 @@ BoundingBox BarnesHutCPUTree::ComputeBoundingBox()
 {
     auto BoundingBoxKernel = [this](THREAD_POOL_KERNEL_ARGS)
     {
-        bbox_per_thread_[block_id].grow(float3(body_position_[global_id]));
+        bbox_per_thread_[block_id].grow(body_position_[global_id]);
     };
 
     PARALLEL_FOR(GetBodyCount(), BoundingBoxKernel);
@@ -84,19 +72,21 @@ void BarnesHutCPUTree::BuildHierarchy()
 
 static int32 FindChildBranch(const float4& node_center, const float4& body_pos)
 {
-    // TODO: Fix for octree
     int32 branch = 0;
     if (body_pos.x > node_center.x) branch = 1;
-    if (body_pos.z > node_center.z) branch += 2;
+    if (body_pos.y > node_center.y) branch += 2;
+    if (body_pos.z > node_center.z) branch += 4;
     return branch;
 }
 
 float4 BarnesHutCPUTree::GetChildCenterPos(const float4& node_center, int32 child_branch, float radius)
 {
-    // TODO: Fix for octree
     float half_radius = 0.5f * radius;
     float4 child_offset = 
-        float4((child_branch & 1) * radius, 0.0f, ((child_branch >> 1) & 1) * radius, 0.0f);
+        float4((child_branch & 1) * radius, 
+            ((child_branch >> 1) & 1) * radius,
+            ((child_branch >> 2) & 1) * radius, 
+            0.0f);
 
     // 0 (0, 0)
     // 1 (radius, 0)
@@ -104,7 +94,6 @@ float4 BarnesHutCPUTree::GetChildCenterPos(const float4& node_center, int32 chil
     // 3 (radius, radius)
 
     float4 pos = node_center - float4(half_radius) + child_offset;
-    pos.y = 0.0f;
     return pos;
 }
 
@@ -289,11 +278,11 @@ void BarnesHutCPUTree::SummarizeTree()
     ThreadPool::Dispatch(GetActualNodeCount(), 1, SummarizeKernel);
 }
 
-float2 BarnesHutCPUTree::ComputeAcceleration(int32 body, float soft, float opening_angle) const
+float4 BarnesHutCPUTree::ComputeAcceleration(int32 body, float soft, float opening_angle) const
 {
-    float2 acceleration = {};
+    float4 acceleration = {};
 
-    float2 body_position = Float3To2(GetPosition(body));
+    const float4& body_position = GetPosition(body);
 
     int32 stack[cNodesStackSize];
     float coeff_stack[cNodesStackSize];
@@ -309,14 +298,17 @@ float2 BarnesHutCPUTree::ComputeAcceleration(int32 body, float soft, float openi
         int32 node = stack[stack_count];
         float threshold_dist = coeff_stack[stack_count];
 
-        float2 center = Float3To2(GetPosition(node));
+        const float4& center = GetPosition(node);
         float mass = GetMass(node);
 
-        float2 l = center - body_position;
+        float3 l = center - body_position;
+        float dist_sq = l.sqnorm();
 
-        if (IsBody(node) || l.sqnorm() > threshold_dist)
+        if (IsBody(node) || dist_sq > threshold_dist)
         {
-            acceleration += GravityAcceleration2(l, mass, soft);
+            float dist_soft = SoftenedDistance(dist_sq, soft);
+            float dist_soft_cubic = dist_soft * dist_soft * dist_soft;
+            acceleration += GravityAcceleration(l, mass, dist_soft_cubic);
         }
         else
         {

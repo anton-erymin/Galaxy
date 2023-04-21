@@ -2,7 +2,7 @@
 
 namespace Math { class BoundingBox; }
 
-constexpr uint32 TREE_CHILDREN_COUNT = 4;
+constexpr uint32 TREE_CHILDREN_COUNT = 8;
 constexpr int32 NULL_INDEX = -1;
 
 class BarnesHutCPUTree
@@ -12,8 +12,7 @@ public:
 
     void BuildTree();
     void SummarizeTree();
-    float2 ComputeAcceleration(int32 body, float soft, float opening_angle) const;
-    //float2 ComputeAccelerationFlat(const float2 &position, float soft, float opening_angle) const;
+    float4 ComputeAcceleration(int32 body, float soft, float opening_angle) const;
 
 private:
     BoundingBox ComputeBoundingBox();
