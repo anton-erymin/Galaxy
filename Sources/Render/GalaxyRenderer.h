@@ -38,4 +38,6 @@ private:
 
     GAL::GraphicsPipelinePtr particles_render_pipeline_;
     GAL::GraphicsPipelinePtr tree_draw_pipeline_;
+
+    GAL::ComputePipelinePtr test_pipeline_;
 };

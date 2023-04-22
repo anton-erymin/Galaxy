@@ -7,5 +7,5 @@ void main()
 {
     uint gidx = gl_GlobalInvocationID.x;
     
-    g_position[gidx].y = 5.0;
+    g_position[gidx].y += 0.001;
 }

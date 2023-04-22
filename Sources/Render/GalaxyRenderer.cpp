@@ -38,6 +38,8 @@ void GalaxyRenderer::CreatePipelines(RenderDevice& render_device)
 {
     particles_render_pipeline_ = render_device.CreateGraphicsPipeline("DrawParticles.geom",  "ShadeSingleColor.vert", "ShadeSingleColor.frag");
     tree_draw_pipeline_ = render_device.CreateGraphicsPipeline("DrawBarnesHut.geom", "ShadeSingleColor.vert", "ShadeSingleColor.frag");
+
+    test_pipeline_ = render_device.CreateComputePipeline("Test.comp");
 }
 
 void GalaxyRenderer::CreateSizeDependentResources(RenderDevice& render_device, const int2& output_size)
@@ -75,7 +77,7 @@ void GalaxyRenderer::BindSceneDataBuffers()
     Systems::IDeviceBufferSystem* buffer_system = engine->GetRenderer().GetRendererCore().
         DeviceBufferSystem();
 
-    particles_render_pipeline_->SetBuffer(particles_positions_buffer_, "ParticlesPositions");
+    particles_render_pipeline_->SetBuffer(particles_positions_buffer_, "Position");
 }
 
 vector<GAL::GraphicsPipelinePtr> GalaxyRenderer::GetPipelines()
@@ -106,6 +108,9 @@ void GalaxyRenderer::Render()
         // so that it will be able to update postions during integration phase
         sim_context_.solver_cv.notify_one();
     }
+
+    test_pipeline_->Dispatch(int3(1, 1, 1));
+    GAL_OpenGL::MemoryBarriers(GAL::MemoryBarrierType::SHADER_STORAGE);
 
     // Draw particles
     if (render_params_.render_particles && render_params_.render_as_points)
@@ -189,5 +194,5 @@ void GalaxyRenderer::UpdateNodesBuffers()
 void GalaxyRenderer::BindNodesBuffers()
 {
     tree_draw_pipeline_->SetBuffer(nodes_positions_buffer_, "NodePositions");
-    tree_draw_pipeline_->SetBuffer(nodes_sizes_buffer_, "NodeSizes");
+    tree_draw_pipeline_->SetBuffer(nodes_sizes_buffer_, "NodeRadius");
 }

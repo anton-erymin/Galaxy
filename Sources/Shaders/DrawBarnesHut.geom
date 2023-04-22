@@ -9,7 +9,7 @@ layout(std430) buffer NodePositions
     vec4 g_node_positions[];
 };
 
-layout(std430) buffer NodeSizes
+layout(std430) buffer NodeRadius
 {
     float g_node_radius[];
 };
