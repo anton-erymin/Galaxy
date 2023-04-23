@@ -1,11 +1,11 @@
 #pragma once
 
-#include "ISolver.h"
+#include "SolverBase.h"
 #include "Thread/ThreadPool.h"
 
 class Thread;
 
-class CPUSolverBase : public ISolver
+class CPUSolverBase : public SolverBase
 {
 public:
 	CPUSolverBase(Universe& universe, SimulationContext& context, const RenderParameters& render_params);
@@ -16,18 +16,14 @@ public:
 protected:
 	void Stop();
 
-private:
+private:	
 	void SolverRun();
-	void Solve(float time) override;
-	void IntegrationKernel(THREAD_POOL_KERNEL_ARGS);
+
+	virtual void IntegrateLeapFrogKickDrift() override;
+	virtual void IntegrateLeapFrogKick() override;
+
 	void LeapFrogKickDriftIntegrationKernel(THREAD_POOL_KERNEL_ARGS);
 	void LeapFrogKickIntegrationKernel(THREAD_POOL_KERNEL_ARGS);
-
-	// This must not be pure virtual because it is called from the separate thread
-	// and destructor of subclass can have been called by the moment
-	virtual void ComputeAcceleration() { }
-
-	void Dump(const char* prefix);
 
 protected:
 	// This needs to be declared before thread

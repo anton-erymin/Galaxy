@@ -47,23 +47,22 @@ GalaxySimulator::GalaxySimulator()
     sim_context_.cMillionYearsPerTimeUnit = sim_context_.cSecondsPerTimeUnit / cSecondsPerHour / cHoursPerDay / cDaysPerYear / 1e+6f;
 
     // Setup context
-    sim_context_.timestep = 0.000015f; //0.00001f
+    sim_context_.timestep = 0.000001f; //0.00001f
     sim_context_.algorithm = SimulationAlgorithm::BARNESHUT_CPU;
     sim_context_.gravity_softening_length = cSoftFactor;
     sim_context_.barnes_hut_opening_angle = cDefaultOpeningAngle;
     sim_context_.is_simulated = false;
 
     CreateUniverse();
-    CreateSolver(sim_context_.algorithm);
     CreateRenderer();
 
     main_window_ = make_unique<MainWindow>(sim_context_, render_params_);
     BIND_EVENT_HANDLER(OnEvent);
     main_window_->AddEventHandler(*this);
 
-    solver_->Start();
-
     //engine->GetRenderer().GetRenderManager().SetVideoRecordState(true);
+
+    CreateSolver(sim_context_.algorithm);
 }
 
 GalaxySimulator::~GalaxySimulator()
@@ -113,9 +112,21 @@ void GalaxySimulator::CreateGalaxy(const float3& position, const float3& vel)
         universe_->velocities_[cur_count + i + 1] += vmag * ortho_dir;
     };
 
-    for (size_t i = 0; i < 60000; i++)
+    auto AddBody = [&](int i)
+    {
+        const float R = 10.0f;
+        float3 rand_pos = float3(RAND_RANGE(-R, R), RAND_RANGE(-R, R), RAND_RANGE(-R, R));
+        float3 pos = position + rand_pos;
+        GalaxyParameters params = {};
+        params.disk_particles_count = 1;
+        universe_->CreateGalaxy(pos, params);
+        universe_->velocities_[cur_count + i + 1] = vel;
+    };
+
+    for (size_t i = 0; i < 1000; i++)
     {
         AddSatellite(i);
+        //AddBody(i);
     }
 }
 
@@ -123,21 +134,36 @@ void GalaxySimulator::CreateSolver(SimulationAlgorithm algorithm)
 {
     switch (algorithm)
     {
-    case SimulationAlgorithm::BRUTEFORCE_CPU:
-        solver_.reset(new BruteforceCPUSolver(*universe_, sim_context_, render_params_));
-        break;
-    case SimulationAlgorithm::BRUTEFORCE_GPU:
-        //solver_.reset(new BruteforceGPUSolver(*universe_, sim_context_, render_params_));
-        break;
     case SimulationAlgorithm::BARNESHUT_CPU:
         solver_.reset(new BarnesHutCPUSolver(*universe_, sim_context_, render_params_));
+        renderer_->SetUpdateHandler(nullptr);
+        solver_->Initialize();
         break;
     case SimulationAlgorithm::BARNESHUT_GPU:
-        //solver_.reset(new BarnesHutGPUSolver(*universe_, sim_context_, render_params_));
+    {
+        BarnesHutGPUSolver* solver = new BarnesHutGPUSolver(*universe_, sim_context_, render_params_);
+        solver_.reset(solver);
+        solver_->Initialize();
+        renderer_->SetUpdateHandler(solver);
+        renderer_->SetPositionBuffer(solver->GetPositionBuffer());
+        break;
+    }
+    case SimulationAlgorithm::BRUTEFORCE_CPU:
+        solver_.reset(new BruteforceCPUSolver(*universe_, sim_context_, render_params_));
+        renderer_->SetUpdateHandler(nullptr);
+        //renderer_->
+        solver_->Initialize();
+        break;
+    case SimulationAlgorithm::BRUTEFORCE_GPU:
+        solver_.reset(new BruteforceGPUSolver(*universe_, sim_context_, render_params_));
+        renderer_->SetUpdateHandler(solver_.get());
+        solver_->Initialize();
         break;
     default:
         break;
     }
+
+    solver_->Start();
 }
 
 void GalaxySimulator::CreateRenderer()
@@ -151,10 +177,6 @@ void GalaxySimulator::OnEvent(Event& e)
     if (e.type == SID_DUP("AlgorithmChanged"))
     {
         CreateSolver(sim_context_.algorithm);
-        if (solver_)
-        {
-            solver_->Start();
-        }
     }
 }
 
@@ -300,24 +322,6 @@ void GalaxySimulator::Bind(GAL::GraphicsPipelinePtr& pipeline)
 
     pipeline->SetBuffer(GetRenderer().GetDeviceBuffer(nodes_buffer_), "NodesData");
     pipeline->SetBuffer(nodes_counter, "NodesCounter");
-}
-#endif // 0
-
-#if 0
-int3 CalcNumGroups(int size, uint group_size)
-{
-    return int3((size + group_size - 1) / group_size, 1, 1);
-}
-
-int3 CalcNumGroups(int2 size, uint group_size)
-{
-    return int3((size.x + group_size - 1) / group_size, (size.y + group_size - 1) / group_size, 1);
-}
-
-int3 CalcNumGroups(int3 size, uint group_size)
-{
-    return int3((size.x + group_size - 1) / group_size, (size.y + group_size - 1) / group_size,
-        (size.z + group_size - 1) / group_size);
 }
 #endif // 0
 

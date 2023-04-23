@@ -28,7 +28,7 @@ private:
 private:
     vector<Galaxy> galaxies_;
     vector<float4> positions_;
-    vector<float3> velocities_;
+    vector<float4> velocities_;
     //vector<float3> accelerations_;
     vector<float3> forces_;
     vector<float> masses_;
@@ -38,9 +38,13 @@ private:
     vector<float4> node_positions_;
     vector<float> node_sizes_;
 
+    friend class SolverBase;
     friend class CPUSolverBase;
+    friend class GPUSolverBase;
     friend class BruteforceCPUSolver;
+    friend class BruteforceGPUSolver;
     friend class BarnesHutCPUSolver;
+    friend class BarnesHutGPUSolver;
     friend class GalaxyRenderer;
     friend class GalaxySimulator;
     friend class ParticleTracker;

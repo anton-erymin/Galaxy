@@ -2,10 +2,10 @@
 
 enum class SimulationAlgorithm
 {
-    BRUTEFORCE_CPU,
-    BRUTEFORCE_GPU,
     BARNESHUT_CPU,
     BARNESHUT_GPU,
+    BRUTEFORCE_CPU,
+    BRUTEFORCE_GPU,
     MAX_COUNT
 };
 
@@ -58,4 +58,11 @@ struct RenderParameters
     float brightness = 1.0f;
     float particle_size_scale = 5.0f;
     bool colors_inverted = true;
+};
+
+class IUpdatable
+{
+public:
+	virtual ~IUpdatable() = default;
+	virtual void Update() = 0;
 };

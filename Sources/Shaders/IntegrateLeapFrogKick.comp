@@ -1,0 +1,28 @@
+#include "CommonConstants.h"
+#include "SimulationLayout.h"
+
+shared uint s_body_count;
+shared float s_timestep;
+
+layout(local_size_x = kGroupSize1D) in;
+
+void main()
+{
+	if (gl_LocalInvocationID.x == 0)
+	{
+		s_body_count = g_body_count;
+		s_timestep = g_timestep;
+	}
+	
+	barrier();
+	
+    uint gidx = gl_GlobalInvocationID.x;
+
+	if (gidx >= s_body_count)
+	{
+		return;
+	}
+
+    // 1/2 kick
+	g_velocity[gidx].xyz += g_acceleration[gidx].xyz * s_timestep * 0.5;
+}

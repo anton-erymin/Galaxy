@@ -27,7 +27,7 @@ void BarnesHutCPUSolver::TraverseTree(int32 node, float radius)
 
     const float4& node_pos = tree_->GetPosition(node);
 
-    universe_.node_positions_.push_back(float4(node_pos.x, 0.0f, node_pos.z, 1.0f));
+    universe_.node_positions_.push_back(node_pos);
     universe_.node_sizes_.push_back(radius);
 
     if (tree_->IsNode(node))

@@ -1,0 +1,173 @@
+#include "SimulationLayout.h"
+
+shared uint s_body_count;
+shared uint s_nodes_max_count;
+shared uint s_total_count;
+shared float s_radius;
+
+// Helpers must be included after declaring shared vars and layout
+#include "TreeHelpers.h"
+
+layout(local_size_x = 256) in;
+
+void main()
+{
+    int gidx = int(gl_GlobalInvocationID.x);
+    
+    if (gidx == 0)
+    {
+		// Load to shared storage
+		s_body_count = g_body_count;
+		s_nodes_max_count = g_nodes_max_count;
+		s_total_count = g_total_count;
+		s_radius = g_radius;
+		
+		// Setup root
+		const float ROOT_RADIUS = 5.0;
+		BBox root_box = BBox_Create(vec3(-ROOT_RADIUS), vec3(ROOT_RADIUS));
+		//ResetTree(root_box);
+    }
+	
+    barrier();
+	
+    if (gidx >= GetBodyCount())
+    {
+        return;
+    }
+
+    //memoryBarrier();
+    
+#if 0    
+uvec3 gl_NumWorkGroups;
+        uvec3 gl_WorkGroupSize;
+        uvec3 gl_WorkGroupID;
+        uvec3 gl_LocalInvocationID;
+        uvec3 gl_GlobalInvocationID;
+        uint  gl_LocalInvocationIndex;
+#endif
+		
+    bool next_body = true;
+    
+    int stride = int(gl_WorkGroupSize.x * gl_NumWorkGroups.x);
+    
+    int body_idx = gidx;
+    
+    // Insert each particle assigned to this thread.
+    //while (body_idx < PARTICLES_COUNT)
+    {
+        if (next_body)
+        {
+            next_body = false;
+            
+            // Setup follow from the root.
+
+        }
+        else
+        {
+            // Read again.
+            //child_idx = g_nodes[parent_idx].child[child_branch].x;
+        }
+        
+        // Follow or continue follow path to the leaf.
+        //while (IsNode(child_idx))
+        {
+        }
+        
+        //if (child_idx != NODE_LOCKED)
+        {
+            // Try to lock.
+            //if (child_idx == atomicCompSwap(g_nodes[parent_idx].child[child_branch].x, child_idx, NODE_LOCKED))
+            {    
+                //if (child_idx == EMPTY_INDEX)
+                {
+                    // Empty node, so just insert and thus unlock.
+                    //g_nodes[parent_idx].child[child_branch].x = EncodeParticleIndex(body_idx);
+                }
+                //else
+                {
+                    // Create new nodes and insert the old and new body.
+                    // New nodes are created until both are in different childs.
+                    
+                    /* old_idx = DecodeParticleIndex(child_idx);
+                    old_pos = g_particles[old_idx].position.xyz;
+                    node_position = node.position.xyz;
+                    locked_node = parent_idx;
+                    locked_branch = child_branch;
+                    locked_depth = depth;
+                    
+                    while (true)
+                    {
+                        // Get next free node index.
+                        new_node_idx = int(atomicAdd(g_nodes_counter, 1u));
+                        
+                        // Create node.
+                        Node new_node;
+                        new_node.mass = 0.0;
+                        new_node.depth = depth;
+                        
+                        for (int i = 0; i < NODE_CHILD_COUNT; ++i)
+                        {
+                            new_node.child[i].x = EMPTY_INDEX;
+                        }
+                        
+                        vec3 node_offset = vec3(0.0);
+                        node_offset.x = float((child_branch >> 1) & 1) * current_radius;
+                        node_offset.z = float(child_branch & 1) * current_radius;
+                        
+                        // Map from [0; R] to [-R; R].
+                        node_offset = 2 * node_offset - vec3(current_radius, 0.0, current_radius);
+                        
+                        node_position += node_offset;
+                        
+                        new_node.position.xyz = node_position;
+                        
+                        g_nodes[new_node_idx] = new_node;
+                        
+                        // Set node as child if we went further.
+                        // otherwise we unlock too early.
+                        if (depth > locked_depth)
+                        {
+                            g_nodes[parent_idx].child[child_branch].x = new_node_idx;
+                        }
+                        else
+                        {
+                            subtree_root = new_node_idx;
+                        }
+                        
+                        parent_idx = new_node_idx;
+
+                        // Check if both bodies fit into different childs.
+                        
+                        child_branch = FindChildBranch(node_position, old_pos);
+                        new_branch = FindChildBranch(node_position, p.position.xyz);
+                        
+                        if (child_branch != new_branch)
+                        {
+                            // Break inserting nodes.
+                            break;
+                        }
+                        
+                        // Both bodies fit into the same child, continue inserting.
+                        current_radius *= 0.5;
+                        ++depth;
+                    }
+                    
+                    // Insert bodies.
+                    g_nodes[parent_idx].child[child_branch].x = child_idx;
+                    g_nodes[parent_idx].child[new_branch].x = EncodeParticleIndex(body_idx);
+                    // Unlock branch.
+                    g_nodes[locked_node].child[locked_branch].x = subtree_root; */
+                }
+                
+                memoryBarrierBuffer();
+                
+                // To the next body if any.
+                body_idx += stride;
+                next_body = true;
+            }
+        }
+        
+        //barrier();
+        //memoryBarrier();
+    }
+}

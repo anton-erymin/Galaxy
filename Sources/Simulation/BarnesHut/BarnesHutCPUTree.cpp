@@ -4,16 +4,22 @@
 
 #include <Thread/ThreadPool.h>
 
-static constexpr uint32_t cMaxTreeLevel = 64;
-static constexpr uint32_t cNodesStackSize = 64;
+static constexpr size_t cMaxTreeLevel = 64;
+static constexpr size_t cNodesStackSize = 64;
+static constexpr size_t cMinNodesCount = 64;
+
+static size_t ComputeNodesMaxCount(size_t body_count)
+{
+    return max(2 * body_count, cMinNodesCount);
+}
 
 BarnesHutCPUTree::BarnesHutCPUTree(const vector<float4>& body_position, const vector<float>& body_mass)
     : body_position_(body_position)
     , body_mass_(body_mass)
-    , mass_(2 * body_position.size())
-    , children_mu_(2 * body_position.size() * TREE_CHILDREN_COUNT)
+    , mass_(ComputeNodesMaxCount(body_position.size()))
+    , children_mu_(ComputeNodesMaxCount(body_position.size()) * TREE_CHILDREN_COUNT)
 {
-    size_t nodes_max_count = 2 * GetBodyCount();
+    size_t nodes_max_count = ComputeNodesMaxCount(GetBodyCount());
     position_.resize(nodes_max_count);
     children_.resize(TREE_CHILDREN_COUNT * nodes_max_count);
     bbox_per_thread_.resize(ThreadPool::GetThreadCount());
@@ -49,7 +55,6 @@ BoundingBox BarnesHutCPUTree::ComputeBoundingBox()
 
 void BarnesHutCPUTree::ResetTree(const BoundingBox& bbox)
 {
-    int max_dim_idx = bbox.maxdim();
     float max_len = bbox.max_extent();
     float3 bbox_center = bbox.center();
 
@@ -171,8 +176,8 @@ void BarnesHutCPUTree::InsertBody(int32 body)
         }
         while (child_branch == old_child_branch); // Subdivide until two bodies are in different child branches
 
-        SetChildIndex(node, old_child_branch, child_index);
-        SetChildIndex(node, child_branch, body);
+        SetChildIndex(node, old_child_branch, child_index); // Old body
+        SetChildIndex(node, child_branch, body); // New body
         // Attach new subtree to tree
         SetChildIndex(subdivided_node, subdivided_branch, subtree);
         UnlockChild(subdivided_node, subdivided_branch);

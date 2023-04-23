@@ -92,7 +92,7 @@ void MainWindow::BuildUI()
     float disk_thickness = 1.0f;
     float black_hole_mass = 1.0f;
 
-    static const char* s_sim_types[] = { "Bruteforce CPU", "Bruteforce GPU", "Barnes-Hut CPU", "Barnes-Hut GPU" };
+    static const char* s_sim_types[] = { "Barnes-Hut CPU", "Barnes-Hut GPU", "Bruteforce CPU", "Bruteforce GPU" };
 
     BuildTable("Simulation",
         [&]()

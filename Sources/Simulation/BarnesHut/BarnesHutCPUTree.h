@@ -24,7 +24,7 @@ private:
 
     // Index helpers
     int32 GetBodyCount() const { return int32(body_position_.size()); }
-    int32 GetNodeCount() const { return int32(position_.size()); }
+    int32 GetNodeMaxCount() const { return int32(position_.size()); }
     int32 GetActualNodeCount() const { return GetRootNode() - cur_node_idx_; }
     bool IsNull(int32 index) const { return index == NULL_INDEX; }
     bool IsBody(int32 index) const { return !IsNull(index) && index < GetBodyCount(); }
@@ -38,7 +38,7 @@ private:
     void SetMass(int32 uni_index, float mass) { assert(IsNode(uni_index)); mass_[GetNodeArrayIndex(uni_index)] = mass; }
     int32 GetChildIndex(int32 uni_index, int32 child_branch) const { assert(IsNode(uni_index)); return children_[GetNodeArrayIndex(uni_index) * TREE_CHILDREN_COUNT + child_branch]; }
     void SetChildIndex(int32 uni_index, int32 child_branch, int32 child_index) { assert(IsNode(uni_index)); children_[GetNodeArrayIndex(uni_index) * TREE_CHILDREN_COUNT + child_branch] = child_index; }
-    int32 GetRootNode() const { return GetNodeUniIndex(GetNodeCount() - 1); }
+    int32 GetRootNode() const { return GetNodeUniIndex(GetNodeMaxCount() - 1); }
     void LockChild(int32 uni_index, int32 child_branch) { assert(IsNode(uni_index)); return children_mu_[GetNodeArrayIndex(uni_index) * TREE_CHILDREN_COUNT + child_branch].lock(); }
     void UnlockChild(int32 uni_index, int32 child_branch) { assert(IsNode(uni_index)); return children_mu_[GetNodeArrayIndex(uni_index) * TREE_CHILDREN_COUNT + child_branch].unlock(); }
 

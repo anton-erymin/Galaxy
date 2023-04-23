@@ -6,6 +6,7 @@
 class Universe;
 struct SimulationContext;
 struct RenderParameters;
+class IUpdatable;
 
 class GalaxyRenderer : public IRendererPlugin
 {
@@ -19,6 +20,10 @@ public:
     virtual void BindSceneDataBuffers() override;
     virtual vector<GAL::GraphicsPipelinePtr> GetPipelines() override;
     virtual void Render() override;
+
+    void SetUpdateHandler(IUpdatable* handler) { aux_updatable_ = handler; }
+
+    void SetPositionBuffer(GAL::BufferPtr buffer);
 
 private:
     void CreateParticlesBuffer();
@@ -39,5 +44,5 @@ private:
     GAL::GraphicsPipelinePtr particles_render_pipeline_;
     GAL::GraphicsPipelinePtr tree_draw_pipeline_;
 
-    GAL::ComputePipelinePtr test_pipeline_;
+    IUpdatable* aux_updatable_ = nullptr;
 };
