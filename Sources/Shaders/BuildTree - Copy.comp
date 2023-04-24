@@ -1,61 +1,10 @@
-#include "SceneData.h"
+//#include "SceneData.h"
 
-#define EMPTY_INDEX (-1)
-#define NODE_LOCKED (-2)
-
-// Input defines: PARTICLES_COUNT, NODES_MAX_COUNT, ROOT_RADIUS, SOFT_EPS
+#define DEFINE_ROOT_CONSTANTS
+#include "SimulationLayout.h"
+#include "BodyHelpers.h"
 
 layout(local_size_x = 256) in;
-
-layout(std140) buffer ParticlesData
-{
-    Particle g_particles[];
-};
-
-layout(std140) buffer NodesData
-{
-    Node g_nodes[];
-};
-
-layout(std140) buffer NodesCounter
-{
-    uint g_nodes_counter;
-};
-
-bool IsNode(int index)
-{
-    return index >= 0 && index < NODES_MAX_COUNT;
-}
-
-int FindChildBranch(vec3 node_pos, vec3 pos)
-{
-    // Find child index to follow.
-    // [-X, -Y][-X, Y][X, -Y][X, Y]
-    
-    int child_idx = 0;
-    
-    if (pos.x > node_pos.x)
-    {
-        child_idx += 2;
-    }
-    
-    if (pos.z > node_pos.z)
-    {
-        child_idx += 1;
-    }
-    
-    return child_idx;
-}
-
-int EncodeParticleIndex(int index)
-{
-    return index + NODES_MAX_COUNT;
-}
-
-int DecodeParticleIndex(int index)
-{
-    return index - NODES_MAX_COUNT;
-}
 
 void main()
 {
@@ -66,68 +15,16 @@ void main()
         return;
     }
 
-#ifdef BUILD_TREE_SINGLE_THREAD
-    if (gidx > 0)
-    {
-        return;
-    }
-#endif
-
     const vec3 root_position = vec3(0);
 
     if (gidx == 0)
     {
-        g_nodes_counter = 0;
-        
-        // Setup root node.
-        
-        Node root_node;
-        root_node.position.xyz = root_position;
-        root_node.mass = 0.0;
-        root_node.depth = 0;
-        
-        for (int i = 0; i < NODE_CHILD_COUNT; ++i)
-        {
-            root_node.child[i].x = EMPTY_INDEX;
-        }
-        
-        g_nodes[0] = root_node;
-       
-        for (int i = 1; i < NODES_MAX_COUNT; ++i)
-        {
-            // Debug negative mass for all nodes.
-            g_nodes[i].mass = -1.0;
-        }
     }
     
-    memoryBarrier();
+    //memoryBarrier();
     barrier();
     
-    //++g_nodes_counter;
     
-    //atomicAdd(g_nodes_counter, 1);
-
-#if 1
-    bool locked = false;
-    while (!locked)
-    {
-        locked = (atomicCompSwap(g_nodes[0].depth, 0, 1) == 0);
-        if (locked)
-        {
-            ++g_nodes_counter;
-            memoryBarrier();
-            atomicExchange(g_nodes[0].depth, 0);
-            //g_nodes[0].depth = 0;
-            //success = true;
-            //break;
-        }
-        //else break;
-        
-        barrier();
-    }
-    return;
-#endif
-
     
 #if 0    
 uvec3 gl_NumWorkGroups;
@@ -136,7 +33,7 @@ uvec3 gl_NumWorkGroups;
         uvec3 gl_LocalInvocationID;
         uvec3 gl_GlobalInvocationID;
         uint  gl_LocalInvocationIndex;
-		
+#endif
 		
     float current_radius = 0.0;
     int parent_idx = 0;
