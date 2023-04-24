@@ -30,8 +30,6 @@ GalaxyRenderer::GalaxyRenderer(Universe& universe, SimulationContext& sim_contex
     // Add additional shaders directory
     sm.AddShadersPath(Paths::BaseDir() + "/../../../Libs/Nucleus2/Sources/Nucleus/Engine/Shaders"); // Nucleus shaders dir
     sm.AddShadersPath(Paths::BaseDir() + "/../../../Sources/Shaders"); // Galaxy shaders dir
-
-    CreateParticlesBuffer();
 }
 
 void GalaxyRenderer::CreatePipelines(RenderDevice& render_device)
@@ -72,10 +70,15 @@ void GalaxyRenderer::UpdatePipelines(GAL::ImagePtr& output_image)
 
 void GalaxyRenderer::BindSceneDataBuffers()
 {
-    Systems::IDeviceBufferSystem* buffer_system = engine->GetRenderer().GetRendererCore().
-        DeviceBufferSystem();
+    if (!particles_positions_buffer_)
+    {
+        CreateParticlesBuffer();
+    }
 
-    particles_render_pipeline_->SetBuffer(particles_positions_buffer_, "Position");
+    if (particles_render_pipeline_)
+    {
+        particles_render_pipeline_->SetBuffer(particles_positions_buffer_, "Position");
+    }
 }
 
 vector<GAL::GraphicsPipelinePtr> GalaxyRenderer::GetPipelines()
@@ -175,11 +178,15 @@ void GalaxyRenderer::CreateNodesBuffers(size_t nodes_count)
     RenderDevice& device = engine->GetRenderer().GetRendererCore().GetRenderDevice();
 
     nodes_positions_buffer_ = device.CreateBuffer("NodePositionsBuffer", GAL::BufferType::kStorage, nodes_count * sizeof(float4), GAL::BufferUsage::DynamicDraw);
-    nodes_sizes_buffer_ = device.CreateBuffer("NodeSizesBuffer", GAL::BufferType::kStorage, nodes_count * sizeof(float), GAL::BufferUsage::DynamicDraw);
 }
 
 void GalaxyRenderer::UpdateParticlesBuffer()
 {
+    if (!particles_positions_buffer_)
+    {
+        CreateParticlesBuffer();
+    }
+
     size_t count = universe_.GetParticlesCount();
     particles_positions_buffer_->Write(0, count * sizeof(float4), universe_.positions_.data());
 }
@@ -201,11 +208,9 @@ void GalaxyRenderer::UpdateNodesBuffers()
     }
 
     nodes_positions_buffer_->Write(0, nodes_count * sizeof(float4), universe_.node_positions_.data());
-    nodes_sizes_buffer_->Write(0, nodes_count * sizeof(float), universe_.node_sizes_.data());
 }
 
 void GalaxyRenderer::BindNodesBuffers()
 {
     tree_draw_pipeline_->SetBuffer(nodes_positions_buffer_, "NodePositions");
-    tree_draw_pipeline_->SetBuffer(nodes_sizes_buffer_, "NodeRadius");
 }

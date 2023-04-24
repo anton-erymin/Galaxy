@@ -25,10 +25,9 @@ void BarnesHutCPUSolver::TraverseTree(int32 node, float radius)
     radius = radius == 0.0f ? tree_->radius_ : radius;
     float half_radius = 0.5f * radius;
 
-    const float4& node_pos = tree_->GetPosition(node);
-
+    float4 node_pos = tree_->GetPosition(node);
+    node_pos.w = radius;
     universe_.node_positions_.push_back(node_pos);
-    universe_.node_sizes_.push_back(radius);
 
     if (tree_->IsNode(node))
     {
@@ -42,8 +41,9 @@ void BarnesHutCPUSolver::TraverseTree(int32 node, float radius)
             else if (tree_->IsBodyOrNull(child_index))
             {
                 // For child refering to body add info here
-                universe_.node_positions_.push_back(tree_->GetChildCenterPos(node_pos, i, radius));
-                universe_.node_sizes_.push_back(half_radius);
+                float4 child_node_pos = tree_->GetChildCenterPos(node_pos, i, radius);
+                child_node_pos.w = half_radius;
+                universe_.node_positions_.push_back(child_node_pos);
             }
         }
     }
@@ -57,14 +57,12 @@ void BarnesHutCPUSolver::ComputeAcceleration()
 
     tree_->BuildTree();
 
+    // Traverse tree collecting nodes info for tree drawing
     universe_.node_positions_.clear();
-    universe_.node_sizes_.clear();
-    // Traverse tree
     if (render_params_.render_tree)
     {
         TraverseTree();
     }
-
     context_.nodes_count = universe_.node_positions_.size();
 
     tree_->SummarizeTree();

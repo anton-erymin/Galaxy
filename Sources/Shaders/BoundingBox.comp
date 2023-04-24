@@ -1,0 +1,23 @@
+#include "SimulationLayout.h"
+#include "Utils.h"
+
+const float ROOT_RADIUS = 20.0;	
+
+shared uint s_body_count;
+shared uint s_nodes_max_count;
+shared uint s_total_count;
+
+// Helpers must be included after declaring shared vars and layout
+#include "TreeHelpers.h"
+
+layout(local_size_x = 1) in;
+
+void main()
+{
+	// Setup root
+	// TODO: Compute box
+	
+	s_total_count = g_total_count;
+	BBox root_box = BBox_Create(vec3(-ROOT_RADIUS), vec3(ROOT_RADIUS));
+	ResetTree(root_box);
+}

@@ -115,11 +115,11 @@ void Galaxy::Create()
     {
         Particle particle = i < numDusts ? CreateDust() : CreateStar();
         particle.SetMass(diskParticleMass);
-        float3 cylindrical = RandomUniformCylindrical(parameters_.bulge_radius, parameters_.disk_radius, parameters_.disk_thickness);
-        float r = SampleDistribution(0.0f, 1.0f, plummer.GetDensity(0.0f), [&plummer](float x) { return plummer.GetDensity(x); }) / 1.0f;
-        cylindrical.x = r * parameters_.disk_radius;
-        float3 relativePos = CylindricalToCartesian(cylindrical);
-        swap(relativePos.y, relativePos.z);
+        //float3 cylindrical = RandomUniformCylindrical(parameters_.bulge_radius, parameters_.disk_radius, parameters_.disk_thickness);
+        //float r = SampleDistribution(0.0f, 1.0f, plummer.GetDensity(0.0f), [&plummer](float x) { return plummer.GetDensity(x); }) / 1.0f;
+        //cylindrical.x = r * parameters_.disk_radius;
+        //float3 relativePos = CylindricalToCartesian(cylindrical);
+        //swap(relativePos.y, relativePos.z);
 #if 0
         relativePos = float3(
             RAND_RANGE(-parameters_.disk_radius, parameters_.disk_radius),
@@ -127,7 +127,7 @@ void Galaxy::Create()
             RAND_RANGE(-parameters_.disk_radius, parameters_.disk_radius));
 #endif // 0
 
-        particle.position = position_ + relativePos;
+        //particle.position = position_ + relativePos;
         particle.galaxy = this;
         particles_.push_back(particle);
     }

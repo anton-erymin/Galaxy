@@ -1,21 +1,24 @@
 #include "Utils.h"
 
 // Contains both particles and nodes
-layout(std430) buffer Position { vec4 g_position[]; };
-layout(std430) buffer Mass { float g_mass[]; };
+layout(std430) coherent buffer Position { vec4 g_position[]; }; // .w - radius for nodes
+layout(std430) coherent buffer Mass { float g_mass[]; };
 
 // Contains only particles
 layout(std430) buffer Velocity { vec4 g_velocity[]; };
 layout(std430) buffer Acceleration { vec4 g_acceleration[]; };
 
 // Contains child indices only for nodes
-layout(std430) buffer Children { int g_children[]; };
+layout(std430) coherent buffer Children { int g_children[]; };
 
 // Current free node index
-layout(std430) buffer NodesIndex { int g_cur_node_idx; };
+layout(std430) coherent buffer NodesIndex { int g_cur_node_idx; };
 
 // Final root bounding box radius
-layout(std430) buffer RootRadius{ float g_radius; };
+layout(std430) coherent buffer RootRadius { float g_radius; };
+
+// Current free node index
+layout(std430) buffer DebugBuffer { int g_debug[]; };
 
 layout(std140) uniform SimulationParameters
 {

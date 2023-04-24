@@ -4,14 +4,9 @@
 layout(points) in;
 layout(line_strip, max_vertices = 20) out;
 
-layout(std430) buffer NodePositions
+layout(std430) buffer NodePositions // And radiuses in .w component
 {
     vec4 g_node_positions[];
-};
-
-layout(std430) buffer NodeRadius
-{
-    float g_node_radius[];
 };
 
 void DrawQuad(mat4 proj_view, vec3 v0, vec3 v1, vec3 v2, vec3 v3)
@@ -47,8 +42,9 @@ void DrawLine(mat4 proj_view, vec3 v0, vec3 v1)
 
 void main()
 {
-    vec3 node_pos = g_node_positions[gl_PrimitiveIDIn].xyz;
-    float radius = g_node_radius[gl_PrimitiveIDIn];
+	vec4 value = g_node_positions[gl_PrimitiveIDIn];
+    vec3 node_pos = value.xyz;
+    float radius = value.w;
     
     mat4 proj_view = g_camera.projection_view_transform;
 

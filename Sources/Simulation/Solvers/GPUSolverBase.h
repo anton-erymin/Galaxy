@@ -23,26 +23,28 @@ private:
 	virtual void IntegrateLeapFrogKick() override;
 
 protected:
-	void CreateBuffers();
-	void CreatePipelines();
+	virtual void CreateBuffers();
+	virtual void CreatePipelines();
+	virtual void BindLayout(GAL::ComputePipelinePtr pipeline);
+
 	void FillBuffers();
 	void UpdateParamsBuffer();
-	void BindLayout(GAL::ComputePipelinePtr pipeline);
 
 	GAL::BufferPtr CreateBuffer(const char* name, size_t size, GAL::BufferType type);
 
 	virtual size_t GetPositionsBufferCount() const { return universe_.GetParticlesCount(); }
+	virtual size_t GetNodesMaxCount() const { return 0; }
 
 	RenderDevice& GetRenderDevice();
 
 private:
+	GAL::ComputePipelinePtr integrate_leap_frog_kick_drift_pipeline_;
+	GAL::ComputePipelinePtr integrate_leap_frog_kick_pipeline_;
+
 	// Position and mass buffers contain both particles and nodes (nodes only if BarnesHut solver used)
 	GAL::BufferPtr position_;
 	GAL::BufferPtr mass_;
 	GAL::BufferPtr velocity_;
 	GAL::BufferPtr acceleration_;
 	GAL::BufferPtr simulation_parameters_;
-
-	GAL::ComputePipelinePtr integrate_leap_frog_kick_drift_pipeline_;
-	GAL::ComputePipelinePtr integrate_leap_frog_kick_pipeline_;
 };

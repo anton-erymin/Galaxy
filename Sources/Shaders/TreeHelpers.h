@@ -1,23 +1,24 @@
 #include "CommonData.h"
 #include "Utils.h"
 
-const uint TREE_CHILDREN_COUNT = 8;
+const int TREE_CHILDREN_COUNT = 8;
 const int NULL_INDEX = -1;
 const int LOCK_INDEX = -2;
 
 uint GetBodyCount() { return s_body_count; }
-uint GetNodeMaxCount() { return s_nodes_max_count; }
+//uint GetNodeMaxCount() { return s_nodes_max_count; }
 int GetRootNode() { return int(s_total_count) - 1; }
-int GetActualNodeCount() { return GetRootNode() - int(g_cur_node_idx); }
-int GetNodeUniIndex(int array_index) { return array_index + int(GetBodyCount()); }
+//int GetActualNodeCount() { return GetRootNode() - int(g_cur_node_idx); }
+//int GetNodeUniIndex(int array_index) { return array_index + int(GetBodyCount()); }
 int GetNodeArrayIndex(int uni_index) { return uni_index - int(GetBodyCount()); }
 bool IsNull(int index) { return index == NULL_INDEX; }
-bool IsBody(int index) { return !IsNull(index) && index < GetBodyCount(); }
-bool IsBodyOrNull(int index) { return index < GetBodyCount(); }
-bool IsNode(int index) { return index >= GetBodyCount(); }
+bool IsBody(int index) { return !IsNull(index) && index < int(GetBodyCount()); }
+bool IsBodyOrNull(int index) { return index < int(GetBodyCount()); }
+bool IsNode(int index) { return index >= int(GetBodyCount()); }
+bool IsLocked(int index) { return index == LOCK_INDEX; }
 
-vec3 GetPosition(int i) { return g_position[i].xyz; }
-void SetPosition(int i, vec3 pos) { g_position[i].xyz = pos; }
+vec4 GetPosition(int i) { return g_position[i]; }
+void SetPosition(int i, vec4 pos) { g_position[i] = pos; }
 float GetMass(int i) { return g_mass[i]; }
 void SetMass(int i, float mass) { g_mass[i] = mass; }
 vec3 GetVelocity(int i) { return g_velocity[i].xyz; }
@@ -33,6 +34,12 @@ int GetChildIndex(int uni_index, int child_branch)
 void SetChildIndex(int uni_index, int child_branch, int child_index) 
 {
 	g_children[GetNodeArrayIndex(uni_index) * TREE_CHILDREN_COUNT + child_branch] = child_index;
+}
+
+bool TryLockChild(int uni_index, int child_branch, int cur_child_index)
+{
+	int off = GetNodeArrayIndex(uni_index) * TREE_CHILDREN_COUNT + child_branch;
+	return atomicCompSwap(g_children[off], cur_child_index, LOCK_INDEX) == cur_child_index;
 }
 
 int FindChildBranch(vec3 node_center, vec3 body_pos)
@@ -56,7 +63,7 @@ vec3 GetChildCenterPos(vec3 node_center, int child_branch, float radius)
     return pos;
 }
 
-int AddNode(vec3 node_center_pos)
+int AddNode(vec4 node_center_pos)
 {	
     int new_node = atomicAdd(g_cur_node_idx, -1);
 	
@@ -80,9 +87,10 @@ void ResetTree(BBox bbox)
     float max_len = BBox_MaxExtent(bbox);
     vec3 bbox_center = BBox_Center(bbox);
 
-    g_radius = 0.5 * max_len;
+	float root_radius = 0.5 * max_len;
+    g_radius = root_radius;
     g_cur_node_idx = GetRootNode();
 
     // Setup root node
-    AddNode(bbox_center);
+    AddNode(vec4(bbox_center, root_radius));
 }

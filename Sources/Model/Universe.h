@@ -35,8 +35,8 @@ private:
     vector<float> inverse_masses_;
     vector<Particle*> all_particles_;
 
-    vector<float4> node_positions_;
-    vector<float> node_sizes_;
+    // Filled from CPU solver
+    vector<float4> node_positions_; // .w - node radius
 
     friend class SolverBase;
     friend class CPUSolverBase;

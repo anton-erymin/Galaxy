@@ -8,6 +8,7 @@
 #include <OpenGL/GraphicsOpenGL.h>
 #include <Data/DeviceData.h>
 #include <Debugging/Profiler.h>
+#include <Math/Math.h>
 
 struct SimulationParameters
 {
@@ -20,22 +21,6 @@ struct SimulationParameters
     uint pad0;
     uint pad1;
 };
-
-int3 CalcNumGroups(int size, uint group_size)
-{
-    return int3((size + group_size - 1) / group_size, 1, 1);
-}
-
-int3 CalcNumGroups(int2 size, uint group_size)
-{
-    return int3((size.x + group_size - 1) / group_size, (size.y + group_size - 1) / group_size, 1);
-}
-
-int3 CalcNumGroups(int3 size, uint group_size)
-{
-    return int3((size.x + group_size - 1) / group_size, (size.y + group_size - 1) / group_size,
-        (size.z + group_size - 1) / group_size);
-}
 
 GPUSolverBase::GPUSolverBase(Universe& universe, SimulationContext& context, const RenderParameters& render_params)
     : SolverBase(universe, context, render_params)
@@ -103,8 +88,8 @@ void GPUSolverBase::UpdateParamsBuffer()
 {
     SimulationParameters params = {};
     params.body_count = universe_.GetParticlesCount();
-    params.nodes_max_count = 0;
-    params.total_count = universe_.GetParticlesCount();
+    params.nodes_max_count = GetNodesMaxCount();
+    params.total_count = params.body_count + params.nodes_max_count;
     params.timestep = context_.timestep;
     params.gravity_softening_length = context_.gravity_softening_length;
     params.barnes_hut_opening_angle = context_.barnes_hut_opening_angle;

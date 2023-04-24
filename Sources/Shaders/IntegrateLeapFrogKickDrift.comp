@@ -28,5 +28,6 @@ void main()
     // Drift
     g_position[gidx].xyz += g_velocity[gidx].xyz * s_timestep;
 	
+	// Clear accumulator
 	g_acceleration[gidx].xyz = vec3(0.0);
 }

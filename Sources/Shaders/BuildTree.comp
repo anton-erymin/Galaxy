@@ -1,3 +1,4 @@
+#include "CommonConstants.h"
 #include "SimulationLayout.h"
 
 shared uint s_body_count;
@@ -7,167 +8,161 @@ shared float s_radius;
 
 // Helpers must be included after declaring shared vars and layout
 #include "TreeHelpers.h"
-
-layout(local_size_x = 256) in;
+	
+layout(local_size_x = 1024) in;
 
 void main()
 {
-    int gidx = int(gl_GlobalInvocationID.x);
-    
-    if (gidx == 0)
-    {
+	if (gl_LocalInvocationID.x == 0)
+	{
 		// Load to shared storage
 		s_body_count = g_body_count;
 		s_nodes_max_count = g_nodes_max_count;
 		s_total_count = g_total_count;
 		s_radius = g_radius;
+		s_radius = 20.0;
 		
-		// Setup root
-		const float ROOT_RADIUS = 5.0;
-		BBox root_box = BBox_Create(vec3(-ROOT_RADIUS), vec3(ROOT_RADIUS));
-		//ResetTree(root_box);
-    }
+		BBox root_box = BBox_Create(vec3(-20.0), vec3(20.0));
+		ResetTree(root_box);
+	}
 	
-    barrier();
-	
-    if (gidx >= GetBodyCount())
-    {
-        return;
-    }
-
-    //memoryBarrier();
+    int gidx = int(gl_GlobalInvocationID.x);
     
-#if 0    
-uvec3 gl_NumWorkGroups;
-        uvec3 gl_WorkGroupSize;
-        uvec3 gl_WorkGroupID;
-        uvec3 gl_LocalInvocationID;
-        uvec3 gl_GlobalInvocationID;
-        uint  gl_LocalInvocationIndex;
-#endif
-		
+	memoryBarrierShared();
+	barrier();
+	
+	if (gidx >= int(GetBodyCount()))
+	{
+		return;
+	}
+	
+    int stride = int(gl_WorkGroupSize.x * gl_NumWorkGroups.x);
     bool next_body = true;
     
-    int stride = int(gl_WorkGroupSize.x * gl_NumWorkGroups.x);
-    
-    int body_idx = gidx;
-    
-    // Insert each particle assigned to this thread.
-    //while (body_idx < PARTICLES_COUNT)
+	int node, new_node, subdivided_node, subdivided_branch, subtree;
+	int child_branch, old_child_branch, child_index;
+	vec3 node_pos, new_node_pos, body_pos, old_body_pos;
+	float current_radius;
+	
+	//int c1 = 0, c2 = 1;
+	//uint off = gl_WorkGroupID.x * 10;
+	
+	//g_debug[0] = 99;
+	//g_debug[1] = 99;
+	//g_debug[2] = 0;
+	//g_debug[3] = 99;
+	
+    // Insert each particle assigned to this thread
+	while (gidx < int(GetBodyCount()))
     {
         if (next_body)
         {
             next_body = false;
-            
-            // Setup follow from the root.
+			body_pos = GetPosition(gidx).xyz;
+			
+            // Setup follow from the root
+			node = GetRootNode();
+			node_pos = GetPosition(node).xyz;
+			current_radius = s_radius;
+			
+			child_branch = FindChildBranch(node_pos, body_pos);
+			
+			//g_debug[off + c1] = 0;
+        }
 
-        }
-        else
+		child_index = GetChildIndex(node, child_branch);
+	
+        // Follow from root to the current available leaf
+		while (IsNode(child_index))
+		{
+			node = child_index;
+			node_pos = GetPosition(node).xyz;
+			child_branch = FindChildBranch(node_pos, body_pos);
+			child_index = GetChildIndex(node, child_branch);
+			current_radius *= 0.5;
+		}
+		
+		//return;
+		
+		//atomicAdd(g_debug[2], 1);
+		
+		//if (g_debug[2] > 2)
+		{
+			//return;
+		}
+		
+        if (!IsLocked(child_index))
         {
-            // Read again.
-            //child_idx = g_nodes[parent_idx].child[child_branch].x;
-        }
-        
-        // Follow or continue follow path to the leaf.
-        //while (IsNode(child_idx))
-        {
-        }
-        
-        //if (child_idx != NODE_LOCKED)
-        {
+			//g_debug[0] = child_index;
+			
+			#if 1
             // Try to lock.
-            //if (child_idx == atomicCompSwap(g_nodes[parent_idx].child[child_branch].x, child_idx, NODE_LOCKED))
+            if (TryLockChild(node, child_branch, child_index))
             {    
-                //if (child_idx == EMPTY_INDEX)
+                if (IsNull(child_index))
                 {
-                    // Empty node, so just insert and thus unlock.
-                    //g_nodes[parent_idx].child[child_branch].x = EncodeParticleIndex(body_idx);
+					//g_debug[3] = child_index;
+					
+                    // No body here yet so just insert and thus unlock
+					SetChildIndex(node, child_branch, gidx);
                 }
-                //else
+                else
                 {
-                    // Create new nodes and insert the old and new body.
+ 					//g_debug[1] = child_index;
+					//AddNode(vec4(5.0, 5.0, 5.0, 150.0));
+					//return;
+					
+                    // Child is body
+					// Create new node(s) and insert the old and new body
                     // New nodes are created until both are in different childs.
-                    
-                    /* old_idx = DecodeParticleIndex(child_idx);
-                    old_pos = g_particles[old_idx].position.xyz;
-                    node_position = node.position.xyz;
-                    locked_node = parent_idx;
-                    locked_branch = child_branch;
-                    locked_depth = depth;
-                    
-                    while (true)
-                    {
-                        // Get next free node index.
-                        new_node_idx = int(atomicAdd(g_nodes_counter, 1u));
-                        
-                        // Create node.
-                        Node new_node;
-                        new_node.mass = 0.0;
-                        new_node.depth = depth;
-                        
-                        for (int i = 0; i < NODE_CHILD_COUNT; ++i)
-                        {
-                            new_node.child[i].x = EMPTY_INDEX;
-                        }
-                        
-                        vec3 node_offset = vec3(0.0);
-                        node_offset.x = float((child_branch >> 1) & 1) * current_radius;
-                        node_offset.z = float(child_branch & 1) * current_radius;
-                        
-                        // Map from [0; R] to [-R; R].
-                        node_offset = 2 * node_offset - vec3(current_radius, 0.0, current_radius);
-                        
-                        node_position += node_offset;
-                        
-                        new_node.position.xyz = node_position;
-                        
-                        g_nodes[new_node_idx] = new_node;
-                        
-                        // Set node as child if we went further.
-                        // otherwise we unlock too early.
-                        if (depth > locked_depth)
-                        {
-                            g_nodes[parent_idx].child[child_branch].x = new_node_idx;
-                        }
-                        else
-                        {
-                            subtree_root = new_node_idx;
-                        }
-                        
-                        parent_idx = new_node_idx;
 
-                        // Check if both bodies fit into different childs.
-                        
-                        child_branch = FindChildBranch(node_position, old_pos);
-                        new_branch = FindChildBranch(node_position, p.position.xyz);
-                        
-                        if (child_branch != new_branch)
-                        {
-                            // Break inserting nodes.
-                            break;
-                        }
-                        
-                        // Both bodies fit into the same child, continue inserting.
-                        current_radius *= 0.5;
-                        ++depth;
-                    }
+					old_body_pos = GetPosition(child_index).xyz;
+					subdivided_node = node;
+					subdivided_branch = child_branch;
+					subtree = -1;
+
+					do
+					{
+						// Create new node
+						
+						new_node_pos = GetChildCenterPos(node_pos, child_branch, current_radius);
+						current_radius *= 0.5;
+						new_node = AddNode(vec4(new_node_pos, current_radius));
+
+						// Get index of subtree
+						subtree = max(subtree, new_node);
+
+						// Link new child node to parent
+						if (new_node != subtree)
+						{
+							SetChildIndex(node, child_branch, new_node);
+						}
+
+						// Find branches for old and new bodies in newly created node
+						child_branch = FindChildBranch(new_node_pos, body_pos);
+						old_child_branch = FindChildBranch(new_node_pos, old_body_pos);
+
+						node = new_node;
+						node_pos = new_node_pos;
+					}
+					while (child_branch == old_child_branch); // Subdivide until two bodies are in different child branches
                     
                     // Insert bodies.
-                    g_nodes[parent_idx].child[child_branch].x = child_idx;
-                    g_nodes[parent_idx].child[new_branch].x = EncodeParticleIndex(body_idx);
-                    // Unlock branch.
-                    g_nodes[locked_node].child[locked_branch].x = subtree_root; */
+                    SetChildIndex(node, old_child_branch, child_index); // Old body
+					SetChildIndex(node, child_branch, gidx); // New body
+					
+					// Attach new subtree to tree unlocking the branch
+					SetChildIndex(subdivided_node, subdivided_branch, subtree);
                 }
                 
-                memoryBarrierBuffer();
-                
-                // To the next body if any.
-                body_idx += stride;
-                next_body = true;
-            }
+				// To the next body if any.
+				gidx += stride;
+				next_body = true;
+            } // Lock
+			#endif
         }
         
-        //barrier();
-        //memoryBarrier();
+        memoryBarrierBuffer();
+		barrier();
     }
 }

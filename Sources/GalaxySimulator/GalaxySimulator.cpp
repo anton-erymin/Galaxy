@@ -123,7 +123,7 @@ void GalaxySimulator::CreateGalaxy(const float3& position, const float3& vel)
         universe_->velocities_[cur_count + i + 1] = vel;
     };
 
-    for (size_t i = 0; i < 1000; i++)
+    for (size_t i = 0; i < 20000; i++)
     {
         AddSatellite(i);
         //AddBody(i);
@@ -135,10 +135,13 @@ void GalaxySimulator::CreateSolver(SimulationAlgorithm algorithm)
     switch (algorithm)
     {
     case SimulationAlgorithm::BARNESHUT_CPU:
+    {
         solver_.reset(new BarnesHutCPUSolver(*universe_, sim_context_, render_params_));
-        renderer_->SetUpdateHandler(nullptr);
         solver_->Initialize();
+        renderer_->SetUpdateHandler(nullptr);
+        renderer_->SetPositionBuffer(nullptr);
         break;
+    }
     case SimulationAlgorithm::BARNESHUT_GPU:
     {
         BarnesHutGPUSolver* solver = new BarnesHutGPUSolver(*universe_, sim_context_, render_params_);
@@ -149,16 +152,22 @@ void GalaxySimulator::CreateSolver(SimulationAlgorithm algorithm)
         break;
     }
     case SimulationAlgorithm::BRUTEFORCE_CPU:
+    {
         solver_.reset(new BruteforceCPUSolver(*universe_, sim_context_, render_params_));
+        solver_->Initialize();
         renderer_->SetUpdateHandler(nullptr);
-        //renderer_->
-        solver_->Initialize();
+        renderer_->SetPositionBuffer(nullptr);
         break;
+    }
     case SimulationAlgorithm::BRUTEFORCE_GPU:
-        solver_.reset(new BruteforceGPUSolver(*universe_, sim_context_, render_params_));
-        renderer_->SetUpdateHandler(solver_.get());
+    {
+        BruteforceGPUSolver* solver = new BruteforceGPUSolver(*universe_, sim_context_, render_params_);
+        solver_.reset(solver);
         solver_->Initialize();
+        renderer_->SetUpdateHandler(solver_.get());
+        renderer_->SetPositionBuffer(solver->GetPositionBuffer());
         break;
+    }
     default:
         break;
     }
@@ -183,20 +192,6 @@ void GalaxySimulator::OnEvent(Event& e)
 #if 0
 void GalaxySimulator::PostRender()
 {
-    const auto& particles_ = universe->GetParticles();
-    const auto count = universe->GetParticlesCount();
-    auto nodes_count = 5 * universe->GetParticlesCount();
-
-    if (is_simulated_)
-    {
-        auto group_count = CalcNumGroups(count, kGroupSize1D);
-
-        {
-            DEBUG_TIMING_BLOCK_GPU("Barnes-Hut");
-
-            const auto kParticlesPerThread = 1u;
-            particles_barnes_hut_pipeline_->Dispatch(CalcNumGroups(count / kParticlesPerThread, kGroupSize1D));
-            GL_CALL(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
 
 #if 0
             static vector<Device::Node> node_data(nodes_count);
@@ -219,27 +214,6 @@ void GalaxySimulator::PostRender()
             }
 #endif // 0
         }
-
-        {
-            DEBUG_TIMING_BLOCK_GPU("Solve");
-
-            //particles_solve_pipeline_->Dispatch(group_count);
-            GL_CALL(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
-        }
-
-        {
-            DEBUG_TIMING_BLOCK_GPU("Particles Update");
-
-            particles_update_pipeline_->Dispatch(group_count);
-            GL_CALL(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
-        }
-    }
-
-#if 0
-    glEnable(GL_BLEND);
-    glEnable(GL_TEXTURE_2D);
-    glDisable(GL_DEPTH_TEST);
-    //glDisable(GL_ALPHA_TEST);
 
     for (auto& particlesByImage : universe->GetParticlesByImage())
     {
@@ -292,18 +266,6 @@ void GalaxySimulator::PostRender()
         glEnd();
     }
 
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
-#endif // 0
-
-    if (renderParams.plotFunctions)
-    {
-        for (auto& galaxy : universe->GetGalaxies())
-        {
-            galaxy->GetHalo().PlotPotential();
-        }
-    }
-}
 
 void GalaxySimulator::UpdateDeltaTime(float new_time)
 {
@@ -313,61 +275,6 @@ void GalaxySimulator::UpdateDeltaTime(float new_time)
     consts.time = deltaTime;
     particles_update_pipeline_->SetRootConstants(&consts);
 
-}
-#endif // 0
-
-#if 0
-void GalaxySimulator::Bind(GAL::GraphicsPipelinePtr& pipeline)
-{
-
-    pipeline->SetBuffer(GetRenderer().GetDeviceBuffer(nodes_buffer_), "NodesData");
-    pipeline->SetBuffer(nodes_counter, "NodesCounter");
-}
-#endif // 0
-
-#if 0
-
-auto nodes_count = 5 * universe->GetParticlesCount();
-
-nodes_buffer_ = GetNextEntity();
-GetRenderer().CreateDeviceBuffer("Nodes", nodes_buffer_,
-    nodes_count * sizeof(Device::Node), GAL::BufferType::kStorage, GL_DYNAMIC_DRAW);
-
-uint32_t counter = 0;
-nodes_counter = GetRenderer().GetRenderDevice().CreateBuffer("Nodes counter",
-    GAL::BufferType::kStorage, sizeof(uint32_t), GL_DYNAMIC_DRAW | GL_DYNAMIC_READ, &counter);
-
-g_particles_render_pipeline = &particles_render_pipeline_;
-g_tree_draw_pipeline = &tree_draw_pipeline_;
-
-camera_components[GetActiveCamera()]->z_far = 100000.0f;
-
-ui_ = make_unique<UI::GalaxyUI>(*this);
-
-{
-    g_defines =
-    {
-        { "SOLVE_BRUTEFORCE", "" },
-        { "PARTICLES_COUNT", to_string(count) },
-        { "NODES_MAX_COUNT", to_string(nodes_count) },
-        { "ROOT_RADIUS", to_string(GLX_UNIVERSE_SIZE * 0.5f) },
-        { "SOFT_EPS", to_string(cSoftFactor) }
-    };
-
-    particles_solve_pipeline_ = GetRenderer().GetRenderDevice().
-        CreateComputePipeline("ParticlesSolve.comp", {}, g_defines);
-
-    particles_barnes_hut_pipeline_ = GetRenderer().GetRenderDevice().
-        CreateComputePipeline("ParticlesBarnesHut.comp", {}, g_defines);
-
-    GAL::PipelineState state = {};
-    state.SetRootConstantsSize(sizeof(Device::ParticlesUpdateRootConstants));
-    particles_update_pipeline_ = GetRenderer().GetRenderDevice().
-        CreateComputePipeline("ParticlesUpdate.comp", state, g_defines);
-
-    Bind(particles_barnes_hut_pipeline_.get());
-    Bind(particles_solve_pipeline_.get());
-    Bind(particles_update_pipeline_.get());
 }
 
 controller_ = GetNextEntity();
@@ -384,4 +291,5 @@ CreateInputComponent(controller_,
         return false;
 
     })->is_active = true;
+
 #endif // 0
