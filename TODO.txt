@@ -2,19 +2,17 @@
 // Hot disk
 // Kuzmin model and more sphere models
 // Choose density model
-// Octree
 // OpenCL compute
 // Collision
-// Video
 
 Fix bug with drawing tree (blinking)
-Octree
-Get rid of recursion in tree code
-
 
 Expose dark matter halo params
 
-Non recursive tree build
+Bug in BuildTree kernel
+GPU Barnes-Hut is not fully implemented
 
-Bug with flat compute force
-Bug with reset model (OpenCL fails desctruction)
+Hot keys
+Dark matter
+Plot potential
+Render bodies as images

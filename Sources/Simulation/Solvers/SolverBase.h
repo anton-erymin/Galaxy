@@ -7,6 +7,7 @@
 class Universe;
 struct SimulationContext;
 struct RenderParameters;
+class BodyTracker;
 
 class SolverBase : public IUpdatable
 {
@@ -46,4 +47,28 @@ protected:
     const RenderParameters& render_params_;
 
     FPSCounter fps_counter_;
+    unique_ptr<BodyTracker> tracker_;
+};
+
+class BodyTracker
+{
+public:
+    BodyTracker(Universe& universe)
+        : universe_(universe)
+    {
+        StorePositions();
+    }
+
+    void AddTracks(initializer_list<size_t>& list)
+    {
+        track_indices_.insert(track_indices_.end(), list.begin(), list.end());
+    }
+
+    void Track();
+    void StorePositions();
+
+private:
+    const Universe& universe_;
+    vector<size_t> track_indices_;
+    vector<float3> prev_pos_;
 };

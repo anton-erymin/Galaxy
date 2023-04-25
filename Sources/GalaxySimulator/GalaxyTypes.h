@@ -11,7 +11,7 @@ enum class SimulationAlgorithm
 
 struct SimulationContext
 {
-    SimulationAlgorithm algorithm = SimulationAlgorithm::BRUTEFORCE_CPU;
+    SimulationAlgorithm algorithm = SimulationAlgorithm::BARNESHUT_CPU;
 
     bool is_simulated = true;
 
@@ -57,7 +57,7 @@ struct RenderParameters
     bool plot_potential = false;
     float brightness = 1.0f;
     float particle_size_scale = 1.0f;
-    bool colors_inverted = true;
+    bool colors_inverted = false;
 };
 
 class IUpdatable
