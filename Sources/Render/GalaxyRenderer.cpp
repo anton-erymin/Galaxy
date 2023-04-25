@@ -28,7 +28,7 @@ GalaxyRenderer::GalaxyRenderer(Universe& universe, SimulationContext& sim_contex
     ShaderTools::ShaderManager& sm = engine->GetRenderer().GetRendererCore().GetRenderDevice().GetShaderManager();
 
     // Add additional shaders directory
-    sm.AddShadersPath(Paths::BaseDir() + "/../../../Libs/Nucleus2/Sources/Nucleus/Engine/Shaders"); // Nucleus shaders dir
+    sm.AddShadersPath(Paths::BaseDir() + "/../../../Libs/Nucleus/Sources/Nucleus/Engine/Shaders"); // Nucleus shaders dir
     sm.AddShadersPath(Paths::BaseDir() + "/../../../Sources/Shaders"); // Galaxy shaders dir
 }
 
