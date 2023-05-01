@@ -9,7 +9,7 @@ shared float s_radius;
 // Helpers must be included after declaring shared vars and layout
 #include "TreeHelpers.h"
 	
-layout(local_size_x = 1024) in;
+layout(local_size_x = 1) in;
 
 void main()
 {
@@ -24,6 +24,9 @@ void main()
 		
 		BBox root_box = BBox_Create(vec3(-20.0), vec3(20.0));
 		ResetTree(root_box);
+		
+		//EnablePrintf();
+		//printf("Tree reset %f!\n", s_radius);
 	}
 	
     int gidx = int(gl_GlobalInvocationID.x);
@@ -44,14 +47,6 @@ void main()
 	vec3 node_pos, new_node_pos, body_pos, old_body_pos;
 	float current_radius;
 	
-	//int c1 = 0, c2 = 1;
-	//uint off = gl_WorkGroupID.x * 10;
-	
-	//g_debug[0] = 99;
-	//g_debug[1] = 99;
-	//g_debug[2] = 0;
-	//g_debug[3] = 99;
-	
     // Insert each particle assigned to this thread
 	while (gidx < int(GetBodyCount()))
     {
@@ -66,8 +61,6 @@ void main()
 			current_radius = s_radius;
 			
 			child_branch = FindChildBranch(node_pos, body_pos);
-			
-			//g_debug[off + c1] = 0;
         }
 
 		child_index = GetChildIndex(node, child_branch);
@@ -82,27 +75,14 @@ void main()
 			current_radius *= 0.5;
 		}
 		
-		//return;
-		
-		//atomicAdd(g_debug[2], 1);
-		
-		//if (g_debug[2] > 2)
-		{
-			//return;
-		}
-		
         if (!IsLocked(child_index))
         {
-			//g_debug[0] = child_index;
-			
 			#if 1
             // Try to lock.
             if (TryLockChild(node, child_branch, child_index))
             {    
                 if (IsNull(child_index))
                 {
-					//g_debug[3] = child_index;
-					
                     // No body here yet so just insert and thus unlock
 					SetChildIndex(node, child_branch, gidx);
                 }
@@ -110,6 +90,9 @@ void main()
                 {
  					//g_debug[1] = child_index;
 					//AddNode(vec4(5.0, 5.0, 5.0, 150.0));
+					
+					//printf("We are here %d\n", child_index);
+					
 					//return;
 					
                     // Child is body
