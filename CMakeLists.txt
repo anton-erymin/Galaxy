@@ -8,18 +8,17 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Bin)
 
 # Setup Nucleus
 set(NUCLEUS_DIR ${CMAKE_SOURCE_DIR}/Libs/Nucleus)
-set(BILLIARDS_BUILD_GAME OFF)
-set(BILLIARDS_BUILD_SHARED ON)
+set(NUCLEUS_BUILD_GAME OFF)
+set(NUCLEUS_BUILD_SHARED ON)
 set(NUCLEUS_INCLUDE_FORMAT OFF)
+set(NUCLEUS_ENABLE_PATH_TRACER OFF)
 add_subdirectory(${NUCLEUS_DIR})
 
 set(CMAKE_MODULE_PATH ${NUCLEUS_DIR}/cmake)
 
 include(SetupBuildOptions)
-include(SetupDefinitions)
 
 SetupBuildOptions()
-SetupDefinitions()
 
 # For ImGui
 include_directories(${NUCLEUS_DIR}/Libs/imgui/Include)
