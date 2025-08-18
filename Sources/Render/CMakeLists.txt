@@ -4,4 +4,4 @@ set(RENDER_SOURCES
 	
 add_library(Galaxy.Render ${RENDER_SOURCES})
 ConfigureGalaxyModule(Galaxy.Render "${RENDER_SOURCES}")
-target_link_libraries(Galaxy.Render PRIVATE Nucleus.Engine Galaxy.Model)
+target_link_libraries(Galaxy.Render PRIVATE Engine Galaxy.Model)

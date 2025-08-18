@@ -1,7 +1,9 @@
 set(GALAXY_SIMULATOR_SOURCES
 	GalaxyTypes.h
 	GalaxySimulator.cpp
-	GalaxySimulator.h)
+	GalaxySimulator.h
+    Galaxy.cpp
+	Galaxy.h)
 	
 add_library(Galaxy.GalaxySimulator STATIC ${GALAXY_SIMULATOR_SOURCES})
 ConfigureGalaxyModule(Galaxy.GalaxySimulator "${GALAXY_SIMULATOR_SOURCES}")
@@ -11,4 +13,4 @@ target_link_libraries(Galaxy.GalaxySimulator PRIVATE
 	Galaxy.Model
 	Galaxy.Simulation
 	Galaxy.Utils
-	Nucleus.Engine)
+	Engine)

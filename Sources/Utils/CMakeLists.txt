@@ -4,4 +4,4 @@ set(UTILS_SOURCES
 	
 add_library(Galaxy.Utils ${UTILS_SOURCES})
 ConfigureGalaxyModule(Galaxy.Utils "${UTILS_SOURCES}")
-target_link_libraries(Galaxy.Utils PRIVATE Nucleus.Core)
+target_link_libraries(Galaxy.Utils PRIVATE Core)

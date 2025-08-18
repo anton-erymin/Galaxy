@@ -23,5 +23,5 @@ ConfigureGalaxyModule(Galaxy.Simulation "${SIMULATION_SOURCES}")
 target_link_libraries(Galaxy.Simulation PRIVATE
 	Galaxy.Model
 	Galaxy.Utils
-	Nucleus.Core
-	Nucleus.Engine)
+	Core
+	Engine)

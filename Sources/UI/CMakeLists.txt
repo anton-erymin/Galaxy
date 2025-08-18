@@ -4,4 +4,4 @@ set(UI_SOURCES
 	
 add_library(Galaxy.UI STATIC ${UI_SOURCES})
 ConfigureGalaxyModule(Galaxy.UI "${UI_SOURCES}")
-target_link_libraries(Galaxy.UI PRIVATE Nucleus.Engine)
+target_link_libraries(Galaxy.UI PRIVATE Engine)

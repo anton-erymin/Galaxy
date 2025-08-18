@@ -11,4 +11,4 @@ set(MODEL_SOURCES
 	
 add_library(Galaxy.Model STATIC ${MODEL_SOURCES})
 ConfigureGalaxyModule(Galaxy.Model "${MODEL_SOURCES}")
-target_link_libraries(Galaxy.Model PRIVATE Nucleus.Core Galaxy.Utils)
+target_link_libraries(Galaxy.Model PRIVATE Core Galaxy.Utils)
