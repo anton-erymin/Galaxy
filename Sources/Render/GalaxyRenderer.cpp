@@ -52,6 +52,7 @@ void GalaxyRenderer::UpdatePipelines(GAL::ImagePtr& output_image)
         GAL::PipelineState state = {};
         state.SetColorAttachment(0, output_image);
         state.SetRootConstantsSize(sizeof(Device::ShadeSingleColorRootConstants));
+        state.blending.is_enabled = true;
         particles_render_pipeline_->SetState(state);
     }
 
@@ -98,9 +99,14 @@ void GalaxyRenderer::Render()
 
     if (render_params_.colors_inverted)
     {
-        particles_render_pipeline_->SetClearColor(Float4(1.0f, 1.0f, 1.0f, 1.0f));
-        particles_render_pipeline_->ClearColorAttachments();
+        particles_render_pipeline_->SetClearColor(Math::kWhiteColor);
     }
+    else
+    {
+        particles_render_pipeline_->SetClearColor(Math::kBlackColor);
+    }
+
+    particles_render_pipeline_->ClearColorAttachments();
 
     if (sim_context_.IsCPUAlgorithm() && sim_context_.positions_update_completed_flag)
     {
@@ -123,11 +129,6 @@ void GalaxyRenderer::Render()
     {
         PROFILER_BLOCK_GPU("Render Particles");
 
-        if (!render_params_.colors_inverted)
-        {
-            //GAL_OpenGL::EnableBlendOneOne();
-        }
-
         particles_render_pipeline_->SetPointSize(render_params_.particle_size_scale);
 
         Device::ShadeSingleColorRootConstants root_constants = {};
@@ -139,11 +140,6 @@ void GalaxyRenderer::Render()
         particles_render_pipeline_->BeginGraphics();
         particles_render_pipeline_->Draw(0, universe_.GetParticlesCount(), GAL::PrimitiveType::Points);
         particles_render_pipeline_->EndGraphics();
-
-        if (!render_params_.colors_inverted)
-        {
-            //GAL_OpenGL::DisableBlend();
-        }
     }
 
     // Draw tree

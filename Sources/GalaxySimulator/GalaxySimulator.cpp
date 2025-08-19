@@ -24,13 +24,12 @@ GalaxySimulator::GalaxySimulator()
     // Setup ImGui context for this module
     UI_ACTIVATE_CONTEXT();
 
+    // Manually assign name and load fonts
     ResourceManager::AssignNameToResource("Content/Assets/Fonts/exo2_medium_condensed.otf", SID("exo2_medium_condensed"));
-
     GET_UIOVERLAY().LoadFonts();
 
     // Create scene
     engine->SetActiveScene(engine->CreateScene());
-    engine->Play();
 
     // Setup top camera
     Entity top_camera;
@@ -45,14 +44,12 @@ GalaxySimulator::GalaxySimulator()
     camera.Get<CameraComponent>()->z_near = 0.000001f;
     camera.Get<CameraComponent>()->z_far = 100000000.0f;
 
-    //srand(0);
-
     // Setup time measure units
     sim_context_.cSecondsPerTimeUnit = static_cast<float>(sqrt(cKiloParsec * cKiloParsec * cKiloParsec / (cMassUnit * cG)));
     sim_context_.cMillionYearsPerTimeUnit = sim_context_.cSecondsPerTimeUnit / cSecondsPerHour / cHoursPerDay / cDaysPerYear / 1e+6f;
 
     // Setup context
-    sim_context_.timestep = 0.000005f; //0.00001f
+    sim_context_.timestep = 0.00001f;
     sim_context_.algorithm = SimulationAlgorithm::BARNESHUT_CPU;
     sim_context_.gravity_softening_length = cSoftFactor;
     sim_context_.barnes_hut_opening_angle = cDefaultOpeningAngle;
@@ -68,6 +65,8 @@ GalaxySimulator::GalaxySimulator()
     //engine->GetRenderer().GetRenderManager().SetVideoRecordState(true);
 
     CreateSolver(sim_context_.algorithm);
+
+    engine->Play();
 }
 
 GalaxySimulator::~GalaxySimulator()
@@ -128,7 +127,7 @@ void GalaxySimulator::CreateGalaxy(const Float3& position, const Float3& vel)
         universe_->velocities_[cur_count + i + 1] = vel;
     };
 
-    for (size_t i = 0; i < 20; i++)
+    for (size_t i = 0; i < 20000; i++)
     {
         AddSatellite(i);
         //AddBody(i);

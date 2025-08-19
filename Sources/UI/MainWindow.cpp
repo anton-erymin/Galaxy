@@ -111,7 +111,14 @@ void MainWindow::BuildUI()
 
             BuildRow("Simulation enabled", [&](){ ImGui::Checkbox("", &sim_context_.is_simulated); });
             //BuildRowValue("Number of particles", 20);
-            BuildRow("Timestep", [&](){ ImGui::SliderFloat("", &sim_context_.timestep, 0.01f, 10.0f, nullptr, 1.0f); });
+            BuildRow("Timestep", [&]()
+                {
+                    static float s_slider_tmestep = 1.0f;
+                    if (ImGui::SliderFloat("", &s_slider_tmestep, 1.0f, 10.0f, nullptr, 1.0f))
+                    {
+                        sim_context_.timestep = 0.000001f * s_slider_tmestep;
+                    }
+                });
             BuildRowStringValue("Timestep, yrs", TimeInYearsToStr(sim_context_.timestep_yrs));
             BuildRowValue("Simulation time in units", sim_context_.simulation_time);
             BuildRowStringValue("Simulation time in yrs", TimeInYearsToStr(sim_context_.simulation_time_million_yrs * 1e+6f));
