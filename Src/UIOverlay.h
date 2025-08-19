@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include "AntTweakBar.h"
 
 struct UIOverlayImpl;
 
@@ -26,7 +27,7 @@ public:
     void SliderFloat(const char* name, float* value, float min, float max, float step = 0.1f);
     void Separator();
     void Group(const char* group);
-    void Button(const char* name, void(*callback)(void*), const char* key = nullptr);
+    void Button(const char* name, TwButtonCallback callback, const char* key = nullptr);
 
 private:
     UIOverlayImpl* impl;

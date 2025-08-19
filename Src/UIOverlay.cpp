@@ -1,6 +1,5 @@
 #include "UIOverlay.h"
 
-#include "AntTweakBar.h"
 #include "GL\freeglut.h"
 
 
@@ -118,7 +117,7 @@ void UIOverlay::Group(const char* group)
     }
 }
 
-void UIOverlay::Button(const char* name, void(*callback)(void*), const char* key)
+void UIOverlay::Button(const char* name,  TwButtonCallback callback, const char* key)
 {
     std::string def;
     if (key)
