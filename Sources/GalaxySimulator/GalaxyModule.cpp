@@ -17,6 +17,8 @@ void GameModule::Initialize(IEngine& eng)
 {
     iengine = &eng;
     Paths::SetShadersDir(Filesystem::MakeAbsolute(Paths::BaseDir() + "/../../../Libs/Nucleus/Sources/Nucleus/Engine/Shaders"));
+    Paths::SetProjectDir(Filesystem::MakeAbsolute(Paths::BaseDir() + "/../../../Libs/Nucleus/Project"));
+    ResourceManager::SetLocalDataSource(Paths::ProjectDir(), ResourceDataSourceType::FILESYSTEM_DIRECTORY);
 }
 
 void GameModule::PostInitialize()
