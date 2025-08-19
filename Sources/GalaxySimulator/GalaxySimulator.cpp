@@ -13,6 +13,7 @@
 #include <Engine.h>
 #include <EngineCore.h>
 #include <Renderer.h>
+#include <ResourceManager.h>
 //#include <Private/RenderManager.h>
 #include <UIOverlay.h>
 
@@ -22,6 +23,10 @@ GalaxySimulator::GalaxySimulator()
 
     // Setup ImGui context for this module
     UI_ACTIVATE_CONTEXT();
+
+    ResourceManager::AssignNameToResource("Content/Assets/Fonts/exo2_medium_condensed.otf", SID("exo2_medium_condensed"));
+
+    GET_UIOVERLAY().LoadFonts();
 
     // Create scene
     engine->SetActiveScene(engine->CreateScene());
@@ -164,7 +169,7 @@ void GalaxySimulator::CreateSolver(SimulationAlgorithm algorithm)
         BruteforceGPUSolver* solver = new BruteforceGPUSolver(*universe_, sim_context_, render_params_);
         solver_.reset(solver);
         solver_->Initialize();
-        renderer_->SetUpdateHandler(solver_.get());
+        renderer_->SetUpdateHandler(solver);
         renderer_->SetPositionBuffer(solver->GetPositionBuffer());
         break;
     }
