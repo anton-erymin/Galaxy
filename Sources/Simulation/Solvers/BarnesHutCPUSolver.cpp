@@ -10,7 +10,7 @@
 BarnesHutCPUSolver::BarnesHutCPUSolver(Universe& universe, SimulationContext& context, const RenderParameters& render_params)
     : CPUSolverBase(universe, context, render_params)
 {
-    tree_ = make_unique<BarnesHutCPUTree>(universe.positions_, universe_.masses_);
+    tree_ = MakeUnique<BarnesHutCPUTree>(universe.positions_, universe_.masses_);
 }
 
 BarnesHutCPUSolver::~BarnesHutCPUSolver()
@@ -25,9 +25,9 @@ void BarnesHutCPUSolver::TraverseTree(int32 node, float radius)
     radius = radius == 0.0f ? tree_->radius_ : radius;
     float half_radius = 0.5f * radius;
 
-    float4 node_pos = tree_->GetPosition(node);
+    Float4 node_pos = tree_->GetPosition(node);
     node_pos.w = radius;
-    universe_.node_positions_.push_back(node_pos);
+    universe_.node_positions_.PushBack(node_pos);
 
     if (tree_->IsNode(node))
     {
@@ -41,9 +41,9 @@ void BarnesHutCPUSolver::TraverseTree(int32 node, float radius)
             else if (tree_->IsBodyOrNull(child_index))
             {
                 // For child refering to body add info here
-                float4 child_node_pos = tree_->GetChildCenterPos(node_pos, i, radius);
+                Float4 child_node_pos = tree_->GetChildCenterPos(node_pos, i, radius);
                 child_node_pos.w = half_radius;
-                universe_.node_positions_.push_back(child_node_pos);
+                universe_.node_positions_.PushBack(child_node_pos);
             }
         }
     }
@@ -58,12 +58,12 @@ void BarnesHutCPUSolver::ComputeAcceleration()
     tree_->BuildTree();
 
     // Traverse tree collecting nodes info for tree drawing
-    universe_.node_positions_.clear();
+    universe_.node_positions_.Clear();
     if (render_params_.render_tree)
     {
         TraverseTree();
     }
-    context_.nodes_count = universe_.node_positions_.size();
+    context_.nodes_count = universe_.node_positions_.Size();
 
     tree_->SummarizeTree();
 
@@ -71,11 +71,11 @@ void BarnesHutCPUSolver::ComputeAcceleration()
 
     // 2. Compute force
 
-    size_t count = universe_.positions_.size();
+    size_t count = universe_.positions_.Size();
 
     auto ComputeForceKernel = [&](THREAD_POOL_KERNEL_ARGS)
     {
-        assert(global_id < count);
+        NASSERT(global_id < count);
 
         if (universe_.masses_[global_id] == 0.0f)
         {

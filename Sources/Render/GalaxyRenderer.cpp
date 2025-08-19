@@ -8,7 +8,7 @@
 #include <RendererCore.h>
 #include <Private/RenderDevice.h>
 #include <GAL.h>
-#include <OpenGL/GraphicsOpenGL.h>
+#include <OpenGL/OpenGLGraphics.h>
 #include <Data/DeviceData.h>
 #include <Misc/Paths.h>
 #include <Debugging/Profiler.h>
@@ -34,11 +34,11 @@ GalaxyRenderer::GalaxyRenderer(Universe& universe, SimulationContext& sim_contex
 
 void GalaxyRenderer::CreatePipelines(RenderDevice& render_device)
 {
-    particles_render_pipeline_ = render_device.CreateGraphicsPipeline("DrawParticles.geom",  "ShadeSingleColor.vert", "ShadeSingleColor.frag");
-    tree_draw_pipeline_ = render_device.CreateGraphicsPipeline("DrawBarnesHut.geom", "ShadeSingleColor.vert", "ShadeSingleColor.frag");
+    particles_render_pipeline_ = render_device.CreateGraphicsPipeline(SID("DrawParticles.geom"), SID("ShadeSingleColor.vert"), SID("ShadeSingleColor.frag"));
+    tree_draw_pipeline_ = render_device.CreateGraphicsPipeline(SID("DrawBarnesHut.geom"), SID("ShadeSingleColor.vert"), SID("ShadeSingleColor.frag"));
 }
 
-void GalaxyRenderer::CreateSizeDependentResources(RenderDevice& render_device, const int2& output_size)
+void GalaxyRenderer::CreateSizeDependentResources(RenderDevice& render_device, const Int2& output_size)
 {
 }
 
@@ -77,13 +77,13 @@ void GalaxyRenderer::BindSceneDataBuffers()
 
     if (particles_render_pipeline_)
     {
-        particles_render_pipeline_->SetBuffer(particles_positions_buffer_, "Position");
+        particles_render_pipeline_->SetBuffer(particles_positions_buffer_, SID("Position"));
     }
 }
 
-vector<GAL::GraphicsPipelinePtr> GalaxyRenderer::GetPipelines()
+Array<GAL::GraphicsPipelinePtr> GalaxyRenderer::GetPipelines()
 {
-    return vector({ particles_render_pipeline_, tree_draw_pipeline_ });
+    return Array({ particles_render_pipeline_, tree_draw_pipeline_ });
 }
 
 void GalaxyRenderer::Render()
@@ -98,8 +98,8 @@ void GalaxyRenderer::Render()
 
     if (render_params_.colors_inverted)
     {
-        GAL_OpenGL::SetClearColor(float4(1.0f, 1.0f, 1.0f, 1.0f));
-        GAL_OpenGL::ClearColor();
+        particles_render_pipeline_->SetClearColor(Float4(1.0f, 1.0f, 1.0f, 1.0f));
+        particles_render_pipeline_->ClearColorAttachments();
     }
 
     if (sim_context_.IsCPUAlgorithm() && sim_context_.positions_update_completed_flag)
@@ -125,13 +125,13 @@ void GalaxyRenderer::Render()
 
         if (!render_params_.colors_inverted)
         {
-            GAL_OpenGL::EnableBlendOneOne();
+            //GAL_OpenGL::EnableBlendOneOne();
         }
 
-        GAL_OpenGL::SetPointSize(render_params_.particle_size_scale);
+        particles_render_pipeline_->SetPointSize(render_params_.particle_size_scale);
 
         Device::ShadeSingleColorRootConstants root_constants = {};
-        float4 particle_color = render_params_.colors_inverted ? Math::kBlackColor : Math::kWhiteColor;
+        Float4 particle_color = render_params_.colors_inverted ? Math::kBlackColor : Math::kWhiteColor;
         root_constants.color = particle_color * render_params_.brightness;
         root_constants.transform = Matrix();
         particles_render_pipeline_->SetRootConstants(&root_constants);
@@ -142,7 +142,7 @@ void GalaxyRenderer::Render()
 
         if (!render_params_.colors_inverted)
         {
-            GAL_OpenGL::DisableBlend();
+            //GAL_OpenGL::DisableBlend();
         }
     }
 
@@ -151,7 +151,7 @@ void GalaxyRenderer::Render()
     {
         PROFILER_BLOCK_GPU("Draw Tree");
 
-        size_t nodes_count = universe_.node_positions_.size();
+        size_t nodes_count = universe_.node_positions_.Size();
         tree_draw_pipeline_->BeginGraphics();
         tree_draw_pipeline_->Draw(0, nodes_count, GAL::PrimitiveType::Points);
         tree_draw_pipeline_->EndGraphics();
@@ -170,14 +170,14 @@ void GalaxyRenderer::CreateParticlesBuffer()
 
     RenderDevice& device = engine->GetRenderer().GetRendererCore().GetRenderDevice();
 
-    particles_positions_buffer_ = device.CreateBuffer("ParticlesPositionsBuffer", GAL::BufferType::kStorage, count * sizeof(float4), GAL::BufferUsage::DynamicDraw);
+    particles_positions_buffer_ = device.CreateBuffer(SID("ParticlesPositionsBuffer"), GAL::BufferType::kStorage, count * sizeof(Float4), GAL::BufferUsage::DynamicDraw);
 }
 
 void GalaxyRenderer::CreateNodesBuffers(size_t nodes_count)
 {
     RenderDevice& device = engine->GetRenderer().GetRendererCore().GetRenderDevice();
 
-    nodes_positions_buffer_ = device.CreateBuffer("NodePositionsBuffer", GAL::BufferType::kStorage, nodes_count * sizeof(float4), GAL::BufferUsage::DynamicDraw);
+    nodes_positions_buffer_ = device.CreateBuffer(SID("NodePositionsBuffer"), GAL::BufferType::kStorage, nodes_count * sizeof(Float4), GAL::BufferUsage::DynamicDraw);
 }
 
 void GalaxyRenderer::UpdateParticlesBuffer()
@@ -188,29 +188,29 @@ void GalaxyRenderer::UpdateParticlesBuffer()
     }
 
     size_t count = universe_.GetParticlesCount();
-    particles_positions_buffer_->Write(0, count * sizeof(float4), universe_.positions_.data());
+    particles_positions_buffer_->Write(0, count * sizeof(Float4), universe_.positions_.Data());
 }
 
 void GalaxyRenderer::UpdateNodesBuffers()
 {
-    size_t nodes_count = universe_.node_positions_.size();
+    size_t nodes_count = universe_.node_positions_.Size();
 
     if (nodes_count == 0)
     {
         return;
     }
 
-    size_t required_size = nodes_count * sizeof(float4);
+    size_t required_size = nodes_count * sizeof(Float4);
     if (!nodes_positions_buffer_ || nodes_positions_buffer_->GetSize() < required_size)
     {
         CreateNodesBuffers(nodes_count);
         BindNodesBuffers();
     }
 
-    nodes_positions_buffer_->Write(0, nodes_count * sizeof(float4), universe_.node_positions_.data());
+    nodes_positions_buffer_->Write(0, nodes_count * sizeof(Float4), universe_.node_positions_.Data());
 }
 
 void GalaxyRenderer::BindNodesBuffers()
 {
-    tree_draw_pipeline_->SetBuffer(nodes_positions_buffer_, "NodePositions");
+    tree_draw_pipeline_->SetBuffer(nodes_positions_buffer_, SID("NodePositions"));
 }

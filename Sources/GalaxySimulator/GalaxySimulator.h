@@ -17,7 +17,7 @@ public:
 
 private:
     void CreateUniverse();
-    void CreateGalaxy(const float3& position, const float3& velocity);
+    void CreateGalaxy(const Float3& position, const Float3& velocity);
     void CreateSolver(SimulationAlgorithm algorithm);
     void CreateRenderer();
 
@@ -27,8 +27,8 @@ private:
     SimulationContext sim_context_;
     RenderParameters render_params_;
 
-    unique_ptr<Universe> universe_;
-    unique_ptr<SolverBase> solver_;
-    unique_ptr<GalaxyRenderer> renderer_;
-    unique_ptr<MainWindow> main_window_;
+    UniquePtr<Universe> universe_;
+    UniquePtr<SolverBase> solver_;
+    UniquePtr<GalaxyRenderer> renderer_;
+    UniquePtr<MainWindow> main_window_;
 };

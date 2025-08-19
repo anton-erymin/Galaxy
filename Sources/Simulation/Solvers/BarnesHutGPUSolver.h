@@ -12,7 +12,7 @@ private:
     virtual void ComputeAcceleration() override;
 
     virtual size_t GetPositionsBufferCount() const override { return universe_.GetParticlesCount() + GetNodesMaxCount(); }
-    virtual size_t GetNodesMaxCount() const override { return max(int(3 * universe_.GetParticlesCount()), 20); }
+    virtual size_t GetNodesMaxCount() const override { return Max(int(3 * universe_.GetParticlesCount()), 20); }
 
     virtual void CreateBuffers() override;
     virtual void CreatePipelines() override;

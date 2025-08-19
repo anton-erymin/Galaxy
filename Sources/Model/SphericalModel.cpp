@@ -2,21 +2,21 @@
 #include <Math/Math.h>
 #include "MathUtils.h"
 
-static constexpr uint32_t N = 10;
+static constexpr uint32 N = 10;
 
 SphericalModel::SphericalModel(float gridXMin, float gridXMax, float radius)
 	: rmin(gridXMin),
 	  rmax(gridXMax),
 	  radius(radius)
 {
-    rvec.resize(N);
-    rho.resize(N, 0.0f);
-    rightPartPoisson.resize(N);
-    potential.resize(N, 0.0f);
-    field.resize(N, 0.0f);
+    rvec.Resize(N);
+    rho.Resize(N, 0.0f);
+    rightPartPoisson.Resize(N);
+    potential.Resize(N, 0.0f);
+    field.Resize(N, 0.0f);
 
     h = (rmax - rmin) / (N - 1);
-    for (size_t i = 0; i < rvec.size(); ++i)
+    for (size_t i = 0; i < rvec.Size(); ++i)
     {
         rvec[i] = rmin + i * h;
     }
@@ -32,7 +32,7 @@ void SphericalModel::CalculatePotential()
     // Plummer
     float M = 100.0f;
 
-    for (size_t i = 0; i < rvec.size(); ++i)
+    for (size_t i = 0; i < rvec.Size(); ++i)
     {
         //rho[i] = PseudoIsothermal(r[i], rho0, radius);
         rho[i] = PlummerDensity(rvec[i], M, radius);
@@ -141,17 +141,17 @@ static float RightPartPoisson(float r)
 	return 4.0f * PI * DensityDistribution(r);
 }
 
-static void Plot(const vector<float> x, const vector<float> y, float xscale, float yscale)
+static void Plot(const Array<float> x, const Array<float> y, float xscale, float yscale)
 {
-    assert(x.size() == y.size());
+    NASSERT(x.Size() == y.Size());
 
-    float minValue = numeric_limits<float>::max();
-    float maxValue = numeric_limits<float>::min();
+    float minValue = std::numeric_limits<float>::max();
+    float maxValue = std::numeric_limits<float>::min();
 
     for (const auto& value : y)
     {
-        minValue = min(value, minValue);
-        maxValue = max(value, maxValue);
+        minValue = Min(value, minValue);
+        maxValue = Max(value, maxValue);
     }
 
 #if 0

@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "GalaxySimulator/GalaxyTypes.h"
+#include "GalaxySimulator/GalaxyModule.h"
 
 #include <EngineMinimal.h>
 #include <Renderer.h>
@@ -9,18 +10,18 @@ MainWindow::MainWindow(SimulationContext& sim_context, RenderParameters& render_
     : sim_context_(sim_context)
     , render_params_(render_params)
 {
-    window_ = engine->UISystem()->CreateUIWindow("Galaxy Simulator", true, int2(), int2(), [this](Entity e){ BuildUI(); })->entity;
-    engine->UISystem()->ShowWindow(window_);
+    window_ = iengine->UISystem()->CreateUIWindow("Galaxy Simulator", true, Int2(), Int2(), [this](Entity e){ BuildUI(); })->entity;
+    iengine->UISystem()->ShowWindow(window_);
     window_.Get<WindowUIComponent>()->color.w = 0.8f;
 }
 
-static void BuildTable(const char* name, function<void()>&& table_content)
+static void BuildTable(const char* name, Function<void()>&& table_content)
 {
-    ImGui::PushID((string(name) + "TableHeader").c_str());
+    ImGui::PushID((String(name) + "TableHeader").CStr());
 
     if (ImGui::CollapsingHeader(name, ImGuiTreeNodeFlags_DefaultOpen))
     {
-        if (ImGui::BeginTable((string(name) + "Table").c_str(), 2,
+        if (ImGui::BeginTable((String(name) + "Table").CStr(), 2,
             ImGuiTableFlags_Resizable | ImGuiTableFlags_Borders))
         {
             ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_None);
@@ -35,7 +36,7 @@ static void BuildTable(const char* name, function<void()>&& table_content)
     ImGui::PopID();
 }
 
-static void BuildRow(const char* name, function<void()>&& value_func)
+static void BuildRow(const char* name, Function<void()>&& value_func)
 {
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
@@ -50,37 +51,37 @@ static void BuildRow(const char* name, function<void()>&& value_func)
 template<typename T>
 static void BuildRowValue(const char* name, const T& value)
 {
-    BuildRow(name, [&](){ ImGui::Text(to_string(value).c_str()); });
+    BuildRow(name, [&](){ ImGui::Text(ToString(value).CStr()); });
 }
 
-static void BuildRowStringValue(const char* name, const string& value)
+static void BuildRowStringValue(const char* name, const String& value)
 {
-    BuildRow(name, [&](){ ImGui::Text(value.c_str()); });
+    BuildRow(name, [&](){ ImGui::Text(value.CStr()); });
 }
 
-static string TimeInYearsToStr(float time_years)
+static String TimeInYearsToStr(float time_years)
 {
     if (time_years < 1e+6f)
     {
-        return to_string(time_years) + " yrs";
+        return ToString(time_years) + " yrs";
     }
     else if (time_years < 1e+9f)
     {
-        return to_string(int(time_years * 1e-6f)) + " mln yrs";
+        return ToString(int(time_years * 1e-6f)) + " mln yrs";
     }
     else if (time_years < 1e+12f)
     {
-        return to_string(int(time_years * 1e-9f)) + " mlrd yrs";
+        return ToString(int(time_years * 1e-9f)) + " mlrd yrs";
     }
     else
     {
-        return to_string(int(time_years * 1e-12f)) + " trln yrs";
+        return ToString(int(time_years * 1e-12f)) + " trln yrs";
     }
 }
 
 void MainWindow::BuildUI()
 {
-    engine->GetRenderer().GetUIOverlay().PushFont(UI::UIOverlay::kRegularBold);
+    iengine->GetRenderer().GetUIOverlay().PushFont(UI::UIOverlay::kRegularBold);
 
     float mass = 1.0f;
     float disk_mass_ratio = 1.0f;
@@ -97,14 +98,14 @@ void MainWindow::BuildUI()
     BuildTable("Simulation",
         [&]()
         {
-            BuildRowValue("Render FPS", int(engine->GetFPSCounter().GetFPS()));
+            BuildRowValue("Render FPS", int(iengine->GetFPSCounter().GetFPS()));
             BuildRowValue("Simulation FPS", int(sim_context_.simulation_fps));
 
             BuildRow("Simulation type", [&]()
                 {
                     if (ImGui::Combo("", (int*)(&sim_context_.algorithm), s_sim_types, int(SimulationAlgorithm::MAX_COUNT)))
                     {
-                        DispatchEvent(Event(SID_DUP("AlgorithmChanged")));
+                        DispatchEvent(Event(SID("AlgorithmChanged")));
                     }
                 });
 

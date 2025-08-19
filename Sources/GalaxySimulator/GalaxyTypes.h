@@ -37,12 +37,12 @@ struct SimulationContext
     float integration_time_msecs = 0.0f;
     float total_step_time_msecs = 0.0f;
 
-    atomic<size_t> nodes_count = 0;
+    Atomic<size_t> nodes_count = 0;
 
     // Sync context
-    atomic_bool positions_update_completed_flag = true;
-    condition_variable solver_cv;
-    mutex solver_mu;
+    AtomicBool positions_update_completed_flag = true;
+    ConditionVariable solver_cv;
+    Mutex solver_mu;
 
     bool IsCPUAlgorithm() const { return algorithm == SimulationAlgorithm::BRUTEFORCE_CPU || algorithm == SimulationAlgorithm::BARNESHUT_CPU; }
     bool IsBarnesHut() const { return algorithm == SimulationAlgorithm::BARNESHUT_CPU || algorithm == SimulationAlgorithm::BARNESHUT_GPU; }

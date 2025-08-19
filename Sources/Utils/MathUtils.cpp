@@ -34,19 +34,19 @@ float integrate_trap(float a, float b, int n, float(*f)(float))
     return res;
 }
 
-void Poisson1(uint32_t numIter, float min, float max, int n, float *data, const vector<float>& rightPart)
+void Poisson1(uint32 numIter, float min, float max, int n, float *data, const Array<float>& rightPart)
 {
-    assert(numIter > 0);
-    assert(min < max);
-    assert(n > 3);
-    assert(data);
+    NASSERT(numIter > 0);
+    NASSERT(min < max);
+    NASSERT(n > 3);
+    NASSERT(data);
 
     float h = (max - min) / (n - 1);
     float h2 = h * h;
     float nu;
     float relax = 1.2f;
 
-    for (uint32_t iter = 0; iter < numIter; iter++)
+    for (uint32 iter = 0; iter < numIter; iter++)
     {
         for (int i = 1; i < n - 1; i++)
         {
@@ -152,14 +152,14 @@ bool poisson3d(int numIter, float min, float max, int n, float ***data, float(*f
 
 float RandomStandardDistribution()
 {
-    float v1 = 2.0f * RAND_NORM - 1.0f;
-    float v2 = 2.0f * RAND_NORM - 1.0f;
+    float v1 = RandNormSigned();
+    float v2 = RandNormSigned();
     float r = v1 * v1 + v2 * v2;
 
     while (r >= 1.0f || r < 0.0000001f)
     {
-        v1 = 2.0f * RAND_NORM - 1.0f;
-        v2 = 2.0f * RAND_NORM - 1.0f;
+        v1 = RandNormSigned();
+        v2 = RandNormSigned();
         r = v1 * v1 + v2 * v2;
     }
 
@@ -167,34 +167,34 @@ float RandomStandardDistribution()
     return v1 * fac;
 }
 
-float3 SphericalToCartesian(float r, float phi, float theta)
+Float3 SphericalToCartesian(float r, float phi, float theta)
 {
     return { r * sinf(theta) * cosf(phi), r * sinf(theta) * sinf(phi), r * cosf(theta) };
 }
 
-float3 SphericalToCartesian(const float3& spherical)
+Float3 SphericalToCartesian(const Float3& spherical)
 {
     return SphericalToCartesian(spherical.x, spherical.y, spherical.z);
 }
 
-float3 CylindricalToCartesian(float r, float phi, float z)
+Float3 CylindricalToCartesian(float r, float phi, float z)
 {
     return { r * cosf(phi), r * sinf(phi), z };
 }
 
-float3 CylindricalToCartesian(const float3 & cylindrical)
+Float3 CylindricalToCartesian(const Float3 & cylindrical)
 {
     return CylindricalToCartesian(cylindrical.x, cylindrical.y, cylindrical.z);
 }
 
-float3 RandomUniformSpherical(float rmin, float rmax)
+Float3 RandomUniformSpherical(float rmin, float rmax)
 {
-    return { RAND_RANGE(rmin, rmax), 2.0f * PI * RAND_NORM /*- PI*/, 2.0f * PI * RAND_NORM };
+    return { RandRange(rmin, rmax), 2.0f * PI * RandNorm() /*- PI*/, 2.0f * PI * RandNorm() };
 }
 
-float3 RandomUniformCylindrical(float rmin, float rmax, float height)
+Float3 RandomUniformCylindrical(float rmin, float rmax, float height)
 {
-    return { RAND_RANGE(rmin, rmax), 2.0f * PI * RAND_NORM, RAND_RANGE(-0.5f * height, 0.5f * height) };
+    return { RandRange(rmin, rmax), 2.0f * PI * RandNorm(), RandRange(-0.5f * height, 0.5f * height) };
 }
 
 float SoftenedDistance(float dist_squared, float soft_factor)
@@ -202,17 +202,17 @@ float SoftenedDistance(float dist_squared, float soft_factor)
     return sqrtf(dist_squared + soft_factor * soft_factor);
 }
 
-float3 GravityAcceleration(const float3& l, float mass, float soft, float length_sq)
+Float3 GravityAcceleration(const Float3& l, float mass, float soft, float length_sq)
 {
-    float3 acceleration = l;
-    float distance_sq = length_sq > 0.0f ? length_sq : dot(l, l);
+    Float3 acceleration = l;
+    float distance_sq = length_sq > 0.0f ? length_sq : Dot(l, l);
     float r = sqrtf(distance_sq + soft * soft);
     float denom = r * r * r;
     acceleration *= mass / denom;
     return acceleration;
 }
 
-float3 GravityAcceleration(const float3& l, float mass, float softened_dist_cubic)
+Float3 GravityAcceleration(const Float3& l, float mass, float softened_dist_cubic)
 {
     return l * mass / softened_dist_cubic;
 }
@@ -245,14 +245,14 @@ float PlummerPotential(float r, float mass, float radius)
     return -mass / (sqrtf(r * r + radius * radius));
 }
 
-void IntegrateMotionEquation(float time, float3& position, float3& velocity, 
-    const float3& force, float inverse_mass)
+void IntegrateMotionEquation(float time, Float3& position, Float3& velocity, 
+    const Float3& force, float inverse_mass)
 {
     // Euler-Cromer
-    /*float3 a = acceleration + force * inverseMass;
+    /*Float3 a = acceleration + force * inverseMass;
     velocity += acceleration * time;
     position += velocity * time;*/
-    //float3 acceleration = inverse_mass * force;
+    //Float3 acceleration = inverse_mass * force;
     velocity += time * force;
     position += time * velocity;
 }

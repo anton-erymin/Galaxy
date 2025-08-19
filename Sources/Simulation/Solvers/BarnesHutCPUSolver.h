@@ -15,5 +15,5 @@ private:
     virtual void ComputeAcceleration() override;
 
 private:
-    unique_ptr<BarnesHutCPUTree> tree_;
+    UniquePtr<BarnesHutCPUTree> tree_;
 };

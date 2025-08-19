@@ -47,7 +47,7 @@ protected:
     const RenderParameters& render_params_;
 
     FPSCounter fps_counter_;
-    unique_ptr<BodyTracker> tracker_;
+    UniquePtr<BodyTracker> tracker_;
 };
 
 class BodyTracker
@@ -59,9 +59,9 @@ public:
         StorePositions();
     }
 
-    void AddTracks(initializer_list<size_t>& list)
+    void AddTracks(std::initializer_list<size_t>& list)
     {
-        track_indices_.insert(track_indices_.end(), list.begin(), list.end());
+        track_indices_.Insert(track_indices_.end(), list.begin(), list.end());
     }
 
     void Track();
@@ -69,6 +69,6 @@ public:
 
 private:
     const Universe& universe_;
-    vector<size_t> track_indices_;
-    vector<float3> prev_pos_;
+    Array<size_t> track_indices_;
+    Array<Float3> prev_pos_;
 };

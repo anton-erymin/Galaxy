@@ -8,7 +8,7 @@
 
 void SolverBase::Initialize()
 {
-    tracker_ = make_unique<BodyTracker>(universe_);
+    tracker_ = MakeUnique<BodyTracker>(universe_);
 
     // Initial acceleration
     ComputeAcceleration();
@@ -83,17 +83,17 @@ void SolverBase::Dump(const char* prefix)
 {
     size_t i = 1;
     NLOG("Step " << context_.timesteps_count << " [" << prefix << "]: "
-        "pos: " << String::Float3ToStr(universe_.positions_[i]) <<
-        ", vel: " << String::Float3ToStr(universe_.velocities_[i]) <<
-        ", force: " << String::Float3ToStr(universe_.forces_[i]));
+        "pos: " << StringUtils::Float3ToStr(universe_.positions_[i]) <<
+        ", vel: " << StringUtils::Float3ToStr(universe_.velocities_[i]) <<
+        ", force: " << StringUtils::Float3ToStr(universe_.forces_[i]));
 }
 
 void BodyTracker::Track()
 {
     for (size_t i = 0; i < universe_.GetParticlesCount(); i++)
     {
-        const float3& new_pos = universe_.positions_[i];
-        float dist_sq = (new_pos - prev_pos_[i]).length_sq();
+        const Float3& new_pos = universe_.positions_[i];
+        float dist_sq = (new_pos - prev_pos_[i]).LengthSquared();
         constexpr float TRACK_TRHESHOLD_DIST = 0.05f;
         constexpr float TRACK_TRHESHOLD_DIST_SQ = TRACK_TRHESHOLD_DIST * TRACK_TRHESHOLD_DIST;
         if (dist_sq > TRACK_TRHESHOLD_DIST_SQ)
@@ -106,8 +106,8 @@ void BodyTracker::Track()
 
 void BodyTracker::StorePositions()
 {
-    prev_pos_.resize(universe_.GetParticlesCount());
-    for (size_t i = 0; i < prev_pos_.size(); i++)
+    prev_pos_.Resize(universe_.GetParticlesCount());
+    for (size_t i = 0; i < prev_pos_.Size(); i++)
     {
         prev_pos_[i] = universe_.positions_[i];
     }

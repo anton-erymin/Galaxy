@@ -35,7 +35,7 @@ BarnesHutGPUSolver::BarnesHutGPUSolver(Universe& universe)
 {
     if (!cl)
     {
-        cl = std::make_unique <cl::OpenCL>();
+        cl = std::MakeUnique <cl::OpenCL>();
     }
 }
 
@@ -101,7 +101,7 @@ void BarnesHutGPUSolver::SolveForces()
 
 void BarnesHutGPUSolver::Inititalize(float time)
 {
-    barnesHutTree = std::make_unique<BarnesHutTree>(float3(-universe.GetSize() * 0.5f), universe.GetSize());
+    barnesHutTree = std::MakeUnique<BarnesHutTree>(float3(-universe.GetSize() * 0.5f), universe.GetSize());
 
     BuildTree();
 

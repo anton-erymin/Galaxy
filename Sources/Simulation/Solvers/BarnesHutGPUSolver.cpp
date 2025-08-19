@@ -4,7 +4,7 @@
 #include <Private/RenderDevice.h>
 #include <Math/Math.h>
 #include <Data/DeviceData.h>
-#include <OpenGL/GraphicsOpenGL.h>
+#include <OpenGL/OpenGLGraphics.h>
 #include <Debugging/Profiler.h>
 
 constexpr uint32 TREE_CHILDREN_COUNT = 8;
@@ -26,7 +26,7 @@ void BarnesHutGPUSolver::ComputeAcceleration()
     {
         PROFILER_BLOCK_GPU("Bounding Box");
 
-        bounding_box_pipeline_->Dispatch(int3(1, 1, 1));
+        bounding_box_pipeline_->Dispatch(Int3(1, 1, 1));
         GAL_OpenGL::MemoryBarriers(GAL::MemoryBarrierType::SHADER_STORAGE);
         GAL_OpenGL::Finish();
     }
@@ -38,8 +38,8 @@ void BarnesHutGPUSolver::ComputeAcceleration()
 
         //build_pipeline_->Dispatch(CalcNumGroups(universe_.GetParticlesCount(), 8));
         //build_pipeline_->Dispatch(CalcNumGroups(universe_.GetParticlesCount(), Device::kGroupSize1D));
-        build_pipeline_->Dispatch(int3(1, 1, 1));
-        GAL_OpenGL::MemoryBarriers(GAL::MemoryBarrierType::SHADER_STORAGE);
+        build_pipeline_->Dispatch(Int3(1, 1, 1));
+        build_pipeline_->MemoryBarriers(GAL::MemoryBarrierType::SHADER_STORAGE);
     }
 }
 
@@ -57,8 +57,8 @@ void BarnesHutGPUSolver::CreatePipelines()
 {
     GPUSolverBase::CreatePipelines();
 
-    bounding_box_pipeline_ = GetRenderDevice().CreateComputePipeline("BoundingBox.comp");
-    build_pipeline_ = GetRenderDevice().CreateComputePipeline("BuildTree.comp");
+    bounding_box_pipeline_ = GetRenderDevice().CreateComputePipeline(SID("AABB.comp"));
+    build_pipeline_ = GetRenderDevice().CreateComputePipeline(SID("BuildTree.comp"));
     //summarize_pipeline_ = GetRenderDevice().CreateComputePipeline("Summarize.comp");
     //sort_pipeline_ = GetRenderDevice().CreateComputePipeline("Sort.comp");
     //compute_acceleration_pipeline_ = GetRenderDevice().CreateComputePipeline("TreeComputeAcceleration.comp");
@@ -74,8 +74,8 @@ void BarnesHutGPUSolver::BindLayout(GAL::ComputePipelinePtr pipeline)
 {
     GPUSolverBase::BindLayout(pipeline);
 
-    pipeline->SetBuffer(children_, "Children");
-    pipeline->SetBuffer(nodes_index_, "NodesIndex");
-    pipeline->SetBuffer(radius_, "RootRadius");
-    pipeline->SetBuffer(debug_, "DebugBuffer");
+    pipeline->SetBuffer(children_, SID("Children"));
+    pipeline->SetBuffer(nodes_index_, SID("NodesIndex"));
+    pipeline->SetBuffer(radius_, SID("RootRadius"));
+    pipeline->SetBuffer(debug_, SID("DebugBuffer"));
 }

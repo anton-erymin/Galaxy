@@ -12,7 +12,7 @@ void Universe::CreateGalaxy()
     AddGalaxy(galaxy);
 }
 
-void Universe::CreateGalaxy(const float3& position, const GalaxyParameters& parameters)
+void Universe::CreateGalaxy(const Float3& position, const GalaxyParameters& parameters)
 {
     Galaxy galaxy(position, parameters);
     AddGalaxy(galaxy);
@@ -22,28 +22,28 @@ void Universe::AddGalaxy(Galaxy& galaxy)
 {
     size_t count = galaxy.GetParticlesCount();
 
-    positions_.reserve(positions_.size() + count);
-    velocities_.reserve(velocities_.size() + count);
-    //accelerations_.reserve(accelerations_.size() + count);
-    forces_.reserve(forces_.size() + count );
-    inverse_masses_.reserve(inverse_masses_.size() + count);
-    masses_.reserve(masses_.size() + count);
+    positions_.Reserve(positions_.Size() + count);
+    velocities_.Reserve(velocities_.Size() + count);
+    //accelerations_.reserve(accelerations_.Size() + count);
+    forces_.Reserve(forces_.Size() + count );
+    inverse_masses_.Reserve(inverse_masses_.Size() + count);
+    masses_.Reserve(masses_.Size() + count);
 
-    all_particles_.reserve(all_particles_.size() + count);
+    all_particles_.Reserve(all_particles_.Size() + count);
 
     for (Particle& particle : galaxy.GetParticles())
     {
-        positions_.push_back(particle.position);
-        velocities_.push_back(particle.velocity);
-        //accelerations_.push_back(particle.acceleration);
-        forces_.push_back(particle.force);
-        masses_.push_back(particle.mass);
-        inverse_masses_.push_back(particle.inverse_mass);
+        positions_.PushBack(particle.position);
+        velocities_.PushBack(particle.velocity);
+        //accelerations_.PushBack(particle.acceleration);
+        forces_.PushBack(particle.force);
+        masses_.PushBack(particle.mass);
+        inverse_masses_.PushBack(particle.inverse_mass);
 
-        //assert(particle.image);
-        //imageToParticles[particle.image].push_back(position.size() - 1);
+        //NASSERT(particle.image);
+        //imageToParticles[particle.image].PushBack(position.Size() - 1);
 
-        all_particles_.push_back(&particle);
+        all_particles_.PushBack(&particle);
     }
 
     //galaxies_.emplace_back(move(galaxy));
@@ -53,17 +53,17 @@ void Universe::AddGalaxy(Galaxy& galaxy)
 
 void Universe::SetRadialVelocitiesFromForce()
 {
-    for (size_t i = 0; i < all_particles_.size(); ++i)
+    for (size_t i = 0; i < all_particles_.Size(); ++i)
     {
-        float3 relativePos = float3(positions_[i]) - all_particles_[i]->galaxy->GetPosition();
-        float3 v = { relativePos.z, 0.0f, -relativePos.x };
-        v.normalize();
+        Float3 relativePos = Float3(positions_[i]) - all_particles_[i]->galaxy->GetPosition();
+        Float3 v = { relativePos.z, 0.0f, -relativePos.x };
+        v.Normalize();
 
         //float radialFromHalo = RadialVelocity(halo.GetForce(relativePos.norm()), particles[i].mass, relativePos.norm());
-        float radial = RadialVelocity(forces_[i].length(), all_particles_[i]->mass, relativePos.length());
+        float radial = RadialVelocity(forces_[i].Length(), all_particles_[i]->mass, relativePos.Length());
         v *= radial * cRadialVelocityFactor;// + radialFromHalo;
                     //float d = 0.1 * v.norm();
-                    //v += lpVec3(d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f), d * RAND_RANGE(-1.0f, 1.0f));
+                    //v += lpVec3(d * RandRange(-1.0f, 1.0f), d * RandRange(-1.0f, 1.0f), d * RandRange(-1.0f, 1.0f));
 
         velocities_[i] = v;//{0,0,0};
 
@@ -72,13 +72,13 @@ void Universe::SetRadialVelocitiesFromForce()
 
 void Universe::SetRandomVelocities(float min, float max)
 {
-    for (size_t i = 0; i < velocities_.size(); i++)
+    for (size_t i = 0; i < velocities_.Size(); i++)
     {
         if (masses_[i] > 0.0f)
         {
-            float3 rand_dir(RAND_SNORM, 0.0f, RAND_SNORM);
-            rand_dir.normalize();
-            velocities_[i] = RAND_RANGE(min, max) * rand_dir;
+            Float3 rand_dir(RandNormSigned(), 0.0f, RandNormSigned());
+            rand_dir.Normalize();
+            velocities_[i] = RandRange(min, max) * rand_dir;
         }
     }
 }

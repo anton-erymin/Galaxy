@@ -10,33 +10,33 @@ public:
     Universe();
 
     void CreateGalaxy();
-    void CreateGalaxy(const float3& position, const GalaxyParameters& parameters);
+    void CreateGalaxy(const Float3& position, const GalaxyParameters& parameters);
 
     void SetRadialVelocitiesFromForce();
 
     void SetRandomVelocities(float min, float max);
 
-    vector<Galaxy>& GetGalaxies() { return galaxies_; }
-    const vector<Particle*>& GetParticles() const { return all_particles_; }
-    size_t GetParticlesCount() const { return positions_.size(); }
+    Array<Galaxy>& GetGalaxies() { return galaxies_; }
+    const Array<Particle*>& GetParticles() const { return all_particles_; }
+    size_t GetParticlesCount() const { return positions_.Size(); }
 
-    //const unordered_map<const Image*, vector<size_t>>& GetParticlesByImage() const { return imageToParticles; }
+    //const unordered_map<const Image*, Array<size_t>>& GetParticlesByImage() const { return imageToParticles; }
 
 private:
     void AddGalaxy(Galaxy& galaxy);
 
 private:
-    vector<Galaxy> galaxies_;
-    vector<float4> positions_;
-    vector<float4> velocities_;
-    //vector<float3> accelerations_;
-    vector<float3> forces_;
-    vector<float> masses_;
-    vector<float> inverse_masses_;
-    vector<Particle*> all_particles_;
+    Array<Galaxy> galaxies_;
+    Array<Float4> positions_;
+    Array<Float4> velocities_;
+    //Array<Float3> accelerations_;
+    Array<Float3> forces_;
+    Array<float> masses_;
+    Array<float> inverse_masses_;
+    Array<Particle*> all_particles_;
 
     // Filled from CPU solver
-    vector<float4> node_positions_; // .w - node radius
+    Array<Float4> node_positions_; // .w - node radius
 
     friend class SolverBase;
     friend class CPUSolverBase;
@@ -49,5 +49,5 @@ private:
     friend class GalaxySimulator;
     friend class BodyTracker;
 
-    //unordered_map<const Image*, vector<size_t>> imageToParticles;
+    //unordered_map<const Image*, Array<size_t>> imageToParticles;
 };

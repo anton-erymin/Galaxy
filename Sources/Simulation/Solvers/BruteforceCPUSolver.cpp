@@ -19,29 +19,29 @@ void BruteforceCPUSolver::ComputeAcceleration()
 {
     // Bruteforce
 
-    size_t count = universe_.positions_.size();
+    size_t count = universe_.positions_.Size();
 
     auto ComputeForceKernel = [&](size_t global_id, size_t local_id, size_t block_id, size_t thread_id)
     {
-        assert(global_id < count);
+        NASSERT(global_id < count);
 
         for (size_t j = global_id + 1; j < count; j++)
         {
-            float3 l = float3(universe_.positions_[j]) - float3(universe_.positions_[global_id]);
+            Float3 l = Float3(universe_.positions_[j]) - Float3(universe_.positions_[global_id]);
             // TODO: Softened distance right?
-            float dist = SoftenedDistance(l.length_sq(), context_.gravity_softening_length);
+            float dist = SoftenedDistance(l.LengthSquared(), context_.gravity_softening_length);
             float dist_cubic = dist * dist * dist;
 
-            float3 force1 = GravityAcceleration(l, universe_.masses_[j], dist_cubic);
-            float3 force2 = GravityAcceleration(-l, universe_.masses_[global_id], dist_cubic);
+            Float3 force1 = GravityAcceleration(l, universe_.masses_[j], dist_cubic);
+            Float3 force2 = GravityAcceleration(-l, universe_.masses_[global_id], dist_cubic);
 
             {
-                lock_guard<mutex> lock(force_mutexes_[global_id]);
+                LockGuard lock(*force_mutexes_[global_id]);
                 universe_.forces_[global_id] += force1;
             }
 
             {
-                lock_guard<mutex> lock(force_mutexes_[j]);
+                LockGuard lock(*force_mutexes_[j]);
                 universe_.forces_[j] += force2;
             }
         }

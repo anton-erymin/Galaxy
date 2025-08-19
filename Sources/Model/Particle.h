@@ -8,10 +8,10 @@ struct Particle
     float activationTime = 0;
     float timer = 0;
 
-    float3 position = {};
-    float3 velocity = {};
-    float3 acceleration = {};
-    float3 force = {};
+    Float3 position = {};
+    Float3 velocity = {};
+    Float3 acceleration = {};
+    Float3 force = {};
 
     float mass = 1.0f;
     float inverse_mass = 1.0f;
@@ -19,7 +19,7 @@ struct Particle
     bool movable = true;
 
     float m_alpha;
-    float3 color = { 1.0f, 1.0f, 1.0f };
+    Float3 color = { 1.0f, 1.0f, 1.0f };
 
     float magnitude = 1.0f;
     float size = 1.0f;

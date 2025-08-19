@@ -8,6 +8,10 @@ CPUSolverBase::CPUSolverBase(Universe& universe, SimulationContext& context, con
     : SolverBase(universe, context, render_params)
     , force_mutexes_(universe.GetParticlesCount())
 {
+    for (UniquePtr<Mutex>& mutex : force_mutexes_)
+    {
+        mutex = MakeUnique<Mutex>();
+    }
 }
 
 CPUSolverBase::~CPUSolverBase()
@@ -18,7 +22,7 @@ CPUSolverBase::~CPUSolverBase()
 void CPUSolverBase::Start()
 {
     active_flag_ = true;
-    thread_.reset(new Thread("CPUSolver Thread", bind(&CPUSolverBase::SolverRun, this)));
+    thread_.reset(new Thread(SID("CPUSolver Thread"), BindCall(&CPUSolverBase::SolverRun, this)));
 }
 
 void CPUSolverBase::Stop()
@@ -53,19 +57,19 @@ void CPUSolverBase::SolverRun()
 
 void CPUSolverBase::IntegrateLeapFrogKickDrift()
 {
-    PARALLEL_FOR_METHOD_BIND(universe_.positions_.size(), CPUSolverBase::LeapFrogKickDriftIntegrationKernel);
+    PARALLEL_FOR_METHOD_BIND(universe_.positions_.Size(), CPUSolverBase::LeapFrogKickDriftIntegrationKernel);
 }
 
 void CPUSolverBase::IntegrateLeapFrogKick()
 {
-    PARALLEL_FOR_METHOD_BIND(universe_.positions_.size(), CPUSolverBase::LeapFrogKickIntegrationKernel);
+    PARALLEL_FOR_METHOD_BIND(universe_.positions_.Size(), CPUSolverBase::LeapFrogKickIntegrationKernel);
 }
 
 void CPUSolverBase::LeapFrogKickDriftIntegrationKernel(THREAD_POOL_KERNEL_ARGS)
 {
     if (universe_.masses_[global_id] > 0.0f)
     {
-        float3 pos = float3(universe_.positions_[global_id]);
+        Float3 pos = Float3(universe_.positions_[global_id]);
 
         // 1/2 kick
         universe_.velocities_[global_id] += universe_.forces_[global_id] * context_.half_timestep;
@@ -74,7 +78,7 @@ void CPUSolverBase::LeapFrogKickDriftIntegrationKernel(THREAD_POOL_KERNEL_ARGS)
         universe_.positions_[global_id] = pos;
     }
     // Clear force accumulator
-    universe_.forces_[global_id] = float3();
+    universe_.forces_[global_id] = Float3();
 }
 
 void CPUSolverBase::LeapFrogKickIntegrationKernel(THREAD_POOL_KERNEL_ARGS)

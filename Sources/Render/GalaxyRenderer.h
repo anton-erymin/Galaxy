@@ -14,11 +14,11 @@ public:
     GalaxyRenderer(Universe& universe, SimulationContext& sim_context, const RenderParameters& render_params);
 
     virtual void CreatePipelines(RenderDevice& render_device) override;
-    virtual void CreateSizeDependentResources(RenderDevice& render_device, const int2& output_size) override;
+    virtual void CreateSizeDependentResources(RenderDevice& render_device, const Int2& output_size) override;
     virtual void DestroyResources() override;
     virtual void UpdatePipelines(GAL::ImagePtr& output_image) override;
     virtual void BindSceneDataBuffers() override;
-    virtual vector<GAL::GraphicsPipelinePtr> GetPipelines() override;
+    virtual Array<GAL::GraphicsPipelinePtr> GetPipelines() override;
     virtual void Render() override;
 
     void SetUpdateHandler(IUpdatable* handler) { aux_updatable_ = handler; }

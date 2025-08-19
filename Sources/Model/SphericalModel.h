@@ -6,7 +6,7 @@ public:
     SphericalDistribution(float mass = 1.0f, float radius = 1.0f) : mass(mass), radius(radius) { }
     virtual ~SphericalDistribution() = default;
     virtual float GetDensity(float r) const = 0;
-    virtual float GetPotential(float r) const { assert(!"Not implemented"); return 0.0f; }
+    virtual float GetPotential(float r) const { NASSERT(!"Not implemented"); return 0.0f; }
 
     float GetMass() const { return mass; }
     float GetRadius() const { return radius; }
@@ -34,11 +34,11 @@ public:
 
 	float     radius;
 
-    vector<float> rvec;
-    vector<float> rho;
-    vector<float> rightPartPoisson;
-	vector<float> potential;
-    vector<float> field;
+    Array<float> rvec;
+    Array<float> rho;
+    Array<float> rightPartPoisson;
+	Array<float> potential;
+    Array<float> field;
 
 	float	  vc;
 

@@ -27,7 +27,7 @@ private:
 
 protected:
 	// This needs to be declared before thread
-	vector<mutex> force_mutexes_;
-	unique_ptr<Thread> thread_;
-	volatile atomic_bool active_flag_;
+	Array<UniquePtr<Mutex>> force_mutexes_;
+	UniquePtr<Thread> thread_;
+	volatile AtomicBool active_flag_;
 };

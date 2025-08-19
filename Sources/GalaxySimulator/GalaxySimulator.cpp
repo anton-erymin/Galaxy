@@ -30,9 +30,9 @@ GalaxySimulator::GalaxySimulator()
     // Setup top camera
     Entity top_camera;
     CameraComponent* camera_comp = top_camera.Create<CameraComponent>();
-    camera_comp->type = CameraComponent::Type::kOrtho;
-    camera_comp->eye = float3(0.0f, 1.0f, 0.0f);
-    camera_comp->at = float3();
+    camera_comp->type = CameraType::Ortho;
+    camera_comp->eye = Float3(0.0f, 1.0f, 0.0f);
+    camera_comp->at = Float3();
     camera_comp->up = -Math::Z;
     //engine->SetActiveCamera(top_camera);
 
@@ -56,7 +56,7 @@ GalaxySimulator::GalaxySimulator()
     CreateUniverse();
     CreateRenderer();
 
-    main_window_ = make_unique<MainWindow>(sim_context_, render_params_);
+    main_window_ = MakeUnique<MainWindow>(sim_context_, render_params_);
     BIND_EVENT_HANDLER(OnEvent);
     main_window_->AddEventHandler(*this);
 
@@ -71,20 +71,20 @@ GalaxySimulator::~GalaxySimulator()
 
 void GalaxySimulator::CreateUniverse()
 {
-    universe_ = make_unique<Universe>();
+    universe_ = MakeUnique<Universe>();
 
     //GalaxyParameters params = {};
     //params.disk_particles_count = 1;
-    //universe_->CreateGalaxy(float3(), params);
-    //universe_->CreateGalaxy(float3(0.2f, 0.0f, 0.0f), params);
+    //universe_->CreateGalaxy(Float3(), params);
+    //universe_->CreateGalaxy(Float3(0.2f, 0.0f, 0.0f), params);
 
-    CreateGalaxy(float3(0.0f, 0.0f, 0.0f), float3(0.0f, 0.0f, 0.0f));
+    CreateGalaxy(Float3(0.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f));
 
-    //CreateGalaxy(float3(-1.5f, 0.0f, 0.0f), float3(0.0f, 0.0f, 0.0f));
-    //CreateGalaxy(float3(1.5f, 0.0f, -1.5f), float3(-1.0f, 0.0f, 0.0f));
+    //CreateGalaxy(Float3(-1.5f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f));
+    //CreateGalaxy(Float3(1.5f, 0.0f, -1.5f), Float3(-1.0f, 0.0f, 0.0f));
 }
 
-void GalaxySimulator::CreateGalaxy(const float3& position, const float3& vel)
+void GalaxySimulator::CreateGalaxy(const Float3& position, const Float3& vel)
 {
     // Save current count
     size_t cur_count = universe_->GetParticlesCount();
@@ -98,12 +98,12 @@ void GalaxySimulator::CreateGalaxy(const float3& position, const float3& vel)
 
     auto AddSatellite = [&](int i)
     {
-        float dist = RAND_RANGE(0.01f, 1.0f);
-        float3 rand_dir(RAND_SNORM, 0.0f, RAND_SNORM);
-        rand_dir.normalize();
-        float3 ortho_dir = float3(rand_dir.z, 0.0f, -rand_dir.x);
-        float3 pos = position + rand_dir * dist;
-        pos.y = RAND_RANGE(-0.05f, 0.05f);
+        float dist = RandRange(0.01f, 1.0f);
+        Float3 rand_dir(RandNormSigned(), 0.0f, RandNormSigned());
+        rand_dir.Normalize();
+        Float3 ortho_dir = Float3(rand_dir.z, 0.0f, -rand_dir.x);
+        Float3 pos = position + rand_dir * dist;
+        pos.y = RandRange(-0.05f, 0.05f);
         GalaxyParameters params = {};
         params.disk_particles_count = 1;
         universe_->CreateGalaxy(pos, params);
@@ -115,8 +115,8 @@ void GalaxySimulator::CreateGalaxy(const float3& position, const float3& vel)
     auto AddBody = [&](int i)
     {
         const float R = 10.0f;
-        float3 rand_pos = float3(RAND_RANGE(-R, R), RAND_RANGE(-R, R), RAND_RANGE(-R, R));
-        float3 pos = position + rand_pos;
+        Float3 rand_pos = Float3(RandRange(-R, R), RandRange(-R, R), RandRange(-R, R));
+        Float3 pos = position + rand_pos;
         GalaxyParameters params = {};
         params.disk_particles_count = 1;
         universe_->CreateGalaxy(pos, params);
@@ -177,13 +177,13 @@ void GalaxySimulator::CreateSolver(SimulationAlgorithm algorithm)
 
 void GalaxySimulator::CreateRenderer()
 {
-    renderer_ = make_unique<GalaxyRenderer>(*universe_, sim_context_, render_params_);
+    renderer_ = MakeUnique<GalaxyRenderer>(*universe_, sim_context_, render_params_);
     engine->GetRenderer().RegisterRendererPlugin(*renderer_);
 }
 
 void GalaxySimulator::OnEvent(Event& e)
 {
-    if (e.type == SID_DUP("AlgorithmChanged"))
+    if (e.type == SID("AlgorithmChanged"))
     {
         CreateSolver(sim_context_.algorithm);
     }
@@ -194,7 +194,7 @@ void GalaxySimulator::PostRender()
 {
 
 #if 0
-            static vector<Device::Node> node_data(nodes_count);
+            static Array<Device::Node> node_data(nodes_count);
             auto buf = renderer_->GetDeviceBuffer(nodes_buffer_);
             buf->Bind();
             void* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
@@ -217,14 +217,14 @@ void GalaxySimulator::PostRender()
 
     for (auto& particlesByImage : universe->GetParticlesByImage())
     {
-        assert(particlesByImage.first);
+        NASSERT(particlesByImage.first);
         glBindTexture(GL_TEXTURE_2D, particlesByImage.first->GetTextureId());
 
         glBegin(GL_QUADS);
 
         for (const auto i : particlesByImage.second)
         {
-            assert(i < universe->GetParticlesCount());
+            NASSERT(i < universe->GetParticlesCount());
             const Particle& particle = *particles_[i];
             if (!particle.active)
             {
@@ -233,12 +233,12 @@ void GalaxySimulator::PostRender()
 
             float s = 0.5f * particle.size_ * renderParams.particlesSizeScale;
 
-            float3 pos = universe->position_[i];
+            Float3 pos = universe->position_[i];
 
-            float3 p1 = pos - v1 * s - v2 * s;
-            float3 p2 = pos - v1 * s + v2 * s;
-            float3 p3 = pos + v1 * s + v2 * s;
-            float3 p4 = pos + v1 * s - v2 * s;
+            Float3 p1 = pos - v1 * s - v2 * s;
+            Float3 p2 = pos - v1 * s + v2 * s;
+            Float3 p3 = pos + v1 * s + v2 * s;
+            Float3 p4 = pos + v1 * s - v2 * s;
 
             float magnitude = particle.magnitude * renderParams.brightness;
             // Squared distance to viewer
