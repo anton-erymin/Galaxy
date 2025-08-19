@@ -17,7 +17,7 @@ set(NUCLEUS_LAUNCH_MODULE_NAME "Galaxy")
 # And main gameplay logic header file
 set(NUCLEUS_GAME_MODULE_NAME "Galaxy.GalaxySimulator")
 set(NUCLEUS_GAME_MODULE_CLASS_NAME "GameModule")
-set(NUCLEUS_GAME_MODULE_HEADER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Sources/GalaxySimulator/Galaxy.h")
+set(NUCLEUS_GAME_MODULE_HEADER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Sources/GalaxySimulator/GalaxyModule.h")
 
 # Finally add Nucleus
 add_subdirectory(${NUCLEUS_DIR})
@@ -34,7 +34,7 @@ include_directories(${NUCLEUS_DIR}/Libs/ankerl)
 set(BUNDLE_PATH ${NUCLEUS_DIR}/Sources/Nucleus/Engine/Core/Bundle.h)
 
 function(ConfigureGalaxyModule name sources)
-	#target_compile_definitions(${name} PRIVATE NUCLEUS_BUILD_SHARED)
+	target_compile_definitions(${name} PRIVATE GAMEPLAY_SHARED)    
 	target_include_directories(${name} PUBLIC ${CMAKE_SOURCE_DIR}/Sources)
 	target_include_directories(${name} PUBLIC ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
     target_precompile_headers(${name} PUBLIC ${BUNDLE_PATH})
