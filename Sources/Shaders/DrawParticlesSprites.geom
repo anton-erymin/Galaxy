@@ -5,6 +5,7 @@ layout(points) in;
 layout(triangle_strip, max_vertices = 4) out;
 
 out vec4 frag_color;
+out vec2 frag_uv;
 
 ROOT_CONSTANTS
 {
@@ -29,15 +30,19 @@ void main()
     vec4 p3 = vec4(pos.xyz + v1 * s - v2 * s, 1.0);
                     
     gl_Position = g_camera.projection_view_transform * p0;
+    frag_uv = vec2(0.0, 1.0);
     EmitVertex();
     
     gl_Position = g_camera.projection_view_transform * p2;
+    frag_uv = vec2(0.0, 0.0);
     EmitVertex();
     
     gl_Position = g_camera.projection_view_transform * p1;
+    frag_uv = vec2(1.0, 1.0);
     EmitVertex();
     
     gl_Position = g_camera.projection_view_transform * p3;
+    frag_uv = vec2(1.0, 0.0);
     EmitVertex();
     
     EndPrimitive();

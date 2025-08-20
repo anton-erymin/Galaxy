@@ -2,6 +2,7 @@
 #include "Universe.h"
 #include "Particle.h"
 #include "GalaxySimulator/GalaxyTypes.h"
+#include "GalaxySimulator/GalaxyModule.h"
 
 #include <Engine.h>
 #include <Renderer.h>
@@ -12,6 +13,8 @@
 #include <Data/DeviceData.h>
 #include <Misc/Paths.h>
 #include <Debugging/Profiler.h>
+#include <ResourceManager.h>
+#include <Interfaces/IImageSystem.h>
 
 #pragma pack(push, 1)
 
@@ -42,6 +45,9 @@ GalaxyRenderer::GalaxyRenderer(Universe& universe, SimulationContext& sim_contex
 
     // Add additional shaders directory
     sm.AddShadersPath(Paths::BaseDir() + "/../../../Sources/Shaders"); // Galaxy shaders dir
+
+    star_image_ = ResourceManager::GetResource("star.png", ResourceLoadFlags::POST_LOAD_INITIALIZE);
+    star_image_->As<ImageResource>()->PostLoadInitialize(true);
 }
 
 void GalaxyRenderer::CreatePipelines(RenderDevice& render_device)
@@ -68,6 +74,8 @@ void GalaxyRenderer::UpdatePipelines(GAL::ImagePtr& output_image)
         state.blending.is_enabled = true;
         state.depth_test_enabled = false;
         particles_render_sprite_pipeline_->SetState(state);
+
+        particles_render_sprite_pipeline_->SetImage(iengine->ImageSystem()->GetDeviceImage(star_image_->GetEntity()), SID("g_image"), 0);
     }
 
     {
@@ -236,6 +244,8 @@ void GalaxyRenderer::UpdateParticlesBuffer()
             particle_data[i].size = universe_.GetParticles()[i]->size;
         }
         particles_data_buffer_->Write(0, count * sizeof(ParticleData), particle_data.Data());
+
+        s_particles_data_uploaded = true;
     }
 }
 

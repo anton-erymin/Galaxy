@@ -2,6 +2,7 @@
 
 #include <Interfaces/IRendererPlugin.h>
 #include <Entity.h>
+#include "ResourcePtr.h"
 
 class Universe;
 struct SimulationContext;
@@ -45,6 +46,8 @@ private:
     GAL::GraphicsPipelinePtr particles_render_sprite_pipeline_;
     GAL::GraphicsPipelinePtr particles_render_points_pipeline_;
     GAL::GraphicsPipelinePtr tree_draw_pipeline_;
+
+    ResourcePtr star_image_;
 
     IUpdatable* aux_updatable_ = nullptr;
 };

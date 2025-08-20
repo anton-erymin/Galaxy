@@ -15,6 +15,7 @@
 #include <Renderer.h>
 #include <ResourceManager.h>
 #include <UIOverlay.h>
+#include <Misc/Paths.h>
 
 GalaxySimulator::GalaxySimulator()
 {
@@ -26,6 +27,8 @@ GalaxySimulator::GalaxySimulator()
     // Manually assign name and load fonts
     ResourceManager::AssignNameToResource("Content/Assets/Fonts/exo2_medium_condensed.otf", SID("exo2_medium_condensed"));
     GET_UIOVERLAY().LoadFonts();
+
+    ResourceManager::SetLocalDataSource(Paths::BaseDir() + "/../../../Data", ResourceDataSourceType::FILESYSTEM_DIRECTORY);
 
     // Create scene
     engine->SetActiveScene(engine->CreateScene());
