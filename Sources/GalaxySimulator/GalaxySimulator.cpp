@@ -14,7 +14,6 @@
 #include <EngineCore.h>
 #include <Renderer.h>
 #include <ResourceManager.h>
-//#include <Private/RenderManager.h>
 #include <UIOverlay.h>
 
 GalaxySimulator::GalaxySimulator()
@@ -53,7 +52,7 @@ GalaxySimulator::GalaxySimulator()
     sim_context_.algorithm = SimulationAlgorithm::BARNESHUT_CPU;
     sim_context_.gravity_softening_length = cSoftFactor;
     sim_context_.barnes_hut_opening_angle = cDefaultOpeningAngle;
-    sim_context_.is_simulated = false;
+    sim_context_.is_simulated = true;
 
     CreateUniverse();
     CreateRenderer();
@@ -127,7 +126,7 @@ void GalaxySimulator::CreateGalaxy(const Float3& position, const Float3& vel)
         universe_->velocities_[cur_count + i + 1] = vel;
     };
 
-    for (size_t i = 0; i < 20000; i++)
+    for (size_t i = 0; i < 200; i++)
     {
         AddSatellite(i);
         //AddBody(i);

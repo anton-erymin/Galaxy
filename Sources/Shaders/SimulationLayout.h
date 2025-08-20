@@ -1,5 +1,14 @@
 #include "Utils.h"
 
+struct ParticleData
+{
+    vec4 color;
+    float magnitude;
+    float size;
+    float pad0;
+    float pad1;
+};
+
 // Contains both particles and nodes
 layout(std430) coherent buffer Position { vec4 g_position[]; }; // .w - radius for nodes
 layout(std430) coherent buffer Mass { float g_mass[]; };
@@ -7,6 +16,7 @@ layout(std430) coherent buffer Mass { float g_mass[]; };
 // Contains only particles
 layout(std430) buffer Velocity { vec4 g_velocity[]; };
 layout(std430) buffer Acceleration { vec4 g_acceleration[]; };
+layout(std430) buffer ParticlesData { ParticleData g_particle_data[]; };
 
 // Contains child indices only for nodes
 layout(std430) coherent buffer Children { int g_children[]; };

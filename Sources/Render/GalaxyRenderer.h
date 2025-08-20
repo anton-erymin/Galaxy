@@ -39,9 +39,11 @@ private:
 
     // For CPU solvers
     GAL::BufferPtr particles_positions_buffer_;
+    GAL::BufferPtr particles_data_buffer_;
     GAL::BufferPtr nodes_positions_buffer_;
 
-    GAL::GraphicsPipelinePtr particles_render_pipeline_;
+    GAL::GraphicsPipelinePtr particles_render_sprite_pipeline_;
+    GAL::GraphicsPipelinePtr particles_render_points_pipeline_;
     GAL::GraphicsPipelinePtr tree_draw_pipeline_;
 
     IUpdatable* aux_updatable_ = nullptr;

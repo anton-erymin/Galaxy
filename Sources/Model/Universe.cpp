@@ -46,7 +46,7 @@ void Universe::AddGalaxy(Galaxy& galaxy)
         all_particles_.PushBack(&particle);
     }
 
-    //galaxies_.emplace_back(move(galaxy));
+    galaxies_.EmplaceBack(Move(galaxy));
 
     NLOG("Galaxy added");
 }

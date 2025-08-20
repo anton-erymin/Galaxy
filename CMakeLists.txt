@@ -50,3 +50,5 @@ add_subdirectory(Sources/Render)
 add_subdirectory(Sources/Simulation)
 add_subdirectory(Sources/UI)
 add_subdirectory(Sources/Utils)
+
+install(TARGETS Galaxy.GalaxySimulator DESTINATION .)

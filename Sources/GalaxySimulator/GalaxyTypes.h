@@ -51,7 +51,7 @@ struct SimulationContext
 struct RenderParameters
 {
     bool render_particles = true;
-    bool render_as_points = true;
+    bool render_as_points = false;
     bool render_tree = false;
     bool render_tracks = true;
     bool plot_potential = false;

@@ -144,7 +144,7 @@ void MainWindow::BuildUI()
             BuildRow("Tracks", [&](){ ImGui::Checkbox("", &render_params_.render_tracks); });
             BuildRow("Plot potential", [&](){ ImGui::Checkbox("", &render_params_.plot_potential); });
             BuildRow("Brightness", [&](){ ImGui::SliderFloat("", &render_params_.brightness, 0.05f, 10.0f, nullptr, 1.0f); });
-            BuildRow("Particles size scale", [&](){ ImGui::SliderFloat("", &render_params_.particle_size_scale, 0.01f, 50.0f, nullptr, 1.0f); });
+            BuildRow("Particles size scale", [&](){ ImGui::SliderFloat("", &render_params_.particle_size_scale, 0.01f, 2.0f, nullptr, 1.0f); });
             BuildRow("Invert colors", [&](){ ImGui::Checkbox("", &render_params_.colors_inverted); });
         });
 

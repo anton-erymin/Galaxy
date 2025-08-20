@@ -13,11 +13,24 @@
 #include <Misc/Paths.h>
 #include <Debugging/Profiler.h>
 
-namespace Device
-{
 #pragma pack(push, 1)
+
+struct DrawParticlesSpritesRootConstants
+{
+    float g_size_scale;
+    float g_brightness;
+};
+
+struct ParticleData
+{
+    Float4 color;
+    float magnitude;
+    float size;
+    float pad0;
+    float pad1;
+};
+
 #pragma pack(pop)
-}
 
 GalaxyRenderer::GalaxyRenderer(Universe& universe, SimulationContext& sim_context, 
     const RenderParameters& render_params)
@@ -28,13 +41,13 @@ GalaxyRenderer::GalaxyRenderer(Universe& universe, SimulationContext& sim_contex
     ShaderTools::ShaderManager& sm = engine->GetRenderer().GetRendererCore().GetRenderDevice().GetShaderManager();
 
     // Add additional shaders directory
-    //sm.AddShadersPath(Paths::BaseDir() + "/../../../Libs/Nucleus/Sources/Nucleus/Engine/Shaders"); // Nucleus shaders dir
     sm.AddShadersPath(Paths::BaseDir() + "/../../../Sources/Shaders"); // Galaxy shaders dir
 }
 
 void GalaxyRenderer::CreatePipelines(RenderDevice& render_device)
 {
-    particles_render_pipeline_ = render_device.CreateGraphicsPipeline(SID("DrawParticles.geom"), SID("ShadeSingleColor.vert"), SID("ShadeSingleColor.frag"));
+    particles_render_sprite_pipeline_= render_device.CreateGraphicsPipeline(SID("DrawParticlesSprites.geom"), SID("DrawParticlesSprites.vert"), SID("DrawParticlesSprites.frag"));
+    particles_render_points_pipeline_ = render_device.CreateGraphicsPipeline(SID("DrawParticlesPoints.geom"), SID("ShadeSingleColor.vert"), SID("ShadeSingleColor.frag"));
     tree_draw_pipeline_ = render_device.CreateGraphicsPipeline(SID("DrawBarnesHut.geom"), SID("ShadeSingleColor.vert"), SID("ShadeSingleColor.frag"));
 }
 
@@ -51,9 +64,18 @@ void GalaxyRenderer::UpdatePipelines(GAL::ImagePtr& output_image)
     {
         GAL::PipelineState state = {};
         state.SetColorAttachment(0, output_image);
+        state.SetRootConstantsSize(sizeof(DrawParticlesSpritesRootConstants));
+        state.blending.is_enabled = true;
+        state.depth_test_enabled = false;
+        particles_render_sprite_pipeline_->SetState(state);
+    }
+
+    {
+        GAL::PipelineState state = {};
+        state.SetColorAttachment(0, output_image);
         state.SetRootConstantsSize(sizeof(Device::ShadeSingleColorRootConstants));
         state.blending.is_enabled = true;
-        particles_render_pipeline_->SetState(state);
+        particles_render_points_pipeline_->SetState(state);
     }
 
     {
@@ -76,15 +98,18 @@ void GalaxyRenderer::BindSceneDataBuffers()
         CreateParticlesBuffer();
     }
 
-    if (particles_render_pipeline_)
+    if (particles_render_points_pipeline_)
     {
-        particles_render_pipeline_->SetBuffer(particles_positions_buffer_, SID("Position"));
+        particles_render_points_pipeline_->SetBuffer(particles_positions_buffer_, SID("Position"));
+        particles_render_sprite_pipeline_->SetBuffer(particles_positions_buffer_, SID("Position"));
+
+        particles_render_sprite_pipeline_->SetBuffer(particles_data_buffer_, SID("ParticlesData"));
     }
 }
 
 Array<GAL::GraphicsPipelinePtr> GalaxyRenderer::GetPipelines()
 {
-    return Array({ particles_render_pipeline_, tree_draw_pipeline_ });
+    return Array({ particles_render_sprite_pipeline_, particles_render_points_pipeline_, tree_draw_pipeline_ });
 }
 
 void GalaxyRenderer::Render()
@@ -99,14 +124,14 @@ void GalaxyRenderer::Render()
 
     if (render_params_.colors_inverted)
     {
-        particles_render_pipeline_->SetClearColor(Math::kWhiteColor);
+        particles_render_points_pipeline_->SetClearColor(Math::kWhiteColor);
     }
     else
     {
-        particles_render_pipeline_->SetClearColor(Math::kBlackColor);
+        particles_render_points_pipeline_->SetClearColor(Math::kBlackColor);
     }
 
-    particles_render_pipeline_->ClearColorAttachments();
+    particles_render_points_pipeline_->ClearColorAttachments();
 
     if (sim_context_.IsCPUAlgorithm() && sim_context_.positions_update_completed_flag)
     {
@@ -125,21 +150,33 @@ void GalaxyRenderer::Render()
     }
 
     // Draw particles
-    if (render_params_.render_particles && render_params_.render_as_points)
+    if (render_params_.render_particles)
     {
         PROFILER_BLOCK_GPU("Render Particles");
 
-        particles_render_pipeline_->SetPointSize(render_params_.particle_size_scale);
+        if (render_params_.render_as_points)
+        {
+            particles_render_points_pipeline_->SetPointSize(render_params_.particle_size_scale);
 
-        Device::ShadeSingleColorRootConstants root_constants = {};
-        Float4 particle_color = render_params_.colors_inverted ? Math::kBlackColor : Math::kWhiteColor;
-        root_constants.color = particle_color * render_params_.brightness;
-        root_constants.transform = Matrix();
-        particles_render_pipeline_->SetRootConstants(&root_constants);
+            Device::ShadeSingleColorRootConstants root_constants = {};
+            Float4 particle_color = render_params_.colors_inverted ? Math::kBlackColor : Math::kWhiteColor;
+            root_constants.color = particle_color * render_params_.brightness;
+            root_constants.transform = Matrix();
+            particles_render_points_pipeline_->SetRootConstants(&root_constants);
 
-        particles_render_pipeline_->BeginGraphics();
-        particles_render_pipeline_->Draw(0, universe_.GetParticlesCount(), GAL::PrimitiveType::Points);
-        particles_render_pipeline_->EndGraphics();
+            particles_render_points_pipeline_->BeginGraphics();
+            particles_render_points_pipeline_->Draw(0, universe_.GetParticlesCount(), GAL::PrimitiveType::Points);
+            particles_render_points_pipeline_->EndGraphics();
+        }
+        else
+        {
+            DrawParticlesSpritesRootConstants root_constants = { render_params_.particle_size_scale, render_params_.brightness };
+            particles_render_sprite_pipeline_->SetRootConstants(&root_constants);
+
+            particles_render_sprite_pipeline_->BeginGraphics();
+            particles_render_sprite_pipeline_->Draw(0, universe_.GetParticlesCount(), GAL::PrimitiveType::Points);
+            particles_render_sprite_pipeline_->EndGraphics();
+        }
     }
 
     // Draw tree
@@ -167,6 +204,7 @@ void GalaxyRenderer::CreateParticlesBuffer()
     RenderDevice& device = engine->GetRenderer().GetRendererCore().GetRenderDevice();
 
     particles_positions_buffer_ = device.CreateBuffer(SID("ParticlesPositionsBuffer"), GAL::BufferType::kStorage, count * sizeof(Float4), GAL::BufferUsage::DynamicDraw);
+    particles_data_buffer_ = device.CreateBuffer(SID("ParticlesDataBuffer"), GAL::BufferType::kStorage, count * sizeof(ParticleData), GAL::BufferUsage::StaticDraw);
 }
 
 void GalaxyRenderer::CreateNodesBuffers(size_t nodes_count)
@@ -185,6 +223,20 @@ void GalaxyRenderer::UpdateParticlesBuffer()
 
     size_t count = universe_.GetParticlesCount();
     particles_positions_buffer_->Write(0, count * sizeof(Float4), universe_.positions_.Data());
+
+    static bool s_particles_data_uploaded = false;
+    if (!s_particles_data_uploaded)
+    {
+        // Fill particles particle_data only once
+        Array<ParticleData> particle_data(count);
+        for (size_t i = 0; i < count; i++)
+        {
+            particle_data[i].color = universe_.GetParticles()[i]->color;
+            particle_data[i].magnitude = universe_.GetParticles()[i]->magnitude;
+            particle_data[i].size = universe_.GetParticles()[i]->size;
+        }
+        particles_data_buffer_->Write(0, count * sizeof(ParticleData), particle_data.Data());
+    }
 }
 
 void GalaxyRenderer::UpdateNodesBuffers()
