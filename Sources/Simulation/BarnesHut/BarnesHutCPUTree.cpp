@@ -5,7 +5,7 @@
 #include <Thread/ThreadPool.h>
 
 static constexpr size_t cMaxTreeLevel = 64;
-static constexpr size_t cNodesStackSize = 64;
+static constexpr size_t cNodesStackSize = 128;
 static constexpr size_t cMinNodesCount = 64;
 
 static size_t ComputeNodesMaxCount(size_t body_count)

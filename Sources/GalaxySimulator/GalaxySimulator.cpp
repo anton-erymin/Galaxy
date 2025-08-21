@@ -80,13 +80,13 @@ void GalaxySimulator::CreateUniverse()
     universe_ = MakeUnique<Universe>();
 
     GalaxyParameters params = {};
-    params.disk_particles_count = 2000;
-    params.bulge_particles_count = 0;
+    params.disk_particles_count = 30000;
+    params.bulge_particles_count = 10000;
     params.total_mass = 1.0f;
     params.disk_radius = 1.0;
     params.disk_thickness = 0.1f;
     params.disk_mass_ratio = 1.0f;
-    params.bulge_radius = 0.01f;
+    params.bulge_radius = 0.2f;
     params.halo_radius = 5.0f;
     params.black_hole_mass = 10000.0f;
 
@@ -114,7 +114,7 @@ void GalaxySimulator::CreateGalaxy(const Float3& position, const Float3& vel)
         float dist = RandRange(0.001f, 1.0f);
         Float3 rand_dir(RandNormSigned(), 0.0f, RandNormSigned());
         rand_dir.Normalize();
-        Float3 ortho_dir = Float3(rand_dir.z, 0.0f, -rand_dir.x);
+        Float3 ortho_dir = Float3(rand_dir.z, 0.0f, -rand_dir.x);        
         Float3 pos = position + rand_dir * dist;
         pos.y = RandRange(-0.05f, 0.05f);
         GalaxyParameters params = {};
@@ -136,7 +136,7 @@ void GalaxySimulator::CreateGalaxy(const Float3& position, const Float3& vel)
         universe_->velocities_[cur_count + i + 1] = vel;
     };
 
-    for (size_t i = 0; i < 200; i++)
+    for (size_t i = 0; i < 2000; i++)
     {
         AddSatellite(i);
         //AddBody(i);
