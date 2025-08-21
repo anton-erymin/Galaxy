@@ -16,17 +16,15 @@ public:
 
     void SetRandomVelocities(float min, float max);
 
-    Array<Galaxy>& GetGalaxies() { return galaxies_; }
+    Array<UniquePtr<Galaxy>>& GetGalaxies() { return galaxies_; }
     const Array<Particle*>& GetParticles() const { return all_particles_; }
     size_t GetParticlesCount() const { return positions_.Size(); }
 
-    //const unordered_map<const Image*, Array<size_t>>& GetParticlesByImage() const { return imageToParticles; }
+private:
+    void AddGalaxy(UniquePtr<Galaxy> galaxy);
 
 private:
-    void AddGalaxy(Galaxy& galaxy);
-
-private:
-    Array<Galaxy> galaxies_;
+    Array<UniquePtr<Galaxy>> galaxies_;
     Array<Float4> positions_;
     Array<Float4> velocities_;
     //Array<Float3> accelerations_;

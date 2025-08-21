@@ -8,19 +8,19 @@ Universe::Universe()
 
 void Universe::CreateGalaxy()
 {
-    Galaxy galaxy;
-    AddGalaxy(galaxy);
+    UniquePtr<Galaxy> galaxy = MakeUnique<Galaxy>();
+    AddGalaxy(Move(galaxy));
 }
 
 void Universe::CreateGalaxy(const Float3& position, const GalaxyParameters& parameters)
 {
-    Galaxy galaxy(position, parameters);
-    AddGalaxy(galaxy);
+    UniquePtr<Galaxy> galaxy = MakeUnique<Galaxy>(position, parameters);
+    AddGalaxy(Move(galaxy));
 }
 
-void Universe::AddGalaxy(Galaxy& galaxy)
+void Universe::AddGalaxy(UniquePtr<Galaxy> galaxy)
 {
-    size_t count = galaxy.GetParticlesCount();
+    size_t count = galaxy->GetParticlesCount();
 
     positions_.Reserve(positions_.Size() + count);
     velocities_.Reserve(velocities_.Size() + count);
@@ -31,18 +31,13 @@ void Universe::AddGalaxy(Galaxy& galaxy)
 
     all_particles_.Reserve(all_particles_.Size() + count);
 
-    for (Particle& particle : galaxy.GetParticles())
+    for (Particle& particle : galaxy->GetParticles())
     {
         positions_.PushBack(particle.position);
         velocities_.PushBack(particle.velocity);
-        //accelerations_.PushBack(particle.acceleration);
         forces_.PushBack(particle.force);
         masses_.PushBack(particle.mass);
         inverse_masses_.PushBack(particle.inverse_mass);
-
-        //NASSERT(particle.image);
-        //imageToParticles[particle.image].PushBack(position.Size() - 1);
-
         all_particles_.PushBack(&particle);
     }
 

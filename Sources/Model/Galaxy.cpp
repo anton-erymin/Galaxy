@@ -87,19 +87,18 @@ void Galaxy::Create()
 
     NASSERT(parameters_.disk_mass_ratio > 0.0f && parameters_.disk_mass_ratio <= 1.0f);
 
-    const float bulgeParticleMass = (1.0f - parameters_.disk_mass_ratio) * parameters_.total_mass / parameters_.bulge_particles_count;
-    const float diskParticleMass = 0.1f;// parameters_.disk_mass_ratio * parameters_.total_mass / parameters_.disk_particles_count;
+    const float bulge_particle_mass = 0.1f;// (1.0f - parameters_.disk_mass_ratio)* parameters_.total_mass / parameters_.bulge_particles_count;
+    const float disk_particle_mass = 0.1f;// parameters_.disk_mass_ratio * parameters_.total_mass / parameters_.disk_particles_count;
 
-    const float dustRatio = 0.1f;
-
-    uint32 numDusts = static_cast<uint32>(parameters_.bulge_particles_count * dustRatio);
+    const float dust_ratio = 0.1f;
+    uint32 dusts_count = static_cast<uint32>(parameters_.bulge_particles_count * dust_ratio);
 
     PlummerModel plummer;
     
     for (uint32 i = 0; i < parameters_.bulge_particles_count; ++i)
     {
-        Particle particle = i < numDusts ? CreateDust() : CreateStar();
-        particle.SetMass(bulgeParticleMass);
+        Particle particle = i < dusts_count ? CreateDust() : CreateStar();
+        particle.SetMass(bulge_particle_mass);
         Float3 spherical = RandomUniformSpherical(0.0f, parameters_.bulge_radius);
         float r = SampleDistribution(0.0f, 1.0f, plummer.GetDensity(0.0f), [&plummer](float x) { return plummer.GetDensity(x); }) / 1.0f;
         spherical.x = r * parameters_.bulge_radius;
@@ -109,38 +108,35 @@ void Galaxy::Create()
         particles_.PushBack(particle);
     }
 
-    numDusts = static_cast<uint32>(parameters_.disk_particles_count * dustRatio);
+    dusts_count = static_cast<uint32>(parameters_.disk_particles_count * dust_ratio);
 
     for (uint32 i = 0; i < parameters_.disk_particles_count; i++)
     {
-        Particle particle = i < numDusts ? CreateDust() : CreateStar();
-        particle.SetMass(diskParticleMass);
-        //Float3 cylindrical = RandomUniformCylindrical(parameters_.bulge_radius, parameters_.disk_radius, parameters_.disk_thickness);
+        Particle particle = i < dusts_count ? CreateDust() : CreateStar();
+        particle.SetMass(disk_particle_mass);
+        Float3 cylindrical = RandomUniformCylindrical(parameters_.bulge_radius, parameters_.disk_radius, parameters_.disk_thickness);
         //float r = SampleDistribution(0.0f, 1.0f, plummer.GetDensity(0.0f), [&plummer](float x) { return plummer.GetDensity(x); }) / 1.0f;
         //cylindrical.x = r * parameters_.disk_radius;
-        //Float3 relativePos = CylindricalToCartesian(cylindrical);
-        //swap(relativePos.y, relativePos.z);
-#if 0
-        relativePos = Float3(
-            RandRange(-parameters_.disk_radius, parameters_.disk_radius),
-            RandRange(-parameters_.disk_radius, parameters_.disk_radius),
-            RandRange(-parameters_.disk_radius, parameters_.disk_radius));
-#endif // 0
+        Float3 pos = CylindricalToCartesian(cylindrical);
+        Swap(pos.y, pos.z);
 
-        //particle.position = position_ + relativePos;
+        Float3 dir = Normalize(pos);
+        dir.y = 0.0f;
+        //Float3 ortho_dir = Math::Orthogonalize(dir, Math::Y);
+        Float3 ortho_dir = Float3(dir.z, 0.0f, -dir.x);
+
+        particle.position = position_ + pos;
+        particle.velocity = RadialVelocity(parameters_.black_hole_mass, dir.Length()) * ortho_dir;
         particle.galaxy = this;
-        particles_.PushBack(particle);
+        particles_.EmplaceBack(particle);
     }
 
     if (!particles_.IsEmpty())
     {
         particles_[0].position = position_;
-        //particles_[0].movable = false;
-        //particles_[0].SetMass(parameters_.black_hole_mass);
+        particles_[0].velocity = Float3();
+        particles_[0].SetMass(parameters_.black_hole_mass);
     }
-
-    //particles[0].position = Float3(-0.45f, 0.0f, -0.45f);
-    //particles[1].position = Float3(-0.3f, 0.0f, -0.3f);
 
     NLOG("Galaxy created");
 }

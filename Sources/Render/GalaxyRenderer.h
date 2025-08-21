@@ -47,7 +47,7 @@ private:
     GAL::GraphicsPipelinePtr particles_render_points_pipeline_;
     GAL::GraphicsPipelinePtr tree_draw_pipeline_;
 
-    ResourcePtr star_image_;
+    Array<ResourcePtr> particle_images_;
 
     IUpdatable* aux_updatable_ = nullptr;
 };

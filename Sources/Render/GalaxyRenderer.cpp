@@ -46,8 +46,15 @@ GalaxyRenderer::GalaxyRenderer(Universe& universe, SimulationContext& sim_contex
     // Add additional shaders directory
     sm.AddShadersPath(Paths::BaseDir() + "/../../../Sources/Shaders"); // Galaxy shaders dir
 
-    star_image_ = ResourceManager::GetResource("star.png", ResourceLoadFlags::POST_LOAD_INITIALIZE);
-    star_image_->As<ImageResource>()->PostLoadInitialize(true);
+    particle_images_.EmplaceBack(ResourceManager::GetResource("star.png", ResourceLoadFlags::POST_LOAD_INITIALIZE));
+    particle_images_.EmplaceBack(ResourceManager::GetResource("dust1.png", ResourceLoadFlags::POST_LOAD_INITIALIZE));
+    particle_images_.EmplaceBack(ResourceManager::GetResource("dust2.png", ResourceLoadFlags::POST_LOAD_INITIALIZE));
+    particle_images_.EmplaceBack(ResourceManager::GetResource("dust3.png", ResourceLoadFlags::POST_LOAD_INITIALIZE));
+
+    for (ResourcePtr& image : particle_images_)
+    {
+        image->As<ImageResource>()->PostLoadInitialize(true);
+    }
 }
 
 void GalaxyRenderer::CreatePipelines(RenderDevice& render_device)
@@ -75,7 +82,7 @@ void GalaxyRenderer::UpdatePipelines(GAL::ImagePtr& output_image)
         state.depth_test_enabled = false;
         particles_render_sprite_pipeline_->SetState(state);
 
-        particles_render_sprite_pipeline_->SetImage(iengine->ImageSystem()->GetDeviceImage(star_image_->GetEntity()), SID("g_image"), 0);
+        particles_render_sprite_pipeline_->SetImage(iengine->ImageSystem()->GetDeviceImage(particle_images_[0]->GetEntity()), SID("g_image"), 0);
     }
 
     {
