@@ -53,7 +53,7 @@ struct RenderParameters
     bool render_particles = true;
     bool render_as_points = false;
     bool render_tree = false;
-    bool render_tracks = true;
+    bool render_tracks = false;
     bool plot_potential = false;
     float brightness = 1.0f;
     float particle_size_scale = 1.0f;

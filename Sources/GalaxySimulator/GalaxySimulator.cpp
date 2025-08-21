@@ -104,7 +104,7 @@ void GalaxySimulator::CreateGalaxy(const Float3& position, const Float3& vel)
 
     auto AddSatellite = [&](int i)
     {
-        float dist = RandRange(0.01f, 1.0f);
+        float dist = RandRange(0.001f, 1.0f);
         Float3 rand_dir(RandNormSigned(), 0.0f, RandNormSigned());
         rand_dir.Normalize();
         Float3 ortho_dir = Float3(rand_dir.z, 0.0f, -rand_dir.x);
@@ -129,7 +129,7 @@ void GalaxySimulator::CreateGalaxy(const Float3& position, const Float3& vel)
         universe_->velocities_[cur_count + i + 1] = vel;
     };
 
-    for (size_t i = 0; i < 200; i++)
+    for (size_t i = 0; i < 40000; i++)
     {
         AddSatellite(i);
         //AddBody(i);

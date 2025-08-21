@@ -116,7 +116,7 @@ void MainWindow::BuildUI()
                     static float s_slider_tmestep = 1.0f;
                     if (ImGui::SliderFloat("", &s_slider_tmestep, 1.0f, 10.0f, nullptr, 1.0f))
                     {
-                        sim_context_.timestep = 0.000001f * s_slider_tmestep;
+                        sim_context_.timestep = 0.00001f * s_slider_tmestep;
                     }
                 });
             BuildRowStringValue("Timestep, yrs", TimeInYearsToStr(sim_context_.timestep_yrs));
@@ -143,7 +143,7 @@ void MainWindow::BuildUI()
             BuildRow("Render Barnes-Hut tree", [&](){ ImGui::Checkbox("", &render_params_.render_tree); });
             BuildRow("Tracks", [&](){ ImGui::Checkbox("", &render_params_.render_tracks); });
             BuildRow("Plot potential", [&](){ ImGui::Checkbox("", &render_params_.plot_potential); });
-            BuildRow("Brightness", [&](){ ImGui::SliderFloat("", &render_params_.brightness, 0.05f, 10.0f, nullptr, 1.0f); });
+            BuildRow("Brightness", [&](){ ImGui::SliderFloat("", &render_params_.brightness, 0.001f, 1.0f, nullptr, 1.0f); });
             BuildRow("Particles size scale", [&](){ ImGui::SliderFloat("", &render_params_.particle_size_scale, 0.01f, 2.0f, nullptr, 1.0f); });
             BuildRow("Invert colors", [&](){ ImGui::Checkbox("", &render_params_.colors_inverted); });
         });
