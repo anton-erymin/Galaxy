@@ -9,6 +9,13 @@ struct SimulationContext;
 struct RenderParameters;
 class IUpdatable;
 
+struct RenderBatch
+{
+    uint32 offset;
+    uint32 count;
+    uint32 texture_idx;
+};
+
 class GalaxyRenderer : public IRendererPlugin
 {
 public:
@@ -48,6 +55,8 @@ private:
     GAL::GraphicsPipelinePtr tree_draw_pipeline_;
 
     Array<ResourcePtr> particle_images_;
+
+    Array<RenderBatch> render_batches_;
 
     IUpdatable* aux_updatable_ = nullptr;
 };

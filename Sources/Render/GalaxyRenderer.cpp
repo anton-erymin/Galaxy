@@ -20,6 +20,7 @@
 
 struct DrawParticlesSpritesRootConstants
 {
+    uint32 g_offset;
     float g_size_scale;
     float g_brightness;
 };
@@ -55,6 +56,26 @@ GalaxyRenderer::GalaxyRenderer(Universe& universe, SimulationContext& sim_contex
     {
         image->As<ImageResource>()->PostLoadInitialize(true);
     }
+
+    // Create batches
+    uint32 cur_texture_idx = 0;
+    uint32 start = 0;
+    size_t i = 0;
+    for (; i < universe_.GetParticlesCount(); i++)
+    {
+        const Particle* particle = universe_.GetParticles()[i];
+        if (particle->texture_idx != cur_texture_idx)
+        {
+            render_batches_.EmplaceBack(RenderBatch{ start, uint32(i) - start, cur_texture_idx });
+            cur_texture_idx = particle->texture_idx;
+            start = i;
+        }
+    }
+
+    if (uint32(i) - start)
+    {
+        render_batches_.EmplaceBack(RenderBatch{ start, uint32(i) - start });
+    }
 }
 
 void GalaxyRenderer::CreatePipelines(RenderDevice& render_device)
@@ -82,7 +103,7 @@ void GalaxyRenderer::UpdatePipelines(GAL::ImagePtr& output_image)
         state.depth_test_enabled = false;
         particles_render_sprite_pipeline_->SetState(state);
 
-        particles_render_sprite_pipeline_->SetImage(iengine->ImageSystem()->GetDeviceImage(particle_images_[0]->GetEntity()), SID("g_image"), 0);
+        particles_render_sprite_pipeline_->SetImage(SID("g_image"), 0);
     }
 
     {
@@ -190,11 +211,16 @@ void GalaxyRenderer::Render()
         }
         else
         {
-            DrawParticlesSpritesRootConstants root_constants = { render_params_.particle_size_scale, render_params_.brightness };
-            particles_render_sprite_pipeline_->SetRootConstants(&root_constants);
-
             particles_render_sprite_pipeline_->BeginGraphics();
-            particles_render_sprite_pipeline_->Draw(0, universe_.GetParticlesCount(), GAL::PrimitiveType::Points);
+            for (const RenderBatch& batch : render_batches_)
+            {
+                DrawParticlesSpritesRootConstants root_constants = { batch.offset, render_params_.particle_size_scale, render_params_.brightness };
+                particles_render_sprite_pipeline_->SetRootConstants(&root_constants);
+
+                iengine->ImageSystem()->GetDeviceImage(particle_images_[batch.texture_idx]->GetEntity())->Bind(0);
+
+                particles_render_sprite_pipeline_->Draw(0, batch.count, GAL::PrimitiveType::Points);
+            }
             particles_render_sprite_pipeline_->EndGraphics();
         }
     }

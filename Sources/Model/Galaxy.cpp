@@ -11,6 +11,7 @@ static Particle CreateStar()
 
     particle.size = RandRange(0.1f, 0.4f);
     particle.magnitude = RandRange(0.2f, 0.3f);
+    particle.texture_idx = 0;
 
     int k = rand() % 3;
     float rnd = RandNorm();
@@ -37,11 +38,9 @@ static Particle CreateDust()
 
     particle.size = RandRange(4.0f, 7.5f);
     particle.magnitude = RandRange(0.015f, 0.02f);
-    //particle->size = 15;
-    //particle.magnitude = 1;
+    particle.texture_idx = RandRangeInt(1, 3);
 
-    int k = rand() % 3;
-    k = 1;
+    int k = rand() % 2;
 
     if (k == 0)
     {
@@ -149,6 +148,8 @@ void Galaxy::Create()
         particles_[0].velocity = Float3();
         particles_[0].SetMass(parameters_.black_hole_mass);
     }
+
+    std::sort(particles_.begin(), particles_.end(), [](const Particle& lhs, const Particle& rhs) { return lhs.texture_idx < rhs.texture_idx; });
 
     NLOG("Galaxy created");
 }

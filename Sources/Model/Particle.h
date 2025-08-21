@@ -23,6 +23,7 @@ struct Particle
 
     float magnitude = 1.0f;
     float size = 1.0f;
+    uint32 texture_idx = 0;
 
     bool double_drawing = false;
 

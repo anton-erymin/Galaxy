@@ -9,14 +9,15 @@ out vec2 frag_uv;
 
 ROOT_CONSTANTS
 {
+    uint g_offset;
     float g_size_scale;
     float g_brightness;
 };
 
 void main()
 {
-	vec4 pos = g_position[gl_PrimitiveIDIn];
-	ParticleData data = g_particle_data[gl_PrimitiveIDIn];
+	vec4 pos = g_position[g_offset + gl_PrimitiveIDIn];
+	ParticleData data = g_particle_data[g_offset + gl_PrimitiveIDIn];
     
     frag_color.xyz = data.color.xyz;
     

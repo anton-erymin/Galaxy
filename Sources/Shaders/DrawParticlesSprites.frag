@@ -9,6 +9,7 @@ uniform sampler2D g_image;
 
 ROOT_CONSTANTS
 {
+    uint g_offset;
     float g_size_scale;
     float g_brightness;
 };
