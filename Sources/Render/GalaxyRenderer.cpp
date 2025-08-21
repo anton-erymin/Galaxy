@@ -84,6 +84,11 @@ void GalaxyRenderer::UpdatePipelines(GAL::ImagePtr& output_image)
         state.SetRootConstantsSize(sizeof(Device::ShadeSingleColorRootConstants));
         state.blending.is_enabled = true;
         particles_render_points_pipeline_->SetState(state);
+
+        Device::ShadeSingleColorRootConstants root_constants = {};
+        root_constants.color = Math::kWhiteColor;
+        root_constants.transform = Matrix();
+        particles_render_points_pipeline_->SetRootConstants(&root_constants);
     }
 
     {
@@ -168,7 +173,7 @@ void GalaxyRenderer::Render()
 
             Device::ShadeSingleColorRootConstants root_constants = {};
             Float4 particle_color = render_params_.colors_inverted ? Math::kBlackColor : Math::kWhiteColor;
-            root_constants.color = particle_color * render_params_.brightness;
+            root_constants.color = particle_color;
             root_constants.transform = Matrix();
             particles_render_points_pipeline_->SetRootConstants(&root_constants);
 

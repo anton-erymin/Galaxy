@@ -15,4 +15,3 @@ GPU Barnes-Hut is not fully implemented
 Hot keys
 Dark matter
 Plot potential
-Render bodies as images
