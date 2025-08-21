@@ -80,8 +80,8 @@ void GalaxySimulator::CreateUniverse()
     universe_ = MakeUnique<Universe>();
 
     GalaxyParameters params = {};
-    params.disk_particles_count = 3000;
-    params.bulge_particles_count = 1000;
+    params.disk_particles_count = 30000;
+    params.bulge_particles_count = 10000;
     params.total_mass = 1.0f;
     params.disk_radius = 1.0;
     params.disk_thickness = 0.1f;
