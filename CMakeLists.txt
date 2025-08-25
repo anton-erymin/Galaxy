@@ -43,7 +43,6 @@ function(ConfigureGalaxyModule name sources)
 endfunction()
 
 # Add modules
-#add_subdirectory(Sources/Controllers)
 add_subdirectory(Sources/GalaxySimulator)
 add_subdirectory(Sources/Model)
 add_subdirectory(Sources/Render)

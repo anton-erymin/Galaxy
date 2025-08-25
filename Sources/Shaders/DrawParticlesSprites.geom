@@ -19,7 +19,7 @@ void main()
 	vec4 pos = g_position[g_offset + gl_PrimitiveIDIn];
 	ParticleData data = g_particle_data[g_offset + gl_PrimitiveIDIn];
     
-    frag_color.xyz = data.color.xyz;
+    frag_color.xyz = data.color.xyz * data.magnitude;
     
     vec3 v1 = vec3(g_camera.view_transform[0].x, g_camera.view_transform[1].x, g_camera.view_transform[2].x);
     vec3 v2 = vec3(g_camera.view_transform[0].y, g_camera.view_transform[1].y, g_camera.view_transform[2].y);
