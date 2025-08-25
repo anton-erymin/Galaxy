@@ -16,6 +16,7 @@
 #include <ResourceManager.h>
 #include <UIOverlay.h>
 #include <Misc/Paths.h>
+#include <Controllers/OrbitController.h>
 
 GalaxySimulator::GalaxySimulator()
 {
@@ -33,14 +34,25 @@ GalaxySimulator::GalaxySimulator()
     // Create scene
     engine->SetActiveScene(engine->CreateScene());
 
+    // Setup orbit camera
+    Entity orbit_camera;
+    CameraComponent* camera_comp = orbit_camera.Create<CameraComponent>();
+    camera_comp->type = CameraType::Perspective;
+    camera_comp->eye = Float3(0.0f, 2.0f, 2.0f);
+    camera_comp->at = Float3();
+    camera_comp->up = Math::Y;
+    InputComponent* input_controller = orbit_camera.Create<InputComponent>();
+    input_controller->controller = MakeShared<OrbitController>();
+    input_controller->input_maps.EmplaceBack(InputMapPath{ SID("System"), SID("OrbitCamera") });
+    input_controller->is_enabled = true;
+
     // Setup top camera
     Entity top_camera;
-    CameraComponent* camera_comp = top_camera.Create<CameraComponent>();
+    camera_comp = top_camera.Create<CameraComponent>();
     camera_comp->type = CameraType::Ortho;
     camera_comp->eye = Float3(0.0f, 1.0f, 0.0f);
     camera_comp->at = Float3();
     camera_comp->up = -Math::Z;
-    //engine->SetActiveCamera(top_camera);
 
     Entity camera = engine->GetActiveCamera();
     camera.Get<CameraComponent>()->z_near = 0.000001f;
@@ -69,6 +81,8 @@ GalaxySimulator::GalaxySimulator()
     CreateSolver(sim_context_.algorithm);
 
     engine->Play();
+
+    engine->SetActiveCamera(orbit_camera);
 }
 
 GalaxySimulator::~GalaxySimulator()
@@ -80,13 +94,13 @@ void GalaxySimulator::CreateUniverse()
     universe_ = MakeUnique<Universe>();
 
     GalaxyParameters params = {};
-    params.disk_particles_count = 30000;
-    params.bulge_particles_count = 10000;
+    params.disk_particles_count = 35000;
+    params.bulge_particles_count = 5000;
     params.total_mass = 1.0f;
-    params.disk_radius = 1.0;
-    params.disk_thickness = 0.1f;
+    params.disk_radius = 0.4f;
+    params.disk_thickness = 0.05f;
     params.disk_mass_ratio = 1.0f;
-    params.bulge_radius = 0.2f;
+    params.bulge_radius = 0.05f;
     params.halo_radius = 5.0f;
     params.black_hole_mass = 10000.0f;
 
