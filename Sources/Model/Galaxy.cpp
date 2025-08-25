@@ -9,23 +9,22 @@ static Particle CreateStar()
 {
     Particle particle;
 
-    particle.size = RandRange(0.1f, 0.4f);
-    particle.magnitude = RandRange(0.2f, 0.3f);
+    particle.size = RandRange(0.05f, 0.15f);
+    particle.magnitude = RandRange(0.5f, 0.8f);
     particle.texture_idx = 0;
 
-    int k = rand() % 3;
-    float rnd = RandNorm();
+    int k = Rand() % 3;
 
     switch (k)
     {
     case 0:
-        particle.color = { 1.0f, 1.0f - rnd * 0.2f, 1.0f - rnd * 0.2f };
+        particle.color = { 1.0f, 1.0f - RandNorm() * 0.2f, 1.0f - RandNorm() * 0.2f };
         break;
     case 1:
-        particle.color = { 1.0f, 1.0f, 1.0f - rnd * 0.2f };
+        particle.color = { 1.0f, 1.0f, 1.0f - RandNorm() * 0.2f };
         break;
     case 2:
-        particle.color = { 1.0f - rnd * 0.2f, 1.0f - rnd * 0.2f, 1.0f };
+        particle.color = { 1.0f - RandNorm() * 0.2f, 1.0f - RandNorm() * 0.2f, 1.0f };
         break;
     }
 
@@ -36,19 +35,19 @@ static Particle CreateDust()
 {
     Particle particle;
 
-    particle.size = RandRange(4.0f, 7.5f);
-    particle.magnitude = RandRange(0.015f, 0.02f);
+    particle.size = RandRange(7.0f, 14.5f);
+    particle.magnitude = RandRange(0.005f, 0.1f);
     particle.texture_idx = RandRangeInt(1, 3);
 
-    int k = rand() % 2;
+    int k = Rand() % 2;
 
     if (k == 0)
     {
-        particle.color = { 0.77f, 0.8f, 1.0f };
+        particle.color = { 1.0f - RandNorm() * 0.33f, 1.0f - RandNorm() * 0.2f, 1.0f };
     }
     else
     {
-        particle.color = { 1.0f, 0.95f, 0.8f };
+        particle.color = { 1.0f, 1.0f - RandNorm() * 0.05f, 1.0f - RandNorm() * 0.2f };
     }
 
     return particle;
@@ -62,8 +61,6 @@ static Particle CreateH2()
     particle.magnitude = RandRange(0.0f, 1.0f);
 
     particle.color = { 1.0f, 0.6f, 0.6f };
-
-    particle.userData = rand() % 2;
 
     return particle;
 }
@@ -87,11 +84,11 @@ void Galaxy::Create()
 
     NASSERT(parameters_.disk_mass_ratio > 0.0f && parameters_.disk_mass_ratio <= 1.0f);
 
-    const float bulge_particle_mass = 0.01f;// (1.0f - parameters_.disk_mass_ratio)* parameters_.total_mass / parameters_.bulge_particles_count;
+    const float bulge_particle_mass = 0.005f;// (1.0f - parameters_.disk_mass_ratio)* parameters_.total_mass / parameters_.bulge_particles_count;
     const float disk_particle_mass = 0.1f;// parameters_.disk_mass_ratio * parameters_.total_mass / parameters_.disk_particles_count;
 
-    const float dust_ratio = 0.1f;
-    uint32 dusts_count = static_cast<uint32>(parameters_.bulge_particles_count * dust_ratio);
+    const float dust_ratio = 0.03f;
+    uint32 dusts_count = 0;// static_cast<uint32>(parameters_.bulge_particles_count * dust_ratio);
 
     PlummerModel plummer;
     
@@ -125,6 +122,8 @@ void Galaxy::Create()
         Particle particle = i < dusts_count ? CreateDust() : CreateStar();
         particle.SetMass(disk_particle_mass);
         Float3 cylindrical = RandomUniformCylindrical(parameters_.bulge_radius, parameters_.disk_radius, parameters_.disk_thickness);
+        float height_at_radius = MapRange(cylindrical.x, parameters_.bulge_radius, parameters_.disk_radius, parameters_.disk_thickness, 0.005f);
+        cylindrical.z = RandRange(-0.5f * height_at_radius, 0.5f * height_at_radius);
         //float r = SampleDistribution(0.0f, 1.0f, plummer.GetDensity(0.0f), [&plummer](float x) { return plummer.GetDensity(x); }) / 1.0f;
         //cylindrical.x = r * parameters_.disk_radius;
         Float3 pos = CylindricalToCartesian(cylindrical);
