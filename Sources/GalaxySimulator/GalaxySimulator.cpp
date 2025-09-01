@@ -94,15 +94,17 @@ void GalaxySimulator::CreateUniverse()
     universe_ = MakeUnique<Universe>();
 
     GalaxyParameters params = {};
-    params.disk_particles_count = 35000;
-    params.bulge_particles_count = 5000;
+    params.disk_particles_count = 55000;
+    params.bulge_particles_count = 10000;
     params.total_mass = 1.0f;
     params.disk_radius = 0.4f;
     params.disk_thickness = 0.05f;
     params.disk_mass_ratio = 1.0f;
     params.bulge_radius = 0.05f;
     params.halo_radius = 5.0f;
-    params.black_hole_mass = 10000.0f;
+    params.black_hole_mass = 1000.0f;
+
+    sim_context_.gravity_softening_length = 0.01f;
 
     universe_->CreateGalaxy(Float3(), params);
     //universe_->CreateGalaxy(Float3(0.2f, 0.0f, 0.0f), params);

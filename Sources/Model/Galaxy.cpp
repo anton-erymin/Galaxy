@@ -84,10 +84,10 @@ void Galaxy::Create()
 
     NASSERT(parameters_.disk_mass_ratio > 0.0f && parameters_.disk_mass_ratio <= 1.0f);
 
-    const float bulge_particle_mass = 0.005f;// (1.0f - parameters_.disk_mass_ratio)* parameters_.total_mass / parameters_.bulge_particles_count;
-    const float disk_particle_mass = 0.1f;// parameters_.disk_mass_ratio * parameters_.total_mass / parameters_.disk_particles_count;
+    const float bulge_particle_mass = 0.0005f;// (1.0f - parameters_.disk_mass_ratio)* parameters_.total_mass / parameters_.bulge_particles_count;
+    const float disk_particle_mass = 0.01f;// parameters_.disk_mass_ratio * parameters_.total_mass / parameters_.disk_particles_count;
 
-    const float dust_ratio = 0.03f;
+    const float dust_ratio = 0.01f;
     uint32 dusts_count = 0;// static_cast<uint32>(parameters_.bulge_particles_count * dust_ratio);
 
     PlummerModel plummer;

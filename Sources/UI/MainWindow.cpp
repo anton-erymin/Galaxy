@@ -116,7 +116,7 @@ void MainWindow::BuildUI()
                     static float s_slider_tmestep = 1.0f;
                     if (ImGui::SliderFloat("", &s_slider_tmestep, 1.0f, 10.0f, nullptr, 1.0f))
                     {
-                        sim_context_.timestep = 0.00001f * s_slider_tmestep;
+                        sim_context_.timestep = 0.000001f * s_slider_tmestep;
                     }
                 });
             BuildRowStringValue("Timestep, yrs", TimeInYearsToStr(sim_context_.timestep_yrs));
