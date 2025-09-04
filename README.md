@@ -7,6 +7,7 @@ Later it was rewritten to use my own little private game engine and to do comput
 Also an attempt to move computations to GPU was made, but OpenGL is not suitable enough to implement some crucial part of hierarchical algorithm.
 So GPU implementation is broken now until Vulkan support is integrated into my engine.
 
+
 <img width="2560" height="1440" alt="034" src="https://github.com/user-attachments/assets/3466bdff-4caf-4070-8fd1-238f57f47f89" />
 <img width="2560" height="1440" alt="086" src="https://github.com/user-attachments/assets/c50ee9cf-d980-4296-877c-c8e06d56cc39" />
 <img width="2560" height="1440" alt="087" src="https://github.com/user-attachments/assets/860afa6e-1e6c-40eb-aceb-711bb0cc7c90" />
